@@ -37,4 +37,4 @@ class LoanORM(Base):
     monthly_payment: Mapped[float | None] = mapped_column(Float, nullable=True)
     remaining_io_months: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     state: Mapped[str | None] = mapped_column(String(8), nullable=True)
-    cohort: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    cohort: Mapped[str | None] = mapped_column(String(128), nullable=True)

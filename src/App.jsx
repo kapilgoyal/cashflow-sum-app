@@ -25,7 +25,13 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 const FONT = '"Source Sans 3", "Segoe UI", system-ui, sans-serif';
 
-/** Match matplotlib CLUSTER_META order (0→1→2). */
+const NAV = [
+  { id: "loan", label: "Loan" },
+  { id: "scenarios", label: "Cash Flow Scenarios" },
+  { id: "cashflow", label: "Cash Flow" },
+];
+
+/** Match matplotlib CLUSTER_META order (0→1→2). No "RI" in labels. */
 const CLUSTER_ORDER = [
   "low LTV and weak refinance incentive",
   "high LTV and strong refinance incentive",
@@ -42,19 +48,16 @@ const CLUSTER_FALLBACK_COUNTS = {
   "high LTV and weak refinance incentive": 375,
 };
 
-/** Domains/ticks aligned to labeled PNG. */
 const X_DOMAIN = [0.28, 0.92];
 const Y_DOMAIN = [-2.4, 3.2];
 const X_TICKS = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
 const Y_TICKS = [-2, -1, 0, 1, 2, 3];
-
-/** Matplotlib scatter s=28 → Recharts Z size (area). */
 const POINT_SIZE = 28;
-
 const OFF_AXIS_FEATURES = ["Documentation", "Remaining Term"];
 
 const LS_CLUSTER_KEY = "cashflow.clusterFilter";
 const LS_GRID_KEY = "cashflow.agGridState";
+const LS_NAV_KEY = "cashflow.navPane";
 
 const gridTheme = themeQuartz.withParams({
   backgroundColor: "#212026",
@@ -89,6 +92,16 @@ function readClusterFilter() {
   return "all";
 }
 
+function readNav() {
+  try {
+    const v = localStorage.getItem(LS_NAV_KEY);
+    if (NAV.some((n) => n.id === v)) return v;
+  } catch {
+    /* ignore */
+  }
+  return "loan";
+}
+
 function readGridState() {
   try {
     const raw = localStorage.getItem(LS_GRID_KEY);
@@ -119,13 +132,21 @@ function saveGridState(api) {
   }
 }
 
+function fmtMoney(v) {
+  if (v == null || Number.isNaN(Number(v))) return "";
+  return Number(v).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 function CustomLegend({ payload, activeCluster, onSelect, counts }) {
   if (!payload?.length) return null;
   const byValue = Object.fromEntries(payload.map((e) => [e.value, e]));
   const entries = CLUSTER_ORDER.map((code) => byValue[code]).filter(Boolean);
   return (
     <div className="scatter-legend-box">
-      <div className="scatter-legend-title">Cluster</div>
+      <div className="scatter-legend-title">Cohort</div>
       <ul className="scatter-legend">
         {entries.map((entry) => {
           const code = entry.value;
@@ -164,7 +185,6 @@ function CustomLegend({ payload, activeCluster, onSelect, counts }) {
   );
 }
 
-/** Filled convex hulls (matplotlib Polygon alpha=0.12, lw=1.2). */
 function HullFills({ hullSeries, activeCluster }) {
   const xScale = useXAxisScale();
   const yScale = useYAxisScale();
@@ -197,12 +217,7 @@ function HullFills({ hullSeries, activeCluster }) {
 }
 
 export default function App() {
-  const [a, setA] = useState("2");
-  const [b, setB] = useState("3");
-  const [sum, setSum] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-
+  const [pane, setPane] = useState(readNav);
   const [loans, setLoans] = useState([]);
   const [hulls, setHulls] = useState({});
   const [counts, setCounts] = useState(CLUSTER_FALLBACK_COUNTS);
@@ -210,9 +225,25 @@ export default function App() {
   const [tapeLoading, setTapeLoading] = useState(true);
   const [clusterFilter, setClusterFilter] = useState(readClusterFilter);
 
+  const [scenarios, setScenarios] = useState([]);
+  const [aggregates, setAggregates] = useState([]);
+  const [ranScenarioIds, setRanScenarioIds] = useState([]);
+  const [runMeta, setRunMeta] = useState(null);
+  const [neonNote, setNeonNote] = useState(null);
+  const [runError, setRunError] = useState(null);
+  const [running, setRunning] = useState(false);
+
   const gridApiRef = useRef(null);
   const restoringRef = useRef(false);
   const saveTimerRef = useRef(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_NAV_KEY, pane);
+    } catch {
+      /* ignore */
+    }
+  }, [pane]);
 
   useEffect(() => {
     let cancelled = false;
@@ -241,6 +272,58 @@ export default function App() {
     };
   }, []);
 
+  // Load scenario grid + any precomputed month-1 aggregates into memory (no full reload).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [gridRes, monthRes] = await Promise.all([
+          fetch("/api/scenarios/grid").catch(() => null),
+          fetch("/cohort-month1.json").catch(() => null),
+        ]);
+        if (cancelled) return;
+        if (gridRes?.ok) {
+          const g = await gridRes.json();
+          setScenarios(g.scenarios || []);
+        } else {
+          // Static fallback from public if API down
+          const staticScenarios = await fetch("/cohort-month1.json")
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null);
+          if (staticScenarios?.aggregates) {
+            setScenarios(
+              staticScenarios.aggregates.map((a) => ({
+                scenario_id: a.scenario_id,
+                cohort: a.cohort,
+                psa_multiple: a.psa_multiple,
+                sda_multiple: a.sda_multiple,
+                recovery_rate: a.recovery_rate,
+                recovery_period_months: a.recovery_period_months,
+                recovery_lag_months: a.recovery_lag_months,
+              }))
+            );
+          }
+        }
+        if (monthRes?.ok) {
+          const m = await monthRes.json();
+          setAggregates(m.aggregates || []);
+          setRanScenarioIds(
+            (m.meta?.ran_scenario_ids || m.aggregates || [])
+              .map((x) => (typeof x === "string" ? x : x.scenario_id))
+              .filter(Boolean)
+          );
+          setRunMeta(m.meta?.parallelism || null);
+          setNeonNote(m.neon_note || null);
+        }
+      } catch {
+        /* offline — panes still usable */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem(LS_CLUSTER_KEY, clusterFilter);
@@ -249,7 +332,7 @@ export default function App() {
     }
   }, [clusterFilter]);
 
-  const columnDefs = useMemo(
+  const loanColumnDefs = useMemo(
     () => [
       { field: "loanId", headerName: "Loan ID", flex: 1.1, minWidth: 100 },
       {
@@ -293,9 +376,133 @@ export default function App() {
       },
       {
         field: "cluster",
-        headerName: "Cluster",
-        width: 100,
+        headerName: "Cohort",
+        flex: 1.6,
+        minWidth: 180,
         filter: true,
+      },
+    ],
+    []
+  );
+
+  const scenarioColumnDefs = useMemo(
+    () => [
+      { field: "scenario_id", headerName: "ID", width: 64 },
+      { field: "cohort", headerName: "Cohort", flex: 1.8, minWidth: 200 },
+      {
+        field: "pca_level",
+        headerName: "PCA",
+        width: 70,
+        valueGetter: (p) =>
+          p.data.pca_level ||
+          ({ 75: "Down", 100: "Base", 125: "Up" }[p.data.psa_multiple] ??
+            p.data.psa_multiple),
+      },
+      {
+        field: "sta_level",
+        headerName: "STA",
+        width: 70,
+        valueGetter: (p) =>
+          p.data.sta_level ||
+          ({ 50: "Down", 100: "Base", 200: "Up" }[p.data.sda_multiple] ??
+            p.data.sda_multiple),
+      },
+      {
+        field: "psa_multiple",
+        headerName: "PSA",
+        width: 64,
+        type: "numericColumn",
+      },
+      {
+        field: "sda_multiple",
+        headerName: "SDA",
+        width: 64,
+        type: "numericColumn",
+      },
+      {
+        field: "recovery_rate",
+        headerName: "Rec %",
+        width: 72,
+        valueFormatter: (p) =>
+          p.value == null ? "" : `${(Number(p.value) * 100).toFixed(0)}%`,
+      },
+      {
+        field: "recovery_period_months",
+        headerName: "Rec mos",
+        width: 80,
+        type: "numericColumn",
+      },
+      {
+        field: "ran",
+        headerName: "Ran",
+        width: 64,
+        valueGetter: (p) =>
+          ranScenarioIds.includes(p.data.scenario_id) ? "Y" : "",
+      },
+    ],
+    [ranScenarioIds]
+  );
+
+  const cfColumnDefs = useMemo(
+    () => [
+      { field: "scenario_id", headerName: "ID", width: 64 },
+      { field: "cohort", headerName: "Cohort", flex: 1.6, minWidth: 180 },
+      { field: "pca_level", headerName: "PCA", width: 64 },
+      { field: "sta_level", headerName: "STA", width: 64 },
+      {
+        field: "n_loans",
+        headerName: "Loans",
+        width: 70,
+        type: "numericColumn",
+      },
+      {
+        field: "beginning_balance",
+        headerName: "Begin bal",
+        width: 110,
+        type: "numericColumn",
+        valueFormatter: (p) => fmtMoney(p.value),
+      },
+      {
+        field: "interest",
+        headerName: "Interest",
+        width: 100,
+        type: "numericColumn",
+        valueFormatter: (p) => fmtMoney(p.value),
+      },
+      {
+        field: "scheduled_principal",
+        headerName: "Sched prin",
+        width: 100,
+        type: "numericColumn",
+        valueFormatter: (p) => fmtMoney(p.value),
+      },
+      {
+        field: "default",
+        headerName: "Default",
+        width: 90,
+        type: "numericColumn",
+        valueFormatter: (p) => fmtMoney(p.value),
+      },
+      {
+        field: "prepay",
+        headerName: "Prepay",
+        width: 90,
+        type: "numericColumn",
+        valueFormatter: (p) => fmtMoney(p.value),
+      },
+      {
+        field: "recovery",
+        headerName: "Recovery",
+        width: 90,
+        type: "numericColumn",
+        valueFormatter: (p) => fmtMoney(p.value),
+      },
+      {
+        field: "ending_balance",
+        headerName: "End bal",
+        width: 110,
+        type: "numericColumn",
+        valueFormatter: (p) => fmtMoney(p.value),
       },
     ],
     []
@@ -336,7 +543,6 @@ export default function App() {
     for (const code of CLUSTER_ORDER) {
       const pts = hulls[code];
       if (!Array.isArray(pts) || pts.length < 3) continue;
-      // Close ring for filled polygon
       const ring = pts.map((p) => ({
         cltv: p.cltv,
         incentive: p.incentive,
@@ -354,6 +560,21 @@ export default function App() {
     }
     return out;
   }, [hulls]);
+
+  const scenarioRows = useMemo(() => {
+    if (scenarios.length) return scenarios;
+    return aggregates.map((a) => ({
+      scenario_id: a.scenario_id,
+      cohort: a.cohort,
+      psa_multiple: a.psa_multiple,
+      sda_multiple: a.sda_multiple,
+      pca_level: a.pca_level,
+      sta_level: a.sta_level,
+      recovery_rate: a.recovery_rate,
+      recovery_period_months: a.recovery_period_months,
+      recovery_lag_months: a.recovery_lag_months,
+    }));
+  }, [scenarios, aggregates]);
 
   const scheduleSave = useCallback(() => {
     if (restoringRef.current) return;
@@ -391,25 +612,46 @@ export default function App() {
     });
   }, []);
 
-  async function handleSum() {
-    setLoading(true);
-    setError(null);
+  const selectPane = useCallback((id) => {
+    setPane(id);
+  }, []);
+
+  async function handleRunMonth1() {
+    setRunning(true);
+    setRunError(null);
     try {
-      const res = await fetch("/api/sum", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ a: Number(a), b: Number(b) }),
-      });
+      const res = await fetch("/api/cashflows/run-month1", { method: "POST" });
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+        const detail = await res.text();
+        throw new Error(`HTTP ${res.status}: ${detail}`);
       }
       const data = await res.json();
-      setSum(data.sum);
+      setAggregates(data.aggregates || []);
+      setRanScenarioIds(data.ran_scenario_ids || []);
+      setRunMeta(data.parallelism || null);
+      setNeonNote(
+        data.neon_missing
+          ? "DATABASE_URL not set — loan-level CF in SQLite/JSON under data/"
+          : data.storage?.neon || null
+      );
+      if (data.aggregates?.length && !scenarios.length) {
+        setScenarios(
+          data.aggregates.map((a) => ({
+            scenario_id: a.scenario_id,
+            cohort: a.cohort,
+            psa_multiple: a.psa_multiple,
+            sda_multiple: a.sda_multiple,
+            recovery_rate: a.recovery_rate,
+            recovery_period_months: a.recovery_period_months,
+            recovery_lag_months: a.recovery_lag_months,
+          }))
+        );
+      }
+      setPane("cashflow");
     } catch (err) {
-      setSum(null);
-      setError(err.message || String(err));
+      setRunError(err.message || String(err));
     } finally {
-      setLoading(false);
+      setRunning(false);
     }
   }
 
@@ -420,7 +662,7 @@ export default function App() {
   };
 
   const filterLabel =
-    clusterFilter === "all" ? "All clusters" : clusterFilter;
+    clusterFilter === "all" ? "All cohorts" : clusterFilter;
 
   return (
     <div className="app">
@@ -435,245 +677,294 @@ export default function App() {
           />
           <span className="topbar-name">CashFlow</span>
         </div>
-        <span className="topbar-version">v0.1.0</span>
+        <span className="topbar-version">v0.2.0</span>
       </header>
 
-      <main className="main">
-        <section className="section">
-          <h2 className="section-title">Sum demo</h2>
-          <div className="sum-row">
-            <div className="field">
-              <label htmlFor="input-a">A</label>
-              <input
-                id="input-a"
-                type="number"
-                value={a}
-                onChange={(e) => setA(e.target.value)}
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="input-b">B</label>
-              <input
-                id="input-b"
-                type="number"
-                value={b}
-                onChange={(e) => setB(e.target.value)}
-              />
-            </div>
+      <div className="shell">
+        <nav className="sidenav" aria-label="Primary">
+          {NAV.map((item) => (
             <button
+              key={item.id}
               type="button"
-              className="btn"
-              onClick={handleSum}
-              disabled={loading}
+              className={`sidenav-btn${pane === item.id ? " is-active" : ""}`}
+              onClick={() => selectPane(item.id)}
             >
-              {loading ? "Adding…" : "Add"}
+              {item.label}
             </button>
-            {sum !== null && (
-              <p className="result">
-                Sum: <strong>{sum}</strong>
-              </p>
-            )}
-            {error && <p className="error">Error: {error}</p>}
-          </div>
-        </section>
+          ))}
+        </nav>
 
-        <section className="section">
-          <div className="section-head section-head-stack">
-            <h2 className="section-title section-title-chart">
-              K-Prototypes (k=3, 4 Features): Original CLTV vs Refinance
-              Incentive
-            </h2>
-            <p className="scatter-subtitle">
-              Original CLTV, Documentation, Remaining Term, Refinance Incentive
-            </p>
-          </div>
-          <div className="chart-wrap chart-wrap-scatter">
-            {tapeLoading ? (
-              <p className="muted">Loading tape…</p>
-            ) : tapeError ? (
-              <p className="error">Tape: {tapeError}</p>
-            ) : (
-              <>
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart
-                    margin={{ top: 12, right: 16, left: 8, bottom: 28 }}
-                  >
-                    <CartesianGrid
-                      stroke="#464646"
-                      strokeDasharray="2 4"
-                      strokeOpacity={0.45}
-                    />
-                    <XAxis
-                      type="number"
-                      dataKey="cltv"
-                      name="Original CLTV"
-                      tick={axisTick}
-                      ticks={X_TICKS}
-                      axisLine={{ stroke: "#323232" }}
-                      tickLine={{ stroke: "#323232" }}
-                      tickFormatter={(v) => Number(v).toFixed(1)}
-                      domain={X_DOMAIN}
-                      allowDataOverflow
-                      label={{
-                        value: "Original CLTV",
-                        position: "insideBottom",
-                        offset: -14,
-                        fill: "#FCFCFC",
-                        fontSize: 11,
-                        fontFamily: FONT,
-                        fontWeight: 600,
-                      }}
-                    />
-                    <YAxis
-                      type="number"
-                      dataKey="incentive"
-                      name="Refinance Incentive"
-                      tick={axisTick}
-                      ticks={Y_TICKS}
-                      axisLine={{ stroke: "#323232" }}
-                      tickLine={{ stroke: "#323232" }}
-                      domain={Y_DOMAIN}
-                      allowDataOverflow
-                      width={44}
-                      label={{
-                        value: "Refinance Incentive",
-                        angle: -90,
-                        position: "insideLeft",
-                        offset: 8,
-                        fill: "#FCFCFC",
-                        fontSize: 11,
-                        fontFamily: FONT,
-                        fontWeight: 600,
-                      }}
-                    />
-                    <ZAxis range={[POINT_SIZE, POINT_SIZE]} />
-                    <Tooltip
-                      cursor={{ strokeDasharray: "3 3", stroke: "#464646" }}
-                      contentStyle={{
-                        background: "#212026",
-                        border: "1px solid #323232",
-                        borderRadius: 0,
-                        fontSize: 11,
-                        color: "#FCFCFC",
-                        fontFamily: FONT,
-                      }}
-                      labelStyle={{ color: "#808080" }}
-                      formatter={(value, name) => {
-                        if (name === "cltv" || name === "Original CLTV") {
-                          return [Number(value).toFixed(3), "Original CLTV"];
-                        }
-                        if (
-                          name === "incentive" ||
-                          name === "Refinance Incentive"
-                        ) {
-                          return [
-                            Number(value).toFixed(3),
-                            "Refinance Incentive",
-                          ];
-                        }
-                        return [value, name];
-                      }}
-                    />
-                    <Legend
-                      verticalAlign="top"
-                      align="left"
-                      wrapperStyle={{
-                        position: "absolute",
-                        top: 8,
-                        left: 56,
-                        width: "auto",
-                        zIndex: 2,
-                      }}
-                      content={(props) => (
-                        <CustomLegend
-                          {...props}
-                          activeCluster={clusterFilter}
-                          onSelect={selectCluster}
-                          counts={counts}
-                        />
-                      )}
-                    />
-                    <HullFills
-                      hullSeries={hullSeries}
-                      activeCluster={clusterFilter}
-                    />
-                    {CLUSTER_ORDER.map((code) => (
-                      <Scatter
-                        key={code}
-                        name={code}
-                        data={scatterByCluster[code]}
-                        fill={CLUSTER_COLORS[code]}
-                        fillOpacity={
-                          clusterFilter === "all" || clusterFilter === code
-                            ? 0.75
-                            : 0.15
-                        }
-                        shape="circle"
-                        onClick={() => selectCluster(code)}
-                        cursor="pointer"
-                        isAnimationActive={false}
-                        legendType="circle"
-                      />
-                    ))}
-                  </ComposedChart>
-                </ResponsiveContainer>
-                <aside
-                  className="scatter-offaxis-note"
-                  aria-label="Off-axis clustering features"
-                >
-                  <span className="scatter-offaxis-mark" aria-hidden="true">
-                    ★
-                  </span>
-                  <ul>
-                    {OFF_AXIS_FEATURES.map((f) => (
-                      <li key={f}>• {f}</li>
-                    ))}
-                  </ul>
-                </aside>
-              </>
-            )}
-          </div>
-        </section>
+        <main className="main">
+          {pane === "loan" && (
+            <>
+              <section className="section">
+                <div className="section-head section-head-stack">
+                  <h2 className="section-title section-title-chart">
+                    K-Prototypes (k=3, 4 Features): Original CLTV vs Refinance
+                    Incentive
+                  </h2>
+                  <p className="scatter-subtitle">
+                    Cohorts: high LTV + strong / high LTV + weak / low LTV +
+                    weak refinance incentive
+                  </p>
+                </div>
+                <div className="chart-wrap chart-wrap-scatter">
+                  {tapeLoading ? (
+                    <p className="muted">Loading tape…</p>
+                  ) : tapeError ? (
+                    <p className="error">Tape: {tapeError}</p>
+                  ) : (
+                    <>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart
+                          margin={{ top: 12, right: 16, left: 8, bottom: 28 }}
+                        >
+                          <CartesianGrid
+                            stroke="#464646"
+                            strokeDasharray="2 4"
+                            strokeOpacity={0.45}
+                          />
+                          <XAxis
+                            type="number"
+                            dataKey="cltv"
+                            name="Original CLTV"
+                            tick={axisTick}
+                            ticks={X_TICKS}
+                            axisLine={{ stroke: "#323232" }}
+                            tickLine={{ stroke: "#323232" }}
+                            tickFormatter={(v) => Number(v).toFixed(1)}
+                            domain={X_DOMAIN}
+                            allowDataOverflow
+                            label={{
+                              value: "Original CLTV",
+                              position: "insideBottom",
+                              offset: -14,
+                              fill: "#FCFCFC",
+                              fontSize: 11,
+                              fontFamily: FONT,
+                              fontWeight: 600,
+                            }}
+                          />
+                          <YAxis
+                            type="number"
+                            dataKey="incentive"
+                            name="Refinance Incentive"
+                            tick={axisTick}
+                            ticks={Y_TICKS}
+                            axisLine={{ stroke: "#323232" }}
+                            tickLine={{ stroke: "#323232" }}
+                            domain={Y_DOMAIN}
+                            allowDataOverflow
+                            width={44}
+                            label={{
+                              value: "Refinance Incentive",
+                              angle: -90,
+                              position: "insideLeft",
+                              offset: 8,
+                              fill: "#FCFCFC",
+                              fontSize: 11,
+                              fontFamily: FONT,
+                              fontWeight: 600,
+                            }}
+                          />
+                          <ZAxis range={[POINT_SIZE, POINT_SIZE]} />
+                          <Tooltip
+                            cursor={{
+                              strokeDasharray: "3 3",
+                              stroke: "#464646",
+                            }}
+                            contentStyle={{
+                              background: "#212026",
+                              border: "1px solid #323232",
+                              borderRadius: 0,
+                              fontSize: 11,
+                              color: "#FCFCFC",
+                              fontFamily: FONT,
+                            }}
+                            labelStyle={{ color: "#808080" }}
+                          />
+                          <Legend
+                            verticalAlign="top"
+                            align="left"
+                            wrapperStyle={{
+                              position: "absolute",
+                              top: 8,
+                              left: 56,
+                              width: "auto",
+                              zIndex: 2,
+                            }}
+                            content={(props) => (
+                              <CustomLegend
+                                {...props}
+                                activeCluster={clusterFilter}
+                                onSelect={selectCluster}
+                                counts={counts}
+                              />
+                            )}
+                          />
+                          <HullFills
+                            hullSeries={hullSeries}
+                            activeCluster={clusterFilter}
+                          />
+                          {CLUSTER_ORDER.map((code) => (
+                            <Scatter
+                              key={code}
+                              name={code}
+                              data={scatterByCluster[code]}
+                              fill={CLUSTER_COLORS[code]}
+                              fillOpacity={
+                                clusterFilter === "all" ||
+                                clusterFilter === code
+                                  ? 0.75
+                                  : 0.15
+                              }
+                              shape="circle"
+                              onClick={() => selectCluster(code)}
+                              cursor="pointer"
+                              isAnimationActive={false}
+                              legendType="circle"
+                            />
+                          ))}
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                      <aside
+                        className="scatter-offaxis-note"
+                        aria-label="Off-axis clustering features"
+                      >
+                        <span
+                          className="scatter-offaxis-mark"
+                          aria-hidden="true"
+                        >
+                          ★
+                        </span>
+                        <ul>
+                          {OFF_AXIS_FEATURES.map((f) => (
+                            <li key={f}>• {f}</li>
+                          ))}
+                        </ul>
+                      </aside>
+                    </>
+                  )}
+                </div>
+              </section>
 
-        <section className="section">
-          <div className="section-head">
-            <h2 className="section-title">Loan tape</h2>
-            <p className="section-meta">
-              Filter: {filterLabel}
-              {clusterFilter !== "all" && (
-                <>
-                  {" · "}
+              <section className="section">
+                <div className="section-head">
+                  <h2 className="section-title">Loans</h2>
+                  <p className="section-meta">
+                    Filter: {filterLabel}
+                    {clusterFilter !== "all" && (
+                      <>
+                        {" · "}
+                        <button
+                          type="button"
+                          className="linkish"
+                          onClick={() => selectCluster("all")}
+                        >
+                          Clear
+                        </button>
+                      </>
+                    )}
+                    {" · "}
+                    Ran scenarios: {ranScenarioIds.length}/27
+                  </p>
+                </div>
+                <div className="grid-wrap grid-wrap-tall ag-theme-cashflow">
+                  <AgGridReact
+                    theme={gridTheme}
+                    rowData={filteredLoans}
+                    columnDefs={loanColumnDefs}
+                    defaultColDef={defaultColDef}
+                    suppressCellFocus
+                    animateRows={false}
+                    onGridReady={onGridReady}
+                    onColumnMoved={scheduleSave}
+                    onColumnVisible={scheduleSave}
+                    onColumnPinned={scheduleSave}
+                    onColumnResized={scheduleSave}
+                    onSortChanged={scheduleSave}
+                    onFilterChanged={scheduleSave}
+                    getRowId={(p) => String(p.data.loanId)}
+                  />
+                </div>
+              </section>
+            </>
+          )}
+
+          {pane === "scenarios" && (
+            <section className="section">
+              <div className="section-head">
+                <h2 className="section-title">Cash Flow Scenarios</h2>
+                <div className="section-actions">
+                  <p className="section-meta">
+                    27 cells · cohort × PCA × STA · month 1 · 27 workers
+                  </p>
                   <button
                     type="button"
-                    className="linkish"
-                    onClick={() => selectCluster("all")}
+                    className="btn"
+                    onClick={handleRunMonth1}
+                    disabled={running}
                   >
-                    Clear
+                    {running ? "Running…" : "Run month 1"}
                   </button>
-                </>
+                </div>
+              </div>
+              {runError && <p className="error">Run: {runError}</p>}
+              {neonNote && <p className="muted">{neonNote}</p>}
+              {runMeta && (
+                <p className="section-meta">
+                  Last wall {Number(runMeta.wall_ms).toFixed(0)} ms · ok=
+                  {runMeta.ok}/{runMeta.n_tasks} · loan rows=
+                  {runMeta.n_loan_rows ?? "—"}
+                </p>
               )}
-            </p>
-          </div>
-          <div className="grid-wrap grid-wrap-tall ag-theme-cashflow">
-            <AgGridReact
-              theme={gridTheme}
-              rowData={filteredLoans}
-              columnDefs={columnDefs}
-              defaultColDef={defaultColDef}
-              suppressCellFocus
-              animateRows={false}
-              onGridReady={onGridReady}
-              onColumnMoved={scheduleSave}
-              onColumnVisible={scheduleSave}
-              onColumnPinned={scheduleSave}
-              onColumnResized={scheduleSave}
-              onSortChanged={scheduleSave}
-              onFilterChanged={scheduleSave}
-              getRowId={(p) => String(p.data.loanId)}
-            />
-          </div>
-        </section>
-      </main>
+              <div className="grid-wrap grid-wrap-tall ag-theme-cashflow">
+                <AgGridReact
+                  theme={gridTheme}
+                  rowData={scenarioRows}
+                  columnDefs={scenarioColumnDefs}
+                  defaultColDef={defaultColDef}
+                  suppressCellFocus
+                  animateRows={false}
+                  getRowId={(p) => String(p.data.scenario_id)}
+                />
+              </div>
+            </section>
+          )}
+
+          {pane === "cashflow" && (
+            <section className="section">
+              <div className="section-head">
+                <h2 className="section-title">Cash Flow</h2>
+                <p className="section-meta">
+                  Cohort-level month-1 summaries
+                  {aggregates.length
+                    ? ` · ${aggregates.length} scenarios`
+                    : " · not run yet"}
+                </p>
+              </div>
+              {!aggregates.length ? (
+                <p className="muted">
+                  No month-1 results in memory. Open Cash Flow Scenarios and
+                  click Run month 1.
+                </p>
+              ) : (
+                <div className="grid-wrap grid-wrap-tall ag-theme-cashflow">
+                  <AgGridReact
+                    theme={gridTheme}
+                    rowData={aggregates}
+                    columnDefs={cfColumnDefs}
+                    defaultColDef={defaultColDef}
+                    suppressCellFocus
+                    animateRows={false}
+                    getRowId={(p) => String(p.data.scenario_id)}
+                  />
+                </div>
+              )}
+            </section>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

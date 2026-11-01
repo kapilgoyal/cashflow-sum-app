@@ -5,10 +5,10 @@ Down/Base/Up (ChatGPT grid; PCA=PSA, STA=SDA):
   SDA (STA): Down=50, Base=100, Up=200
 Full cross: 3 cohorts × 3 PSA × 3 SDA = 27 rows.
 
-Cohorts (display names; no short-code "RI" labels) — preserve CF-43 cluster meaning:
-- low LTV and weak refinance incentive      (cluster 0; former moderate short label)
-- high LTV and strong refinance incentive   (cluster 1; former strong short label)
-- high LTV and weak refinance incentive    (cluster 2; former weak short label)
+Cohorts (display names only; no "RI" substring in labels):
+- high LTV and strong refinance incentive  (cluster 1; expand from strong RI)
+- high LTV and weak refinance incentive    (cluster 2; expand from moderate RI)
+- low LTV and weak refinance incentive     (cluster 0; expand from weak RI)
 
 Per-cohort recovery (rate / period months; lag=0):
 - high LTV and strong refinance incentive → 60% / 12mo
