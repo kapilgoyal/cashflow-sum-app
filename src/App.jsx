@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AgGridReact } from "ag-grid-react";
 import {
   AllCommunityModule,
   ModuleRegistry,
-  themeQuartz,
 } from "ag-grid-community";
 import {
   CartesianGrid,
@@ -19,11 +17,10 @@ import {
   useXAxisScale,
   useYAxisScale,
 } from "recharts";
+import { DataGrid, FONT } from "./cashflowGrid";
 import "./App.css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
-
-const FONT = '"Source Sans 3", "Segoe UI", system-ui, sans-serif';
 
 const NAV = [
   { id: "loan", label: "Loan" },
@@ -58,29 +55,6 @@ const OFF_AXIS_FEATURES = ["Documentation", "Remaining Term"];
 const LS_CLUSTER_KEY = "cashflow.clusterFilter";
 const LS_GRID_KEY = "cashflow.agGridState";
 const LS_NAV_KEY = "cashflow.navPane";
-
-const gridTheme = themeQuartz.withParams({
-  backgroundColor: "#212026",
-  foregroundColor: "#FCFCFC",
-  headerBackgroundColor: "#0C0C0C",
-  headerTextColor: "#808080",
-  oddRowBackgroundColor: "#121212",
-  rowHoverColor: "#1A1A1A",
-  selectedRowBackgroundColor: "#1E1E22",
-  borderColor: "#323232",
-  rowBorder: { style: "solid", width: 1, color: "#323232" },
-  columnBorder: { style: "solid", width: 1, color: "#2A2A2A" },
-  headerColumnBorder: false,
-  fontFamily: FONT,
-  fontSize: 11,
-  headerFontSize: 10,
-  headerFontWeight: 600,
-  spacing: 2,
-  headerHeight: 22,
-  rowHeight: 22,
-  borderRadius: 0,
-  wrapperBorderRadius: 0,
-});
 
 function readClusterFilter() {
   try {
@@ -233,6 +207,11 @@ export default function App() {
   const [runError, setRunError] = useState(null);
   const [running, setRunning] = useState(false);
 
+  const [qcRows, setQcRows] = useState([]);
+  const [qcMeta, setQcMeta] = useState(null);
+  const [qcLoading, setQcLoading] = useState(false);
+  const [qcError, setQcError] = useState(null);
+
   const gridApiRef = useRef(null);
   const restoringRef = useRef(false);
   const saveTimerRef = useRef(null);
@@ -332,6 +311,40 @@ export default function App() {
     }
   }, [clusterFilter]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setQcLoading(true);
+      setQcError(null);
+      try {
+        const res = await fetch("/api/qc/results");
+        if (!res.ok) {
+          const detail = await res.text();
+          throw new Error(`HTTP ${res.status}: ${detail}`);
+        }
+        const data = await res.json();
+        if (cancelled) return;
+        setQcRows(Array.isArray(data.results) ? data.results : []);
+        setQcMeta({
+          tape_row_count: data.tape_row_count,
+          run_id: data.run_id,
+          n: data.n,
+        });
+      } catch (err) {
+        if (!cancelled) {
+          setQcError(err.message || String(err));
+          setQcRows([]);
+          setQcMeta(null);
+        }
+      } finally {
+        if (!cancelled) setQcLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const loanColumnDefs = useMemo(
     () => [
       { field: "loanId", headerName: "Loan ID", flex: 1.1, minWidth: 100 },
@@ -380,6 +393,80 @@ export default function App() {
         flex: 1.6,
         minWidth: 180,
         filter: true,
+      },
+    ],
+    []
+  );
+
+  const qcColumnDefs = useMemo(
+    () => [
+      {
+        field: "source",
+        headerName: "Source",
+        width: 110,
+        valueFormatter: (p) =>
+          p.value === "absolute_basis"
+            ? "Absolute"
+            : p.value === "demo"
+              ? "Demo"
+              : p.value ?? "",
+      },
+      {
+        field: "edit_number",
+        headerName: "Edit",
+        width: 64,
+        type: "numericColumn",
+        valueFormatter: (p) => (p.value == null ? "" : String(p.value)),
+      },
+      {
+        field: "nl_description",
+        headerName: "Check",
+        flex: 2.2,
+        minWidth: 220,
+      },
+      {
+        field: "outcome",
+        headerName: "Result",
+        width: 90,
+        cellClass: (p) => {
+          if (p.value === "pass") return "qc-outcome-pass";
+          if (p.value === "fail") return "qc-outcome-fail";
+          if (p.value === "skipped") return "qc-outcome-skip";
+          return undefined;
+        },
+        valueFormatter: (p) =>
+          p.value == null ? "" : String(p.value).toUpperCase(),
+      },
+      {
+        field: "fail_count",
+        headerName: "Fail",
+        width: 72,
+        type: "numericColumn",
+        valueFormatter: (p) => (p.value == null ? "—" : String(p.value)),
+      },
+      {
+        field: "pass_count",
+        headerName: "Pass",
+        width: 72,
+        type: "numericColumn",
+        valueFormatter: (p) => (p.value == null ? "—" : String(p.value)),
+      },
+      {
+        field: "tape_row_count",
+        headerName: "Tape n",
+        width: 80,
+        type: "numericColumn",
+      },
+      {
+        field: "sql_or_notes",
+        headerName: "SQL / notes",
+        flex: 2,
+        minWidth: 180,
+        valueGetter: (p) =>
+          p.data?.sql_executed ||
+          p.data?.detail ||
+          p.data?.skip_reason ||
+          "",
       },
     ],
     []
@@ -869,24 +956,49 @@ export default function App() {
                     Ran scenarios: {ranScenarioIds.length}/27
                   </p>
                 </div>
-                <div className="grid-wrap grid-wrap-tall ag-theme-cashflow">
-                  <AgGridReact
-                    theme={gridTheme}
-                    rowData={filteredLoans}
-                    columnDefs={loanColumnDefs}
-                    defaultColDef={defaultColDef}
-                    suppressCellFocus
-                    animateRows={false}
-                    onGridReady={onGridReady}
-                    onColumnMoved={scheduleSave}
-                    onColumnVisible={scheduleSave}
-                    onColumnPinned={scheduleSave}
-                    onColumnResized={scheduleSave}
-                    onSortChanged={scheduleSave}
-                    onFilterChanged={scheduleSave}
-                    getRowId={(p) => String(p.data.loanId)}
-                  />
+                <DataGrid
+                  rowData={filteredLoans}
+                  columnDefs={loanColumnDefs}
+                  defaultColDef={defaultColDef}
+                  onGridReady={onGridReady}
+                  onColumnMoved={scheduleSave}
+                  onColumnVisible={scheduleSave}
+                  onColumnPinned={scheduleSave}
+                  onColumnResized={scheduleSave}
+                  onSortChanged={scheduleSave}
+                  onFilterChanged={scheduleSave}
+                  getRowId={(p) => String(p.data.loanId)}
+                />
+              </section>
+
+              <section className="section">
+                <div className="section-head">
+                  <h2 className="section-title">Loan Quality QC</h2>
+                  <p className="section-meta">
+                    Neon asf_tape
+                    {qcMeta?.tape_row_count != null
+                      ? ` · ${qcMeta.tape_row_count} loans`
+                      : ""}
+                    {qcMeta?.run_id ? ` · run ${qcMeta.run_id}` : ""}
+                    {qcMeta?.n != null ? ` · ${qcMeta.n} checks` : ""}
+                  </p>
                 </div>
+                {qcLoading ? (
+                  <p className="muted">Loading QC results…</p>
+                ) : qcError ? (
+                  <p className="error">QC: {qcError}</p>
+                ) : !qcRows.length ? (
+                  <p className="muted">
+                    No QC results yet. Load asf_tape and run QC against Neon.
+                  </p>
+                ) : (
+                  <DataGrid
+                    rowData={qcRows}
+                    columnDefs={qcColumnDefs}
+                    defaultColDef={defaultColDef}
+                    getRowId={(p) => String(p.data.check_id)}
+                  />
+                )}
               </section>
             </>
           )}
@@ -918,17 +1030,12 @@ export default function App() {
                   {runMeta.n_loan_rows ?? "—"}
                 </p>
               )}
-              <div className="grid-wrap grid-wrap-tall ag-theme-cashflow">
-                <AgGridReact
-                  theme={gridTheme}
-                  rowData={scenarioRows}
-                  columnDefs={scenarioColumnDefs}
-                  defaultColDef={defaultColDef}
-                  suppressCellFocus
-                  animateRows={false}
-                  getRowId={(p) => String(p.data.scenario_id)}
-                />
-              </div>
+              <DataGrid
+                rowData={scenarioRows}
+                columnDefs={scenarioColumnDefs}
+                defaultColDef={defaultColDef}
+                getRowId={(p) => String(p.data.scenario_id)}
+              />
             </section>
           )}
 
@@ -949,17 +1056,12 @@ export default function App() {
                   click Run month 1.
                 </p>
               ) : (
-                <div className="grid-wrap grid-wrap-tall ag-theme-cashflow">
-                  <AgGridReact
-                    theme={gridTheme}
-                    rowData={aggregates}
-                    columnDefs={cfColumnDefs}
-                    defaultColDef={defaultColDef}
-                    suppressCellFocus
-                    animateRows={false}
-                    getRowId={(p) => String(p.data.scenario_id)}
-                  />
-                </div>
+                <DataGrid
+                  rowData={aggregates}
+                  columnDefs={cfColumnDefs}
+                  defaultColDef={defaultColDef}
+                  getRowId={(p) => String(p.data.scenario_id)}
+                />
               )}
             </section>
           )}

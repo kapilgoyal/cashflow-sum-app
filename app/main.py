@@ -14,6 +14,7 @@ app = FastAPI(
     description=(
         "PSA/SDA securitization CF. "
         "POST /api/cashflows/run-month1 runs 27 cohort×PCA×STA workers (month 1). "
+        "GET /api/qc/results reads Loan Quality QC from Neon asf_tape. "
         "Recovery uses constant lag; state-varying lag is TODO."
     ),
 )

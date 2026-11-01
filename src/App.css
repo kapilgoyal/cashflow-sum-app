@@ -448,3 +448,21 @@ body {
   width: 100%;
   height: 100%;
 }
+
+.cf-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.qc-outcome-pass {
+  color: var(--cf-up);
+  font-weight: 600;
+}
+
+.qc-outcome-fail {
+  color: var(--cf-down);
+  font-weight: 600;
+}
+
+.qc-outcome-skip {
+  color: var(--cf-muted);
+}
