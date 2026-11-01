@@ -1,12 +1,13 @@
 :root {
-  --cf-bg: #00204e;
-  --cf-bg-deep: #001a3f;
+  --cf-bg: #000000;
+  --cf-bg-deep: #0d0d0d;
+  --cf-panel: #1a1a1a;
   --cf-text: #ffffff;
-  --cf-muted: #b8c5d6;
-  --cf-accent: #e85a9b;
-  --cf-accent-bright: #ff6b9d;
-  --cf-hairline: #0a3568;
-  --cf-grid: #001a3f;
+  --cf-muted: #a0a0a0;
+  --cf-accent: #ff6600;
+  --cf-accent-bright: #ff8533;
+  --cf-hairline: #2a2a2a;
+  --cf-grid: #0d0d0d;
   --cf-font: "IBM Plex Sans", "Segoe UI", sans-serif;
 }
 
@@ -77,7 +78,7 @@ body {
 }
 
 .section {
-  background: var(--cf-bg-deep);
+  background: var(--cf-panel);
   border: 1px solid var(--cf-hairline);
   padding: 10px 12px;
 }

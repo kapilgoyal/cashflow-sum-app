@@ -36,14 +36,14 @@ const CHART_DATA = [
 ];
 
 const gridTheme = themeQuartz.withParams({
-  backgroundColor: "#00204E",
+  backgroundColor: "#1A1A1A",
   foregroundColor: "#FFFFFF",
-  headerBackgroundColor: "#001A3F",
-  headerTextColor: "#B8C5D6",
-  oddRowBackgroundColor: "#001A3F",
-  rowHoverColor: "#0A2B55",
-  selectedRowBackgroundColor: "#0A3568",
-  borderColor: "#0A3568",
+  headerBackgroundColor: "#0D0D0D",
+  headerTextColor: "#A0A0A0",
+  oddRowBackgroundColor: "#0D0D0D",
+  rowHoverColor: "#262626",
+  selectedRowBackgroundColor: "#333333",
+  borderColor: "#2A2A2A",
   rowBorder: true,
   fontFamily: '"IBM Plex Sans", "Segoe UI", sans-serif',
   fontSize: 11,
@@ -186,18 +186,18 @@ export default function App() {
                   margin={{ top: 4, right: 8, left: -12, bottom: 0 }}
                 >
                   <CartesianGrid
-                    stroke="#0A3568"
+                    stroke="#2A2A2A"
                     strokeDasharray="3 3"
                     vertical={false}
                   />
                   <XAxis
                     dataKey="cohort"
-                    tick={{ fill: "#B8C5D6", fontSize: 11 }}
-                    axisLine={{ stroke: "#0A3568" }}
+                    tick={{ fill: "#A0A0A0", fontSize: 11 }}
+                    axisLine={{ stroke: "#2A2A2A" }}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: "#B8C5D6", fontSize: 11 }}
+                    tick={{ fill: "#A0A0A0", fontSize: 11 }}
                     axisLine={false}
                     tickLine={false}
                     domain={[5.5, 7.5]}
@@ -205,15 +205,15 @@ export default function App() {
                   />
                   <Tooltip
                     contentStyle={{
-                      background: "#00204E",
-                      border: "1px solid #0A3568",
+                      background: "#1A1A1A",
+                      border: "1px solid #2A2A2A",
                       fontSize: 11,
                       color: "#FFFFFF",
                     }}
-                    labelStyle={{ color: "#B8C5D6" }}
+                    labelStyle={{ color: "#A0A0A0" }}
                     formatter={(value) => [`${Number(value).toFixed(2)}%`, "Avg rate"]}
                   />
-                  <Bar dataKey="avgRate" fill="#E85A9B" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="avgRate" fill="#FF6600" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

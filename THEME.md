@@ -1,23 +1,24 @@
 # CashFlow theme
 
-Dense professional UI. Small fonts. GIC navy field, white type, pink accents.
+Dense Bloomberg-style terminal UI. Black field, white type, orange-amber accents. Small fonts. Thin header with **v0.1.0**.
 
 ## Top bar
 
-Height 32px (range 28–36px). White **CashFlow** name + pink **v0.1.0**.
+Height 32px (range 28–36px). White **CashFlow** name + orange **v0.1.0**.
 
 ## Palette
 
 | Token | Hex | Role |
 | --- | --- | --- |
-| Background | `#00204E` | Page / shell (GIC navy) |
-| Background deep | `#001A3F` | Panels / top bar |
+| Background | `#000000` | Page / shell |
+| Background deep | `#0D0D0D` | Top bar / secondary |
+| Panel | `#1A1A1A` | Section panels |
 | Text | `#FFFFFF` | Primary type |
-| Text muted | `#B8C5D6` | Secondary labels |
-| Accent | `#E85A9B` | Version / CTA / chart |
-| Accent bright | `#FF6B9D` | Hover / highlight |
-| Hairline | `#0A3568` | Borders on navy |
-| Grid mute | `#001A3F` | Table chrome |
+| Text muted | `#A0A0A0` | Secondary labels |
+| Accent | `#FF6600` | Version / CTA / chart (Bloomberg orange) |
+| Accent bright | `#FF8533` | Hover / highlight |
+| Hairline | `#2A2A2A` | Borders on black |
+| Grid mute | `#0D0D0D` | Table chrome |
 
 ## Typography
 
