@@ -368,14 +368,16 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <img
-          className="topbar-mark"
-          src="/favicon.svg"
-          alt=""
-          width={16}
-          height={16}
-        />
-        <span className="topbar-name">CashFlow</span>
+        <div className="topbar-brand">
+          <img
+            className="topbar-mark"
+            src="/favicon.svg"
+            alt=""
+            width={16}
+            height={16}
+          />
+          <span className="topbar-name">CashFlow</span>
+        </div>
         <span className="topbar-version">v0.1.0</span>
       </header>
 
