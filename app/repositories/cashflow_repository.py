@@ -1,4 +1,8 @@
-"""Persist loan-level month-1 cash flows: Neon if DATABASE_URL, else SQLite + JSON."""
+"""Persist loan-level month-1 cash flows: Neon if DATABASE_URL, else SQLite + JSON.
+
+Neon fact table is normalized (scenario_id FK + CF measures only). Scenario
+definition fields come from securitization_scenarios via the enriched view.
+"""
 
 from __future__ import annotations
 
@@ -10,6 +14,13 @@ from typing import Any
 
 import pandas as pd
 
+from app.repositories.cashflow_schema import (
+    LOAN_CF_MONTH1_ENRICHED_VIEW_SQL,
+    LOAN_CF_MONTH1_TABLE_SQL,
+    MONTH1_FACT_COLS,
+)
+from app.repositories.scenario_repository import CREATE_SQL as SCENARIO_SQL
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATA = REPO_ROOT / "data"
 SQLITE_NAME = "loan_cf_month1.sqlite"
@@ -17,51 +28,28 @@ LOAN_JSON = "loan_cf_month1.json"
 AGG_JSON = "cohort_month1_cf.json"
 AGG_CSV = "cohort_month1_cf.csv"
 
-CREATE_SQL = """
-CREATE TABLE IF NOT EXISTS loan_cashflows_month1 (
-    scenario_id TEXT NOT NULL,
-    loan_id TEXT NOT NULL,
-    cohort TEXT NOT NULL,
-    psa_multiple INTEGER,
-    sda_multiple INTEGER,
-    pca_level TEXT,
-    sta_level TEXT,
-    month INTEGER NOT NULL,
-    beginning_balance DOUBLE PRECISION,
-    interest DOUBLE PRECISION,
-    scheduled_principal DOUBLE PRECISION,
-    default_amt DOUBLE PRECISION,
-    prepay DOUBLE PRECISION,
-    recovery DOUBLE PRECISION,
-    ending_balance DOUBLE PRECISION,
-    loan_age INTEGER,
-    cpr DOUBLE PRECISION,
-    smm DOUBLE PRECISION,
-    cdr DOUBLE PRECISION,
-    mdr DOUBLE PRECISION,
-    PRIMARY KEY (scenario_id, loan_id, month)
-);
-"""
+# Back-compat alias used by older import sites / load helpers.
+CREATE_SQL = LOAN_CF_MONTH1_TABLE_SQL
 
 
 def _resolve_db_url() -> str | None:
-    return os.environ.get("DATABASE_URL") or os.environ.get("NEON_DATABASE_URL")
+    return (
+        os.environ.get("DATABASE_URL_UNPOOLED")
+        or os.environ.get("DATABASE_URL")
+        or os.environ.get("NEON_DATABASE_URL")
+    )
 
 
-def _row_tuple(r: dict[str, Any]) -> tuple:
+def _fact_tuple(r: dict[str, Any]) -> tuple:
+    default_amt = r.get("default_amt", r.get("default"))
     return (
         r.get("scenario_id"),
         r.get("loan_id"),
-        r.get("cohort"),
-        r.get("psa_multiple"),
-        r.get("sda_multiple"),
-        r.get("pca_level"),
-        r.get("sta_level"),
         int(r.get("month") or 1),
         r.get("beginning_balance"),
         r.get("interest"),
         r.get("scheduled_principal"),
-        r.get("default"),
+        default_amt,
         r.get("prepay"),
         r.get("recovery"),
         r.get("ending_balance"),
@@ -96,7 +84,6 @@ class CashflowRepository:
             "database_url_set": bool(_resolve_db_url()),
         }
 
-        # --- local JSON (loan-level + cohort aggregates) ---
         payload = {
             "meta": meta or {},
             "aggregates": aggregates,
@@ -126,13 +113,11 @@ class CashflowRepository:
             "n_aggregates": len(aggregates),
         }
 
-        # --- SQLite always (offline default) ---
         try:
             status["sqlite"] = self._save_sqlite(loan_rows)
         except Exception as exc:  # noqa: BLE001
             status["sqlite"] = f"error: {type(exc).__name__}: {exc}"
 
-        # --- Neon when configured ---
         url = _resolve_db_url()
         if not url:
             status["neon"] = "skipped: DATABASE_URL not set (using SQLite/local JSON)"
@@ -145,19 +130,37 @@ class CashflowRepository:
         return status
 
     def _save_sqlite(self, loan_rows: list[dict[str, Any]]) -> str:
+        # SQLite offline copy stays denorm-free for consistency; no FK enforce.
+        sqlite_ddl = """
+        CREATE TABLE IF NOT EXISTS loan_cashflows_month1 (
+            scenario_id TEXT NOT NULL,
+            loan_id TEXT NOT NULL,
+            month INTEGER NOT NULL,
+            beginning_balance REAL,
+            interest REAL,
+            scheduled_principal REAL,
+            default_amt REAL,
+            prepay REAL,
+            recovery REAL,
+            ending_balance REAL,
+            loan_age INTEGER,
+            cpr REAL,
+            smm REAL,
+            cdr REAL,
+            mdr REAL,
+            PRIMARY KEY (scenario_id, loan_id, month)
+        );
+        """
         with sqlite3.connect(self.sqlite_path) as conn:
-            conn.execute(CREATE_SQL.replace("DOUBLE PRECISION", "REAL"))
-            conn.execute("DELETE FROM loan_cashflows_month1")
+            conn.execute("DROP TABLE IF EXISTS loan_cashflows_month1")
+            conn.execute(sqlite_ddl)
             conn.executemany(
-                """
+                f"""
                 INSERT INTO loan_cashflows_month1 (
-                    scenario_id, loan_id, cohort, psa_multiple, sda_multiple,
-                    pca_level, sta_level, month, beginning_balance, interest,
-                    scheduled_principal, default_amt, prepay, recovery,
-                    ending_balance, loan_age, cpr, smm, cdr, mdr
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    {", ".join(MONTH1_FACT_COLS)}
+                ) VALUES ({", ".join("?" for _ in MONTH1_FACT_COLS)})
                 """,
-                [_row_tuple(r) for r in loan_rows],
+                [_fact_tuple(r) for r in loan_rows],
             )
             conn.commit()
         return f"wrote {len(loan_rows)} rows → {self.sqlite_path}"
@@ -165,27 +168,38 @@ class CashflowRepository:
     def _save_neon(self, url: str, loan_rows: list[dict[str, Any]]) -> str:
         try:
             import psycopg
+            from psycopg import sql
         except ImportError:
             return "skipped: psycopg not installed"
 
-        with psycopg.connect(url, connect_timeout=5) as conn:
+        with psycopg.connect(url, connect_timeout=30) as conn:
             with conn.cursor() as cur:
-                cur.execute(CREATE_SQL)
-                cur.execute("DELETE FROM loan_cashflows_month1")
-                for r in loan_rows:
-                    cur.execute(
-                        """
-                        INSERT INTO loan_cashflows_month1 (
-                            scenario_id, loan_id, cohort, psa_multiple, sda_multiple,
-                            pca_level, sta_level, month, beginning_balance, interest,
-                            scheduled_principal, default_amt, prepay, recovery,
-                            ending_balance, loan_age, cpr, smm, cdr, mdr
-                        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                        """,
-                        _row_tuple(r),
+                cur.execute(SCENARIO_SQL)
+                # Prefer migrate path for existing denorm tables; for fresh
+                # writes ensure normalized table + view exist.
+                cur.execute(
+                    """
+                    SELECT column_name FROM information_schema.columns
+                    WHERE table_schema='public' AND table_name='loan_cashflows_month1'
+                    """
+                )
+                cols = {r[0] for r in cur.fetchall()}
+                if not cols or "cohort" in cols or "psa_multiple" in cols:
+                    # Caller should run migrate script; refuse silent denorm rewrite.
+                    raise RuntimeError(
+                        "loan_cashflows_month1 is missing or denormalized — "
+                        "run scripts/migrate_normalize_loan_cf_month1.py first"
                     )
+                cur.execute("DELETE FROM loan_cashflows_month1")
+                copy = sql.SQL(
+                    "COPY loan_cashflows_month1 ({}) FROM STDIN"
+                ).format(sql.SQL(", ").join(map(sql.Identifier, MONTH1_FACT_COLS)))
+                with cur.copy(copy) as copy_writer:
+                    for r in loan_rows:
+                        copy_writer.write_row(_fact_tuple(r))
+                cur.execute(LOAN_CF_MONTH1_ENRICHED_VIEW_SQL)
             conn.commit()
-        return f"seeded {len(loan_rows)} rows into loan_cashflows_month1 (Neon)"
+        return f"seeded {len(loan_rows)} normalized rows into loan_cashflows_month1 (Neon)"
 
     def load_aggregates(self) -> dict[str, Any] | None:
         if not self.agg_json_path.exists():

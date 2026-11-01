@@ -362,6 +362,67 @@ body {
   border-color: var(--cf-accent);
 }
 
+.select {
+  background: #0c0c0c;
+  color: #fcfcfc;
+  border: 1px solid #323232;
+  border-radius: 0;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 2px 6px;
+  margin-left: 4px;
+}
+
+.drill-trail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 0;
+  margin: 0 0 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--cf-hairline);
+  font-size: 11px;
+  color: var(--cf-muted);
+}
+
+.drill-crumb {
+  display: inline-flex;
+  align-items: center;
+}
+
+.drill-sep {
+  margin: 0 6px;
+  color: #464646;
+}
+
+.drill-current {
+  color: var(--cf-accent);
+  font-weight: 600;
+}
+
+.drill-link {
+  font-size: 11px;
+}
+
+.ag-theme-cashflow .cf-num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ag-theme-cashflow .cf-id {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.ag-theme-cashflow .cf-grid-header {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ag-theme-cashflow .ag-row-selected {
+  background-color: #2a2418 !important;
+}
+
 .btn {
   padding: 4px 10px;
   font: inherit;

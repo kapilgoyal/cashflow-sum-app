@@ -37,7 +37,13 @@ class ScenarioRepository:
 
     def try_seed_neon(self, scenarios: list[Scenario] | None = None) -> str:
         """Seed Neon/Postgres when DATABASE_URL is set and reachable."""
-        url = os.environ.get("DATABASE_URL") or os.environ.get("NEON_DATABASE_URL")
+        try:
+            from app.repositories.env_load import load_dotenv, resolve_pg_url
+
+            load_dotenv()
+            url = resolve_pg_url()
+        except Exception:  # noqa: BLE001
+            url = os.environ.get("DATABASE_URL") or os.environ.get("NEON_DATABASE_URL")
         if not url:
             return "skipped: DATABASE_URL not set"
 
