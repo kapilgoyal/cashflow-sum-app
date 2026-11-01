@@ -24,12 +24,14 @@ export const gridTheme = themeQuartz.withParams({
   fontSize: 11,
   headerFontSize: 10,
   headerFontWeight: 600,
-  spacing: 2,
-  headerHeight: 22,
-  rowHeight: 22,
+  spacing: 4,
+  headerHeight: 28,
+  rowHeight: 24,
   borderRadius: 0,
   wrapperBorderRadius: 0,
   rangeSelectionBorderColor: "#FD9D24",
+  iconSize: 12,
+  headerColumnResizeHandleWidth: 2,
 });
 
 export function fmtMoney(v) {
@@ -68,7 +70,10 @@ export const sharedDefaultColDef = {
   resizable: true,
   filter: true,
   floatingFilter: false,
+  suppressHeaderFilterButton: false,
   suppressMovable: false,
+  wrapHeaderText: false,
+  autoHeaderHeight: false,
   cellStyle: {
     fontFamily: FONT,
     fontVariantNumeric: "tabular-nums",
@@ -128,7 +133,7 @@ export function DataGrid({
   onGridReady,
   scheduleSave,
   persistLayout = false,
-  className = "grid-wrap grid-wrap-tall ag-theme-cashflow",
+  className = "grid-wrap grid-wrap-fill ag-theme-cashflow",
   heightClass,
 }) {
   const defaultColDef = useMemo(() => ({ ...sharedDefaultColDef }), []);
@@ -208,4 +213,10 @@ export function DrillTrail({ crumbs, onJump }) {
       })}
     </nav>
   );
+}
+
+/** Compact Bloomberg-style status strip (not a browser blue alert). */
+export function StatusBanner({ tone = "muted", children }) {
+  if (!children) return null;
+  return <p className={`status-banner status-banner-${tone}`}>{children}</p>;
 }

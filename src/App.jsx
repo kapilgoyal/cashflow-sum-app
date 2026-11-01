@@ -18,6 +18,7 @@ import {
   DataGrid,
   DrillTrail,
   FONT,
+  StatusBanner,
   fmtNum,
   fmtPct,
   intCol,
@@ -30,9 +31,23 @@ import "./App.css";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const NAV = [
-  { id: "loan", label: "Loan" },
-  { id: "scenarios", label: "Cash Flow Scenarios" },
+  { id: "asf", label: "ASF Tape" },
+  { id: "qc", label: "Loan QC" },
+  { id: "strat", label: "Stratification" },
+  { id: "cohort", label: "Cohort" },
+  { id: "scenarios", label: "Scenarios" },
   { id: "cashflow", label: "Cash Flow" },
+];
+
+const STRAT_DIMS = [
+  { id: "documentation_type", label: "Documentation" },
+  { id: "ltv_bucket", label: "LTV bucket" },
+  { id: "cltv_bucket", label: "CLTV bucket" },
+  { id: "fico_band", label: "FICO band" },
+  { id: "state", label: "State" },
+  { id: "property_type", label: "Property type" },
+  { id: "occupancy", label: "Occupancy" },
+  { id: "loan_purpose", label: "Loan purpose" },
 ];
 
 /** Match matplotlib CLUSTER_META order (0→1→2). No "RI" in labels. */
@@ -62,6 +77,7 @@ const OFF_AXIS_FEATURES = ["Documentation", "Remaining Term"];
 const LS_CLUSTER_KEY = "cashflow.clusterFilter";
 const LS_GRID_KEY = "cashflow.agGridState";
 const LS_NAV_KEY = "cashflow.navPane";
+const LS_STRAT_KEY = "cashflow.stratDim";
 
 function readClusterFilter() {
   try {
@@ -77,10 +93,21 @@ function readNav() {
   try {
     const v = localStorage.getItem(LS_NAV_KEY);
     if (NAV.some((n) => n.id === v)) return v;
+    if (v === "loan") return "cohort";
   } catch {
     /* ignore */
   }
-  return "loan";
+  return "asf";
+}
+
+function readStratDim() {
+  try {
+    const v = localStorage.getItem(LS_STRAT_KEY);
+    if (STRAT_DIMS.some((d) => d.id === v)) return v;
+  } catch {
+    /* ignore */
+  }
+  return "documentation_type";
 }
 
 function readGridState() {
@@ -198,6 +225,21 @@ export default function App() {
   const [tapeLoading, setTapeLoading] = useState(true);
   const [clusterFilter, setClusterFilter] = useState(readClusterFilter);
 
+  const [asfLoans, setAsfLoans] = useState([]);
+  const [asfTotal, setAsfTotal] = useState(0);
+  const [asfSource, setAsfSource] = useState(null);
+  const [asfLoading, setAsfLoading] = useState(false);
+  const [asfError, setAsfError] = useState(null);
+
+  const [stratDim, setStratDim] = useState(readStratDim);
+  const [stratRows, setStratRows] = useState([]);
+  const [stratMeta, setStratMeta] = useState(null);
+  const [stratLoading, setStratLoading] = useState(false);
+  const [stratError, setStratError] = useState(null);
+
+  const [cohortStats, setCohortStats] = useState([]);
+  const [cohortStatsError, setCohortStatsError] = useState(null);
+
   const [scenarios, setScenarios] = useState([]);
   const [aggregates, setAggregates] = useState([]);
   const [ranScenarioIds, setRanScenarioIds] = useState([]);
@@ -210,8 +252,8 @@ export default function App() {
   const [selectedScenarioId, setSelectedScenarioId] = useState("S05");
   const [selectedLoanId, setSelectedLoanId] = useState(null);
   const [selectedCohort, setSelectedCohort] = useState(null);
-  /** month1 = Neon loan×scenario month-1; loanMonth = multi-month AG Grid drill. */
-  const [cfView, setCfView] = useState("month1");
+  /** agg = scenario aggregates; month1 = all loans for scenario; loanMonth = multi-month. */
+  const [cfView, setCfView] = useState("agg");
   const [loanMonthRows, setLoanMonthRows] = useState([]);
   const [loanMonthLoading, setLoanMonthLoading] = useState(false);
   const [runError, setRunError] = useState(null);
@@ -233,6 +275,14 @@ export default function App() {
       /* ignore */
     }
   }, [pane]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_STRAT_KEY, stratDim);
+    } catch {
+      /* ignore */
+    }
+  }, [stratDim]);
 
   useEffect(() => {
     let cancelled = false;
@@ -261,7 +311,100 @@ export default function App() {
     };
   }, []);
 
-  // Prefer Neon (DATABASE_URL) for scenarios + month-1 CF; fall back to static JSON.
+  // ASF Tape loans from Neon (Excel fallback via API).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setAsfLoading(true);
+      setAsfError(null);
+      try {
+        const res = await fetch("/api/asf/tape?limit=2000");
+        if (!res.ok) {
+          const detail = await res.text();
+          throw new Error(`HTTP ${res.status}: ${detail}`);
+        }
+        const data = await res.json();
+        if (cancelled) return;
+        setAsfLoans(data.loans || []);
+        setAsfTotal(data.total ?? (data.loans || []).length);
+        setAsfSource(data.source || null);
+      } catch (err) {
+        if (!cancelled) {
+          setAsfError(err.message || String(err));
+          setAsfLoans([]);
+        }
+      } finally {
+        if (!cancelled) setAsfLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Stratification buckets.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setStratLoading(true);
+      setStratError(null);
+      try {
+        const res = await fetch(
+          `/api/asf/stratification?by=${encodeURIComponent(stratDim)}`
+        );
+        if (!res.ok) {
+          const detail = await res.text();
+          throw new Error(`HTTP ${res.status}: ${detail}`);
+        }
+        const data = await res.json();
+        if (cancelled) return;
+        setStratRows(data.rows || []);
+        setStratMeta({
+          dimension: data.dimension,
+          n_buckets: data.n_buckets,
+          tape_row_count: data.tape_row_count,
+          tape_upb: data.tape_upb,
+        });
+      } catch (err) {
+        if (!cancelled) {
+          setStratError(err.message || String(err));
+          setStratRows([]);
+          setStratMeta(null);
+        }
+      } finally {
+        if (!cancelled) setStratLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [stratDim]);
+
+  // Cohort pool stats from Neon asf_tape.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/asf/cohort-stats");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!cancelled) {
+          setCohortStats(data.rows || []);
+          setCohortStatsError(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setCohortStats([]);
+          setCohortStatsError(err.message || String(err));
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Prefer Neon for scenarios + month-1 CF; fall back to static JSON.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -281,6 +424,8 @@ export default function App() {
             `Neon · scenarios=${st.scenarios} · month1=${st.loan_cashflows_month1} · orphans=${st.orphans}`
           );
           loadedFromNeon = true;
+        } else if (neonStatusRes && !neonStatusRes.ok) {
+          setNeonNote(null);
         }
 
         if (neonScenRes?.ok) {
@@ -299,28 +444,37 @@ export default function App() {
       }
 
       try {
-        const monthRes = await fetch("/cohort-month1.json");
-        if (!cancelled && monthRes.ok) {
+        const monthRes = await fetch("/api/cashflows/month1").catch(() => null);
+        if (!cancelled && monthRes?.ok) {
           const m = await monthRes.json();
           setAggregates(m.aggregates || []);
-          if (!loadedFromNeon) {
-            setRanScenarioIds(
-              (m.meta?.ran_scenario_ids || m.aggregates || [])
-                .map((x) => (typeof x === "string" ? x : x.scenario_id))
-                .filter(Boolean)
-            );
-            if (!scenarios.length && m.aggregates?.length) {
-              setScenarios(
-                m.aggregates.map((a) => ({
-                  scenario_id: a.scenario_id,
-                  cohort: a.cohort,
-                  psa_multiple: a.psa_multiple,
-                  sda_multiple: a.sda_multiple,
-                  recovery_rate: a.recovery_rate,
-                  recovery_period_months: a.recovery_period_months,
-                  recovery_lag_months: a.recovery_lag_months,
-                }))
+          if (m.ran_scenario_ids?.length) {
+            setRanScenarioIds(m.ran_scenario_ids);
+          }
+        } else {
+          const staticRes = await fetch("/cohort-month1.json");
+          if (!cancelled && staticRes.ok) {
+            const m = await staticRes.json();
+            setAggregates(m.aggregates || []);
+            if (!loadedFromNeon) {
+              setRanScenarioIds(
+                (m.meta?.ran_scenario_ids || m.aggregates || [])
+                  .map((x) => (typeof x === "string" ? x : x.scenario_id))
+                  .filter(Boolean)
               );
+              if (!scenarios.length && m.aggregates?.length) {
+                setScenarios(
+                  m.aggregates.map((a) => ({
+                    scenario_id: a.scenario_id,
+                    cohort: a.cohort,
+                    psa_multiple: a.psa_multiple,
+                    sda_multiple: a.sda_multiple,
+                    recovery_rate: a.recovery_rate,
+                    recovery_period_months: a.recovery_period_months,
+                    recovery_lag_months: a.recovery_lag_months,
+                  }))
+                );
+              }
             }
           }
         }
@@ -333,19 +487,20 @@ export default function App() {
     };
   }, []);
 
-  // Loan-level month-1 rows from Neon enriched view, filtered by scenario_id.
+  // Loan-level month-1 rows from Neon for ALL loans in selected scenario.
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!selectedScenarioId || cfView !== "month1") {
+      if (!selectedScenarioId || (cfView !== "month1" && pane !== "cashflow")) {
         return;
       }
+      if (cfView === "agg" || cfView === "loanMonth") return;
       setNeonCfLoading(true);
       try {
         const res = await fetch(
           `/api/neon/cashflows/month1?scenario_id=${encodeURIComponent(
             selectedScenarioId
-          )}&limit=1000`
+          )}&limit=5000`
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -373,7 +528,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [selectedScenarioId, selectedLoanId, cfView]);
+  }, [selectedScenarioId, selectedLoanId, cfView, pane]);
 
   // Multi-month loan×scenario drill from Neon loan_month_cf_enriched.
   useEffect(() => {
@@ -446,9 +601,202 @@ export default function App() {
     };
   }, []);
 
+  const qcSummary = useMemo(() => {
+    const pass = qcRows.filter((r) => r.outcome === "pass").length;
+    const fail = qcRows.filter((r) => r.outcome === "fail").length;
+    const skipped = qcRows.filter((r) => r.outcome === "skipped").length;
+    const scored = pass + fail;
+    const pct = scored ? (100 * pass) / scored : null;
+    return { pass, fail, skipped, scored, pct };
+  }, [qcRows]);
+
+  const asfColumnDefs = useMemo(
+    () => [
+      { field: "loan_id", headerName: "Loan", width: 100, cellClass: "cf-id" },
+      moneyCol("current_loan_amount", "UPB", 110),
+      {
+        field: "current_interest_rate",
+        headerName: "Rate",
+        width: 72,
+        valueFormatter: (p) => fmtPct(p.value, 2),
+        cellClass: "cf-num",
+      },
+      intCol("original_fico", "FICO", 72),
+      {
+        field: "original_ltv",
+        headerName: "LTV",
+        width: 72,
+        valueFormatter: (p) => fmtPct(p.value, 1),
+        cellClass: "cf-num",
+      },
+      {
+        field: "original_cltv",
+        headerName: "CLTV",
+        width: 72,
+        valueFormatter: (p) => fmtPct(p.value, 1),
+        cellClass: "cf-num",
+      },
+      { field: "state", headerName: "State", width: 64 },
+      {
+        field: "documentation_type",
+        headerName: "Documentation",
+        flex: 1.2,
+        minWidth: 120,
+      },
+      { field: "property_type", headerName: "Property", width: 100 },
+      { field: "occupancy", headerName: "Occupancy", width: 100 },
+      { field: "loan_purpose", headerName: "Purpose", width: 100 },
+      intCol("remaining_term", "Rem term", 88),
+      {
+        field: "refinance_incentive",
+        headerName: "Refi",
+        width: 72,
+        valueFormatter: (p) => fmtNum(p.value, 3),
+        cellClass: "cf-num",
+      },
+      { field: "cohort", headerName: "Cohort", flex: 1.4, minWidth: 160 },
+    ],
+    []
+  );
+
+  const qcColumnDefs = useMemo(
+    () => [
+      { field: "check_id", headerName: "Check", width: 160, cellClass: "cf-id" },
+      { field: "source", headerName: "Source", width: 110 },
+      intCol("edit_number", "Edit", 64),
+      {
+        field: "nl_description",
+        headerName: "Description",
+        flex: 2,
+        minWidth: 200,
+      },
+      {
+        field: "outcome",
+        headerName: "Outcome",
+        width: 88,
+        cellClass: (p) => {
+          if (p.value === "pass") return "qc-outcome-pass";
+          if (p.value === "fail") return "qc-outcome-fail";
+          if (p.value === "skipped") return "qc-outcome-skip";
+          return "";
+        },
+      },
+      intCol("fail_count", "Fails", 72),
+      intCol("pass_count", "Passes", 80),
+      {
+        field: "detail",
+        headerName: "Detail",
+        flex: 1.2,
+        minWidth: 140,
+      },
+    ],
+    []
+  );
+
+  const stratColumnDefs = useMemo(
+    () => [
+      { field: "bucket", headerName: "Bucket", flex: 1.4, minWidth: 140 },
+      intCol("loan_count", "Loans", 80),
+      moneyCol("upb", "UPB", 120),
+      {
+        field: "avg_ltv",
+        headerName: "Avg LTV",
+        width: 88,
+        valueFormatter: (p) => fmtPct(p.value, 1),
+        cellClass: "cf-num",
+      },
+      {
+        field: "avg_cltv",
+        headerName: "Avg CLTV",
+        width: 88,
+        valueFormatter: (p) => fmtPct(p.value, 1),
+        cellClass: "cf-num",
+      },
+      {
+        field: "avg_fico",
+        headerName: "Avg FICO",
+        width: 88,
+        valueFormatter: (p) => fmtNum(p.value, 0),
+        cellClass: "cf-num",
+      },
+      {
+        field: "avg_rate",
+        headerName: "Avg rate",
+        width: 88,
+        valueFormatter: (p) => fmtPct(p.value, 2),
+        cellClass: "cf-num",
+      },
+      {
+        field: "avg_refi_incentive",
+        headerName: "Avg refi",
+        width: 88,
+        valueFormatter: (p) => fmtNum(p.value, 3),
+        cellClass: "cf-num",
+      },
+    ],
+    []
+  );
+
+  const cohortStatsColumnDefs = useMemo(
+    () => [
+      { field: "cohort", headerName: "Cohort", flex: 1.8, minWidth: 200 },
+      intCol("loan_count", "Loans", 80),
+      moneyCol("upb", "UPB", 120),
+      {
+        field: "avg_ltv",
+        headerName: "Avg LTV",
+        width: 88,
+        valueFormatter: (p) => fmtPct(p.value, 1),
+        cellClass: "cf-num",
+      },
+      {
+        field: "avg_cltv",
+        headerName: "Avg CLTV",
+        width: 88,
+        valueFormatter: (p) => fmtPct(p.value, 1),
+        cellClass: "cf-num",
+      },
+      {
+        field: "avg_fico",
+        headerName: "Avg FICO",
+        width: 88,
+        valueFormatter: (p) => fmtNum(p.value, 0),
+        cellClass: "cf-num",
+      },
+      {
+        field: "avg_rate",
+        headerName: "Avg rate",
+        width: 88,
+        valueFormatter: (p) => fmtPct(p.value, 2),
+        cellClass: "cf-num",
+      },
+      {
+        field: "avg_refi_incentive",
+        headerName: "Avg refi",
+        width: 88,
+        valueFormatter: (p) => fmtNum(p.value, 3),
+        cellClass: "cf-num",
+      },
+      {
+        field: "avg_remaining_term",
+        headerName: "Avg rem",
+        width: 88,
+        valueFormatter: (p) => fmtNum(p.value, 0),
+        cellClass: "cf-num",
+      },
+    ],
+    []
+  );
+
   const loanColumnDefs = useMemo(
     () => [
-      { field: "loanId", headerName: "Loan ID", flex: 1.1, minWidth: 100, cellClass: "cf-id" },
+      {
+        field: "loanId",
+        headerName: "Loan ID",
+        flex: 1.1,
+        minWidth: 100,
+        cellClass: "cf-id",
+      },
       intCol("fico", "FICO", 72),
       {
         field: "cltv",
@@ -521,6 +869,35 @@ export default function App() {
       },
     ],
     [ranScenarioIds]
+  );
+
+  const aggColumnDefs = useMemo(
+    () => [
+      { field: "scenario_id", headerName: "ID", width: 72, cellClass: "cf-id" },
+      { field: "cohort", headerName: "Cohort", flex: 1.6, minWidth: 180 },
+      {
+        field: "pca_level",
+        headerName: "PCA",
+        width: 64,
+        valueGetter: (p) => pcaLabel(p.data),
+      },
+      {
+        field: "sta_level",
+        headerName: "STA",
+        width: 64,
+        valueGetter: (p) => staLabel(p.data),
+      },
+      intCol("n_loans", "Loans", 72),
+      moneyCol("beginning_balance", "Begin bal", 110),
+      moneyCol("interest", "Interest", 100),
+      moneyCol("scheduled_principal", "Sched prin", 100),
+      moneyCol("default_amt", "Default", 90),
+      moneyCol("default", "Default", 90),
+      moneyCol("prepay", "Prepay", 90),
+      moneyCol("recovery", "Recovery", 90),
+      moneyCol("ending_balance", "End bal", 110),
+    ],
+    []
   );
 
   const cfMonth1ColumnDefs = useMemo(
@@ -696,8 +1073,17 @@ export default function App() {
     if (!row?.scenario_id) return;
     setSelectedScenarioId(row.scenario_id);
     if (row.cohort) setSelectedCohort(row.cohort);
+    setSelectedLoanId(null);
     setCfView("month1");
     setPane("cashflow");
+  }, []);
+
+  const drillAggScenario = useCallback((row) => {
+    if (!row?.scenario_id) return;
+    setSelectedScenarioId(row.scenario_id);
+    if (row.cohort) setSelectedCohort(row.cohort);
+    setSelectedLoanId(null);
+    setCfView("month1");
   }, []);
 
   const drillMonth1Loan = useCallback((row) => {
@@ -706,25 +1092,31 @@ export default function App() {
     setSelectedScenarioId(row.scenario_id);
     if (row.cohort) setSelectedCohort(row.cohort);
     setCfView("loanMonth");
-    setPane("cashflow");
   }, []);
 
   const onDrillJump = useCallback((crumb) => {
     if (crumb.id === "loans") {
       setSelectedLoanId(null);
       setSelectedCohort(null);
-      setCfView("month1");
-      setPane("loan");
+      setCfView("agg");
+      setPane("cohort");
       return;
     }
     if (crumb.id === "scenarios") {
-      setCfView("month1");
+      setCfView("agg");
       setSelectedLoanId(null);
       setPane("scenarios");
       return;
     }
+    if (crumb.id === "agg") {
+      setCfView("agg");
+      setSelectedLoanId(null);
+      setPane("cashflow");
+      return;
+    }
     if (crumb.id === "month1") {
       setCfView("month1");
+      setSelectedLoanId(null);
       setPane("cashflow");
     }
   }, []);
@@ -732,11 +1124,11 @@ export default function App() {
   const clearDrill = useCallback(() => {
     setSelectedLoanId(null);
     setSelectedCohort(null);
-    setCfView("month1");
+    setCfView("agg");
   }, []);
 
   const drillCrumbs = useMemo(() => {
-    const crumbs = [{ id: "loans", label: "Loans", jumpable: true }];
+    const crumbs = [{ id: "loans", label: "Cohorts", jumpable: true }];
     if (selectedCohort) {
       crumbs.push({
         id: "cohort",
@@ -745,14 +1137,21 @@ export default function App() {
       });
     }
     crumbs.push({ id: "scenarios", label: "Scenarios", jumpable: true });
-    if (selectedScenarioId) {
+    crumbs.push({ id: "agg", label: "CF aggregates", jumpable: cfView !== "agg" });
+    if (selectedScenarioId && cfView !== "agg") {
       crumbs.push({
         id: "scenario",
         label: selectedScenarioId,
         jumpable: false,
       });
     }
-    crumbs.push({ id: "month1", label: "Month-1 CF", jumpable: cfView === "loanMonth" });
+    if (cfView === "month1" || cfView === "loanMonth") {
+      crumbs.push({
+        id: "month1",
+        label: "All loans · month 1",
+        jumpable: cfView === "loanMonth",
+      });
+    }
     if (cfView === "loanMonth" && selectedLoanId) {
       crumbs.push({
         id: "loanMonth",
@@ -784,8 +1183,10 @@ export default function App() {
       setRunMeta(data.parallelism || null);
       setNeonNote(
         data.neon_missing
-          ? "DATABASE_URL not set — loan-level CF in SQLite/JSON under data/"
-          : data.storage?.neon || null
+          ? "DATABASE_URL not set — loan-level CF persisted locally under data/"
+          : data.cached
+            ? `Loaded ${data.storage?.neon || data.storage?.json || "cache"} · loan-level on Neon`
+            : data.storage?.neon || "Run complete · loan-level persisted"
       );
       if (data.aggregates?.length && !scenarios.length) {
         setScenarios(
@@ -800,7 +1201,7 @@ export default function App() {
           }))
         );
       }
-      setCfView("month1");
+      setCfView("agg");
       setPane("cashflow");
     } catch (err) {
       setRunError(err.message || String(err));
@@ -818,6 +1219,21 @@ export default function App() {
   const filterLabel =
     clusterFilter === "all" ? "All cohorts" : clusterFilter;
 
+  const scenarioOptions = useMemo(() => {
+    const ids = (
+      scenarios.length
+        ? scenarios
+        : aggregates.map((a) => ({
+            scenario_id: a.scenario_id,
+            cohort: a.cohort,
+          }))
+    ).map((s) => ({
+      id: s.scenario_id,
+      label: `${s.scenario_id}${s.cohort ? ` · ${s.cohort}` : ""}`,
+    }));
+    return ids;
+  }, [scenarios, aggregates]);
+
   return (
     <div className="app">
       <header className="topbar">
@@ -831,7 +1247,7 @@ export default function App() {
           />
           <span className="topbar-name">CashFlow</span>
         </div>
-        <span className="topbar-version">v0.2.0</span>
+        <span className="topbar-version">v0.3.0</span>
       </header>
 
       <div className="shell">
@@ -849,7 +1265,127 @@ export default function App() {
         </nav>
 
         <main className="main">
-          {pane === "loan" && (
+          {pane === "asf" && (
+            <section className="section section-fill">
+              <div className="section-head">
+                <h2 className="section-title">ASF Tape</h2>
+                <p className="section-meta">
+                  {asfSource || "asf_tape"}
+                  {asfTotal ? ` · ${asfTotal} loans` : ""}
+                  {" · all loans"}
+                </p>
+              </div>
+              {asfLoading ? (
+                <p className="muted">Loading ASF tape…</p>
+              ) : asfError ? (
+                <StatusBanner tone="error">ASF: {asfError}</StatusBanner>
+              ) : (
+                <DataGrid
+                  rowData={asfLoans}
+                  columnDefs={asfColumnDefs}
+                  getRowId={(p) => String(p.data.loan_id)}
+                  onRowDrill={drillLoan}
+                  heightClass="grid-wrap-fill"
+                />
+              )}
+            </section>
+          )}
+
+          {pane === "qc" && (
+            <section className="section section-fill">
+              <div className="section-head">
+                <h2 className="section-title">Loan Quality QC</h2>
+                <p className="section-meta">
+                  Neon asf_tape
+                  {qcMeta?.tape_row_count != null
+                    ? ` · ${qcMeta.tape_row_count} loans`
+                    : ""}
+                  {qcMeta?.run_id ? ` · run ${qcMeta.run_id}` : ""}
+                  {qcMeta?.n != null ? ` · ${qcMeta.n} checks` : ""}
+                </p>
+              </div>
+              {!qcLoading && !qcError && qcRows.length > 0 && (
+                <div className="qc-summary">
+                  <span className="qc-stat qc-stat-pass">
+                    Pass {qcSummary.pass}
+                  </span>
+                  <span className="qc-stat qc-stat-fail">
+                    Fail {qcSummary.fail}
+                  </span>
+                  <span className="qc-stat">Skip {qcSummary.skipped}</span>
+                  <span className="qc-stat">
+                    % pass{" "}
+                    {qcSummary.pct == null
+                      ? "—"
+                      : `${qcSummary.pct.toFixed(1)}%`}
+                  </span>
+                </div>
+              )}
+              {qcLoading ? (
+                <p className="muted">Loading QC results…</p>
+              ) : qcError ? (
+                <StatusBanner tone="error">QC: {qcError}</StatusBanner>
+              ) : !qcRows.length ? (
+                <p className="muted">
+                  No QC results yet. Load asf_tape and run QC against Neon.
+                </p>
+              ) : (
+                <DataGrid
+                  rowData={qcRows}
+                  columnDefs={qcColumnDefs}
+                  getRowId={(p) => String(p.data.check_id)}
+                  heightClass="grid-wrap-fill"
+                />
+              )}
+            </section>
+          )}
+
+          {pane === "strat" && (
+            <section className="section section-fill">
+              <div className="section-head">
+                <h2 className="section-title">Stratification</h2>
+                <div className="section-actions">
+                  <p className="section-meta">
+                    Alternate tape cuts (not K-prototype)
+                    {stratMeta?.tape_row_count != null
+                      ? ` · ${stratMeta.tape_row_count} loans`
+                      : ""}
+                    {stratMeta?.tape_upb != null
+                      ? ` · UPB ${Number(stratMeta.tape_upb).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                      : ""}
+                  </p>
+                  <label className="field-inline">
+                    <span>By</span>
+                    <select
+                      className="select"
+                      value={stratDim}
+                      onChange={(e) => setStratDim(e.target.value)}
+                    >
+                      {STRAT_DIMS.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </div>
+              {stratLoading ? (
+                <p className="muted">Loading stratification…</p>
+              ) : stratError ? (
+                <StatusBanner tone="error">Strat: {stratError}</StatusBanner>
+              ) : (
+                <DataGrid
+                  rowData={stratRows}
+                  columnDefs={stratColumnDefs}
+                  getRowId={(p) => String(p.data.bucket)}
+                  heightClass="grid-wrap-fill"
+                />
+              )}
+            </section>
+          )}
+
+          {pane === "cohort" && (
             <>
               <section className="section">
                 <div className="section-head section-head-stack">
@@ -866,7 +1402,7 @@ export default function App() {
                   {tapeLoading ? (
                     <p className="muted">Loading tape…</p>
                   ) : tapeError ? (
-                    <p className="error">Tape: {tapeError}</p>
+                    <StatusBanner tone="error">Tape: {tapeError}</StatusBanner>
                   ) : (
                     <>
                       <ResponsiveContainer width="100%" height="100%">
@@ -1004,6 +1540,27 @@ export default function App() {
 
               <section className="section">
                 <div className="section-head">
+                  <h2 className="section-title">Cohort statistics</h2>
+                  <p className="section-meta">
+                    Per-cohort count · UPB · avg LTV/CLTV/FICO
+                  </p>
+                </div>
+                {cohortStatsError ? (
+                  <StatusBanner tone="muted">
+                    Cohort stats: {cohortStatsError}
+                  </StatusBanner>
+                ) : (
+                  <DataGrid
+                    rowData={cohortStats}
+                    columnDefs={cohortStatsColumnDefs}
+                    getRowId={(p) => String(p.data.cohort)}
+                    heightClass="grid-wrap-mid"
+                  />
+                )}
+              </section>
+
+              <section className="section section-fill">
+                <div className="section-head">
                   <h2 className="section-title">Loans</h2>
                   <div className="section-actions">
                     <p className="section-meta">
@@ -1036,13 +1593,14 @@ export default function App() {
                   onGridReady={onGridReady}
                   scheduleSave={scheduleSave}
                   persistLayout
+                  heightClass="grid-wrap-fill"
                 />
               </section>
             </>
           )}
 
           {pane === "scenarios" && (
-            <section className="section">
+            <section className="section section-fill">
               <div className="section-head">
                 <h2 className="section-title">Cash Flow Scenarios</h2>
                 <div className="section-actions">
@@ -1052,7 +1610,7 @@ export default function App() {
                       ? ` · cohort filter: ${selectedCohort}`
                       : " · 27 cells"}
                     {" · "}
-                    Click row → month-1 CF
+                    Click row → all-loan month-1 CF
                   </p>
                   {(selectedCohort || selectedLoanId) && (
                     <button
@@ -1074,11 +1632,16 @@ export default function App() {
                 </div>
               </div>
               <DrillTrail crumbs={drillCrumbs} onJump={onDrillJump} />
-              {runError && <p className="error">Run: {runError}</p>}
-              {neonNote && <p className="muted">{neonNote}</p>}
+              {runError && (
+                <StatusBanner tone="error">Run: {runError}</StatusBanner>
+              )}
+              {neonNote && (
+                <StatusBanner tone="muted">{neonNote}</StatusBanner>
+              )}
               {runMeta && (
                 <p className="section-meta">
-                  Last wall {Number(runMeta.wall_ms).toFixed(0)} ms · ok=
+                  Last {runMeta.executor || "run"} · wall{" "}
+                  {Number(runMeta.wall_ms || 0).toFixed(0)} ms · ok=
                   {runMeta.ok}/{runMeta.n_tasks} · loan rows=
                   {runMeta.n_loan_rows ?? "—"}
                 </p>
@@ -1088,34 +1651,67 @@ export default function App() {
                 columnDefs={scenarioColumnDefs}
                 getRowId={(p) => String(p.data.scenario_id)}
                 onRowDrill={drillScenario}
+                heightClass="grid-wrap-fill"
               />
             </section>
           )}
 
           {pane === "cashflow" && (
-            <section className="section">
+            <section className="section section-fill">
               <div className="section-head">
                 <h2 className="section-title">
                   {cfView === "loanMonth"
                     ? "Cash Flow · multi-month"
-                    : "Cash Flow · month 1"}
+                    : cfView === "month1"
+                      ? "Cash Flow · all loans · month 1"
+                      : "Cash Flow · scenario aggregates"}
                 </h2>
                 <div className="section-actions">
-                  <p className="section-meta">
-                    {cfView === "loanMonth"
-                      ? `Neon loan_month_cf_enriched · ${selectedLoanId} · ${selectedScenarioId}`
-                      : `Neon loan_cashflows_month1_enriched · ${selectedScenarioId}${
-                          neonMonth1Total ? ` · ${neonMonth1Total} loans` : ""
-                        }`}
-                    {cfView === "month1" ? " · Click row → multi-month" : ""}
-                  </p>
+                  <label className="field-inline">
+                    <span>Scenario</span>
+                    <select
+                      className="select"
+                      value={selectedScenarioId || ""}
+                      onChange={(e) => {
+                        setSelectedScenarioId(e.target.value);
+                        setSelectedLoanId(null);
+                        if (cfView === "agg") setCfView("month1");
+                      }}
+                    >
+                      {scenarioOptions.map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className={`linkish${cfView === "agg" ? " is-active" : ""}`}
+                    onClick={() => {
+                      setCfView("agg");
+                      setSelectedLoanId(null);
+                    }}
+                  >
+                    Aggregates
+                  </button>
+                  <button
+                    type="button"
+                    className={`linkish${cfView === "month1" ? " is-active" : ""}`}
+                    onClick={() => {
+                      setCfView("month1");
+                      setSelectedLoanId(null);
+                    }}
+                  >
+                    All loans
+                  </button>
                   {cfView === "loanMonth" && (
                     <button
                       type="button"
                       className="linkish"
                       onClick={() => setCfView("month1")}
                     >
-                      Back to month 1
+                      Back to loans
                     </button>
                   )}
                   {(selectedLoanId || selectedCohort) && (
@@ -1130,6 +1726,15 @@ export default function App() {
                 </div>
               </div>
               <DrillTrail crumbs={drillCrumbs} onJump={onDrillJump} />
+              <p className="section-meta">
+                {cfView === "loanMonth"
+                  ? `Neon loan_month_cf_enriched · ${selectedLoanId} · ${selectedScenarioId}`
+                  : cfView === "month1"
+                    ? `Neon loan_cashflows_month1_enriched · ${selectedScenarioId}${
+                        neonMonth1Total ? ` · ${neonMonth1Total} loans` : ""
+                      } · click row → months`
+                    : `Scenario aggregates (all loans) · ${aggregates.length || 0} cells · click → loan-level`}
+              </p>
               {cfView === "loanMonth" ? (
                 loanMonthLoading ? (
                   <p className="muted">Loading multi-month CF…</p>
@@ -1147,24 +1752,40 @@ export default function App() {
                     getRowId={(p) =>
                       `${p.data.scenario_id}|${p.data.loan_id}|${p.data.month}`
                     }
+                    heightClass="grid-wrap-fill"
                   />
                 )
-              ) : neonCfLoading ? (
-                <p className="muted">Loading Neon month-1 rows…</p>
-              ) : !neonMonth1Rows.length ? (
-                <p className="muted">
-                  No Neon month-1 rows for {selectedScenarioId}
-                  {selectedLoanId ? ` / ${selectedLoanId}` : ""}. Check
-                  DATABASE_URL / API, or open Scenarios and run month 1.
-                </p>
+              ) : cfView === "month1" ? (
+                neonCfLoading ? (
+                  <p className="muted">Loading all-loan month-1 CF…</p>
+                ) : !neonMonth1Rows.length ? (
+                  <StatusBanner tone="muted">
+                    No Neon month-1 rows for {selectedScenarioId}
+                    {selectedLoanId ? ` / ${selectedLoanId}` : ""}. Open
+                    Scenarios and Run month 1 (persists loan-level to Neon).
+                  </StatusBanner>
+                ) : (
+                  <DataGrid
+                    rowData={neonMonth1Rows}
+                    columnDefs={cfMonth1ColumnDefs}
+                    getRowId={(p) =>
+                      `${p.data.scenario_id}|${p.data.loan_id}|${p.data.month}`
+                    }
+                    onRowDrill={drillMonth1Loan}
+                    heightClass="grid-wrap-fill"
+                  />
+                )
+              ) : !aggregates.length ? (
+                <StatusBanner tone="muted">
+                  No scenario aggregates yet. Open Scenarios and Run month 1.
+                </StatusBanner>
               ) : (
                 <DataGrid
-                  rowData={neonMonth1Rows}
-                  columnDefs={cfMonth1ColumnDefs}
-                  getRowId={(p) =>
-                    `${p.data.scenario_id}|${p.data.loan_id}|${p.data.month}`
-                  }
-                  onRowDrill={drillMonth1Loan}
+                  rowData={aggregates}
+                  columnDefs={aggColumnDefs}
+                  getRowId={(p) => String(p.data.scenario_id)}
+                  onRowDrill={drillAggScenario}
+                  heightClass="grid-wrap-fill"
                 />
               )}
             </section>

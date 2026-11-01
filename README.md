@@ -40,8 +40,11 @@ Optional Neon seed: set `DATABASE_URL`; scripts attempt insert and skip cleanly 
 
 ## Deploy (Vercel)
 
-1. Import the repo as a **single** Vite project (not multi-service).
-2. No `vercel.json` required — Vercel serves `api/*.py` automatically.
+1. Vite frontend (`dist/`) + FastAPI via Mangum at `api/index.py`.
+2. `vercel.json` rewrites `/api/*` → Mangum and SPA routes → `index.html`.
+3. Set `DATABASE_URL` (and ideally `DATABASE_URL_UNPOOLED`) in the Vercel project env.
+4. Left nav: **ASF Tape** · **Loan QC** · **Stratification** · **Cohort** · **Scenarios** · **Cash Flow**.
+5. **Run month 1** → `POST /api/cashflows/run-month1` (loads Neon cache on Vercel; full engine locally; persists loan-level CF).
 
 ## Local frontend
 

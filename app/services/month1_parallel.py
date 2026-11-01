@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import time
 import traceback
-from concurrent.futures import ProcessPoolExecutor, as_completed
+import os
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from typing import Any
 
 from app.models.loan import Loan
@@ -136,7 +137,13 @@ def run_month1_parallel(
 
     t_wall0 = time.perf_counter()
     results: list[dict[str, Any]] = []
-    with ProcessPoolExecutor(max_workers=max_workers) as pool:
+    # Vercel / constrained runtimes: threads (same _worker, no formula change).
+    use_threads = bool(os.environ.get("VERCEL")) or max_workers <= 4
+    executor_cls = ThreadPoolExecutor if use_threads else ProcessPoolExecutor
+    executor_name = (
+        "ThreadPoolExecutor" if use_threads else "ProcessPoolExecutor"
+    )
+    with executor_cls(max_workers=max_workers) as pool:
         futures = {
             pool.submit(_worker, p): p["scenario"]["scenario_id"] for p in payloads
         }
@@ -183,7 +190,7 @@ def run_month1_parallel(
 
     return {
         "parallelism": {
-            "executor": "ProcessPoolExecutor",
+            "executor": executor_name,
             "max_workers": max_workers,
             "n_tasks": len(payloads),
             "wall_ms": round(wall_ms, 3),
