@@ -26,16 +26,20 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 const FONT = '"Source Sans 3", "Segoe UI", system-ui, sans-serif';
 
 /** Match matplotlib CLUSTER_META order (0→1→2). */
-const CLUSTER_ORDER = ["moderate RI", "strong RI", "weak RI"];
+const CLUSTER_ORDER = [
+  "low LTV and weak refinance incentive",
+  "high LTV and strong refinance incentive",
+  "high LTV and weak refinance incentive",
+];
 const CLUSTER_COLORS = {
-  "moderate RI": "#1f77b4",
-  "strong RI": "#ff7f0e",
-  "weak RI": "#2ca02c",
+  "low LTV and weak refinance incentive": "#1f77b4",
+  "high LTV and strong refinance incentive": "#ff7f0e",
+  "high LTV and weak refinance incentive": "#2ca02c",
 };
 const CLUSTER_FALLBACK_COUNTS = {
-  "moderate RI": 339,
-  "strong RI": 329,
-  "weak RI": 375,
+  "low LTV and weak refinance incentive": 339,
+  "high LTV and strong refinance incentive": 329,
+  "high LTV and weak refinance incentive": 375,
 };
 
 /** Domains/ticks aligned to labeled PNG. */

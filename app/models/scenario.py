@@ -35,7 +35,7 @@ class ScenarioORM(Base):
     __tablename__ = "securitization_scenarios"
 
     scenario_id: Mapped[str] = mapped_column(String(32), primary_key=True)
-    cohort: Mapped[str] = mapped_column(String(32), nullable=False)
+    cohort: Mapped[str] = mapped_column(String(128), nullable=False)
     psa_multiple: Mapped[int] = mapped_column(Integer, nullable=False)
     sda_multiple: Mapped[int] = mapped_column(Integer, nullable=False)
     recovery_period_months: Mapped[int] = mapped_column(Integer, nullable=False, default=6)

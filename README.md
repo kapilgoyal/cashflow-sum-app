@@ -33,11 +33,11 @@ uvicorn app.main:app --reload
 
 ### Scenario grid
 
-- Cohorts: `moderate RI`, `strong RI`, `weak RI`
-- PSA multiples: **75 / 100 / 125** (base case = **100 PSA**)
-- SDA multiples: **50 / 100 / 200**
+- Cohorts: `low LTV and weak refinance incentive`, `high LTV and strong refinance incentive`, `high LTV and weak refinance incentive`
+- PSA (PCA) Down/Base/Up: **75 / 100 / 125** (base case = **100 PSA**)
+- SDA (STA) Down/Base/Up: **50 / 100 / 200**
 - Full cross = **27 rows** in `data/securitization_scenarios.csv`
-- Recovery: `recovery_period_months=6`, `recovery_lag_months=6`, static `recovery_rate=0.60` (state-varying lag TODO)
+- Recovery (per cohort, lag=0): strong-incentive high-LTV **60%/12mo**; weak-incentive high-LTV **55%/15mo**; weak-incentive low-LTV **75%/9mo** (state-varying lag TODO)
 
 ### One-loan CF sample
 
