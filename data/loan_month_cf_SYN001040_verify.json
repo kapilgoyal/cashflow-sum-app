@@ -1,0 +1,139 @@
+{
+  "loan_id": "SYN001040",
+  "cohort": "low LTV and weak refinance incentive",
+  "scenario_ids": [
+    "S01",
+    "S02",
+    "S03",
+    "S04",
+    "S05",
+    "S06",
+    "S07",
+    "S08",
+    "S09"
+  ],
+  "n_db_rows": 1554,
+  "csv_path": "C:\\Users\\kgoya\\source\\cashflow-sum-app\\data\\loan_month_cf_SYN001040_cohort_axis.csv",
+  "verifications": [
+    {
+      "scenario_id": "S01",
+      "n_months": 192,
+      "checks": {
+        "a_no_negative_balances": "PASS",
+        "b_end_equals_next_beg": "PASS",
+        "c_end_zero_stops_further_months": "PASS",
+        "d_default_plus_recovery_le_beg": "PASS",
+        "e_recovery_spread_rate_over_period": "PASS"
+      },
+      "all_pass": true,
+      "details": {}
+    },
+    {
+      "scenario_id": "S02",
+      "n_months": 191,
+      "checks": {
+        "a_no_negative_balances": "PASS",
+        "b_end_equals_next_beg": "PASS",
+        "c_end_zero_stops_further_months": "PASS",
+        "d_default_plus_recovery_le_beg": "PASS",
+        "e_recovery_spread_rate_over_period": "PASS"
+      },
+      "all_pass": true,
+      "details": {}
+    },
+    {
+      "scenario_id": "S03",
+      "n_months": 186,
+      "checks": {
+        "a_no_negative_balances": "PASS",
+        "b_end_equals_next_beg": "PASS",
+        "c_end_zero_stops_further_months": "PASS",
+        "d_default_plus_recovery_le_beg": "PASS",
+        "e_recovery_spread_rate_over_period": "PASS"
+      },
+      "all_pass": true,
+      "details": {}
+    },
+    {
+      "scenario_id": "S04",
+      "n_months": 173,
+      "checks": {
+        "a_no_negative_balances": "PASS",
+        "b_end_equals_next_beg": "PASS",
+        "c_end_zero_stops_further_months": "PASS",
+        "d_default_plus_recovery_le_beg": "PASS",
+        "e_recovery_spread_rate_over_period": "PASS"
+      },
+      "all_pass": true,
+      "details": {}
+    },
+    {
+      "scenario_id": "S05",
+      "n_months": 172,
+      "checks": {
+        "a_no_negative_balances": "PASS",
+        "b_end_equals_next_beg": "PASS",
+        "c_end_zero_stops_further_months": "PASS",
+        "d_default_plus_recovery_le_beg": "PASS",
+        "e_recovery_spread_rate_over_period": "PASS"
+      },
+      "all_pass": true,
+      "details": {}
+    },
+    {
+      "scenario_id": "S06",
+      "n_months": 169,
+      "checks": {
+        "a_no_negative_balances": "PASS",
+        "b_end_equals_next_beg": "PASS",
+        "c_end_zero_stops_further_months": "PASS",
+        "d_default_plus_recovery_le_beg": "PASS",
+        "e_recovery_spread_rate_over_period": "PASS"
+      },
+      "all_pass": true,
+      "details": {}
+    },
+    {
+      "scenario_id": "S07",
+      "n_months": 158,
+      "checks": {
+        "a_no_negative_balances": "PASS",
+        "b_end_equals_next_beg": "PASS",
+        "c_end_zero_stops_further_months": "PASS",
+        "d_default_plus_recovery_le_beg": "PASS",
+        "e_recovery_spread_rate_over_period": "PASS"
+      },
+      "all_pass": true,
+      "details": {}
+    },
+    {
+      "scenario_id": "S08",
+      "n_months": 158,
+      "checks": {
+        "a_no_negative_balances": "PASS",
+        "b_end_equals_next_beg": "PASS",
+        "c_end_zero_stops_further_months": "PASS",
+        "d_default_plus_recovery_le_beg": "PASS",
+        "e_recovery_spread_rate_over_period": "PASS"
+      },
+      "all_pass": true,
+      "details": {}
+    },
+    {
+      "scenario_id": "S09",
+      "n_months": 155,
+      "checks": {
+        "a_no_negative_balances": "PASS",
+        "b_end_equals_next_beg": "PASS",
+        "c_end_zero_stops_further_months": "PASS",
+        "d_default_plus_recovery_le_beg": "PASS",
+        "e_recovery_spread_rate_over_period": "PASS"
+      },
+      "all_pass": true,
+      "details": {}
+    }
+  ],
+  "all_scenarios_pass": true,
+  "neon_table": "public.loan_month_cf",
+  "neon_view": "public.loan_month_cf_enriched"
+}

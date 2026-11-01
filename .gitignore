@@ -2,6 +2,8 @@
 dist/
 .DS_Store
 .env
+.env.local
+.vercel/
 __pycache__/
 *.py[cod]
 .Python
