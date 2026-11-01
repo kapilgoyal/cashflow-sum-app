@@ -1,31 +1,47 @@
 # CashFlow theme
 
-Dense Bloomberg Terminal–style UI. Black field, near-white type, amber accents sampled from a Terminal **Pure Factor Returns** screenshot. Small fonts. Thin header with **v0.1.0**.
-
-Source screenshot: `docs/bloomberg-terminal-pure-factor-returns.png`
+Dense Bloomberg Terminal–style UI matched to `docs/bloomberg-terminal-pure-factor-returns.png` (733×355). Black field, near-white type, golden amber accents. Small fonts. 32px header with **v0.1.0**.
 
 ## Top bar
 
-Height 32px (range 28–36px). Near-white **CashFlow** name + amber **v0.1.0**.
+Height **32px**. Pure black. Near-white uppercase **CashFlow** + amber **v0.1.0**. Hairline bottom border `#323232`.
 
 ## Palette
 
-Sampled from Terminal pixels (733×355). Accent replaces prior marketing-orange `#FF6600`.
+Pixel-sampled from the Terminal screenshot. Amber accent family kept at `#FD9D24` (bright glyph peaks `#F29C29`–`#FDA432`; anti-aliased median darker).
 
-| Token | Hex | Role |
-| --- | --- | --- |
-| Background | `#000000` | Page / shell (near `#010101`–`#030303`) |
-| Background deep | `#010101` | Top bar / secondary |
-| Panel | `#212026` | Section panels / tab-bar surfaces |
-| Grid mute | `#1A1A1A` | Table chrome / odd rows |
-| Text | `#FCFCFC` | Primary type (also `#ECF1F9` in shot) |
-| Text muted | `#808080` | Secondary labels (`#585858` also present) |
-| Accent | `#FD9D24` | Version / CTA / chart / labels (median amber ~`#F49D29`) |
-| Accent bright | `#FCA024` | Hover / highlight |
-| Hairline | `#585858` | Borders on black |
-| Up | `#40B065` | Positive / chart up |
-| Down | `#C41E3A` | Negative / chart down |
+| Token | Hex | Role | Notes vs prior |
+| --- | --- | --- | --- |
+| Background | `#000000` | Page / shell | unchanged |
+| Background deep | `#000000` | Top bar | was `#010101` → pure black |
+| Panel | `#212026` | Section panels | unchanged (matches `#1F201C`–`#212123` cluster) |
+| Grid mute | `#0C0C0C` | Table header / deep chrome | was `#1A1A1A` |
+| Row alt | `#121212` | Odd rows | new / was odd `#1A1A1A` |
+| Text | `#FCFCFC` | Primary type | unchanged (`#FFFFFF` also common) |
+| Text muted | `#808080` | Column headers / axis ticks | unchanged (also `#727272`) |
+| Accent | `#FD9D24` | Labels / CTA / chart / version | unchanged |
+| Accent bright | `#FCA024` | Hover / highlight | unchanged |
+| Hairline | `#323232` | Borders / grid lines | was `#585858` (sampled `#323232`/`#2D2D2D`) |
+| Chrome | `#464646` | Input borders | new (sampled mid-gray) |
+| Up | `#43BC67` | Positive | was `#40B065` (sampled cell green) |
+| Down | `#C51D46` | Negative | was `#C41E3A` (sampled `#CD2047`/`#C51D46`) |
 
 ## Typography
 
-IBM Plex Sans. Body 12px, labels 11px, table cells 11px, top bar name 12px, version 10px.
+**Source Sans 3** (Google Fonts, OFL) — dense UI sans for body, header, AG Grid, Recharts.
+
+Terminal historically used proprietary Matthew Carter faces (**Bloomberg Prop Unicode** / **Bloomberg Fixed Unicode**); bloomberg.com serves **Bloomberg** / **Bloomberg-PropU_N** / **Bloomberg-Sans** via Bloomberg’s font service — not licensed for third-party apps. Source Sans 3 is the closest widely available match (base of Bergoom, an open Terminal recreation). Fallback: `"Segoe UI", system-ui, sans-serif`. Tabular figures via `font-feature-settings: "tnum" 1`.
+
+Sizes: body 12px / lh 1.25; labels 10px caps amber; table cells 11px; header rows 22px; top bar name 12px; version 10px.
+
+## Density / chrome
+
+- Section padding `6–8px`, main gap `6px` (tighter than prior `10–12px`).
+- AG Grid: `rowHeight`/`headerHeight` **22**, spacing **2**, square corners, hairline `#323232` row/column borders.
+- Recharts: solid `#323232` horizontal grid, 10px ticks, square bars (no radius).
+- Field labels amber uppercase (Terminal filter-label pattern).
+- Buttons square, black text on amber.
+
+## Favicon
+
+`public/favicon.svg` — black field, amber stylized **C** + rising bars; wired in `index.html`.

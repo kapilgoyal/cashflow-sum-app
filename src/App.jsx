@@ -18,6 +18,9 @@ import "./App.css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
+const FONT =
+  '"Source Sans 3", "Segoe UI", system-ui, sans-serif';
+
 const SAMPLE_LOANS = [
   { loanId: "LN-10021", fico: 742, cltv: 78.5, rate: 6.125, cohort: "A" },
   { loanId: "LN-10044", fico: 698, cltv: 85.0, rate: 6.875, cohort: "B" },
@@ -38,19 +41,24 @@ const CHART_DATA = [
 const gridTheme = themeQuartz.withParams({
   backgroundColor: "#212026",
   foregroundColor: "#FCFCFC",
-  headerBackgroundColor: "#1A1A1A",
+  headerBackgroundColor: "#0C0C0C",
   headerTextColor: "#808080",
-  oddRowBackgroundColor: "#1A1A1A",
-  rowHoverColor: "#2A2A2E",
-  selectedRowBackgroundColor: "#333338",
-  borderColor: "#585858",
-  rowBorder: true,
-  fontFamily: '"IBM Plex Sans", "Segoe UI", sans-serif',
+  oddRowBackgroundColor: "#121212",
+  rowHoverColor: "#1A1A1A",
+  selectedRowBackgroundColor: "#1E1E22",
+  borderColor: "#323232",
+  rowBorder: { style: "solid", width: 1, color: "#323232" },
+  columnBorder: { style: "solid", width: 1, color: "#2A2A2A" },
+  headerColumnBorder: false,
+  fontFamily: FONT,
   fontSize: 11,
   headerFontSize: 10,
-  spacing: 3,
-  headerHeight: 28,
-  rowHeight: 26,
+  headerFontWeight: 600,
+  spacing: 2,
+  headerHeight: 22,
+  rowHeight: 22,
+  borderRadius: 0,
+  wrapperBorderRadius: 0,
 });
 
 export default function App() {
@@ -115,6 +123,12 @@ export default function App() {
       setLoading(false);
     }
   }
+
+  const axisTick = {
+    fill: "#808080",
+    fontSize: 10,
+    fontFamily: FONT,
+  };
 
   return (
     <div className="app">
@@ -183,21 +197,21 @@ export default function App() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={CHART_DATA}
-                  margin={{ top: 4, right: 8, left: -12, bottom: 0 }}
+                  margin={{ top: 4, right: 6, left: -14, bottom: 0 }}
                 >
                   <CartesianGrid
-                    stroke="#585858"
-                    strokeDasharray="3 3"
+                    stroke="#323232"
+                    strokeDasharray="0"
                     vertical={false}
                   />
                   <XAxis
                     dataKey="cohort"
-                    tick={{ fill: "#808080", fontSize: 11 }}
-                    axisLine={{ stroke: "#585858" }}
+                    tick={axisTick}
+                    axisLine={{ stroke: "#323232" }}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fill: "#808080", fontSize: 11 }}
+                    tick={axisTick}
                     axisLine={false}
                     tickLine={false}
                     domain={[5.5, 7.5]}
@@ -206,14 +220,19 @@ export default function App() {
                   <Tooltip
                     contentStyle={{
                       background: "#212026",
-                      border: "1px solid #585858",
+                      border: "1px solid #323232",
+                      borderRadius: 0,
                       fontSize: 11,
                       color: "#FCFCFC",
+                      fontFamily: FONT,
                     }}
                     labelStyle={{ color: "#808080" }}
-                    formatter={(value) => [`${Number(value).toFixed(2)}%`, "Avg rate"]}
+                    formatter={(value) => [
+                      `${Number(value).toFixed(2)}%`,
+                      "Avg rate",
+                    ]}
                   />
-                  <Bar dataKey="avgRate" fill="#FD9D24" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="avgRate" fill="#FD9D24" radius={[0, 0, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

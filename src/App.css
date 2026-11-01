@@ -1,17 +1,21 @@
 :root {
-  /* Sampled from Bloomberg Terminal Pure Factor Returns screenshot */
+  /* Sampled from Bloomberg Terminal Pure Factor Returns screenshot (733×355) */
   --cf-bg: #000000;
-  --cf-bg-deep: #010101;
+  --cf-bg-deep: #000000;
   --cf-panel: #212026;
   --cf-text: #fcfcfc;
   --cf-muted: #808080;
   --cf-accent: #fd9d24;
   --cf-accent-bright: #fca024;
-  --cf-hairline: #585858;
-  --cf-grid: #1a1a1a;
-  --cf-up: #40b065;
-  --cf-down: #c41e3a;
-  --cf-font: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --cf-hairline: #323232;
+  --cf-chrome: #464646;
+  --cf-grid: #0c0c0c;
+  --cf-row-alt: #121212;
+  --cf-up: #43bc67;
+  --cf-down: #c51d46;
+  /* Bloomberg Prop/Fixed are proprietary; Source Sans 3 is the closest OFL UI sans
+     (Bergoom, an open Terminal recreation, was derived from Source Sans 3). */
+  --cf-font: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
 }
 
 *,
@@ -30,10 +34,11 @@ body,
 body {
   font-family: var(--cf-font);
   font-size: 12px;
-  line-height: 1.35;
+  line-height: 1.25;
   color: var(--cf-text);
   background: var(--cf-bg);
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1;
 }
 
 .app {
@@ -48,8 +53,8 @@ body {
   gap: 8px;
   height: 32px;
   min-height: 32px;
-  max-height: 36px;
-  padding: 0 12px;
+  max-height: 32px;
+  padding: 0 10px;
   background: var(--cf-bg-deep);
   border-bottom: 1px solid var(--cf-hairline);
 }
@@ -57,7 +62,8 @@ body {
 .topbar-name {
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   color: var(--cf-text);
   line-height: 1;
 }
@@ -72,9 +78,9 @@ body {
 
 .main {
   flex: 1;
-  padding: 12px 16px 20px;
+  padding: 8px 10px 12px;
   display: grid;
-  gap: 12px;
+  gap: 6px;
   max-width: 1100px;
   width: 100%;
   margin: 0 auto;
@@ -83,14 +89,14 @@ body {
 .section {
   background: var(--cf-panel);
   border: 1px solid var(--cf-hairline);
-  padding: 10px 12px;
+  padding: 6px 8px 8px;
 }
 
 .section-title {
-  margin: 0 0 8px;
-  font-size: 11px;
+  margin: 0 0 6px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--cf-accent);
 }
@@ -99,29 +105,34 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  gap: 8px 12px;
+  gap: 6px 10px;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  min-width: 88px;
+  gap: 2px;
+  min-width: 80px;
 }
 
 .field label {
-  font-size: 11px;
-  color: var(--cf-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cf-accent);
 }
 
 .field input {
-  width: 100px;
-  padding: 5px 7px;
+  width: 96px;
+  padding: 3px 6px;
   font: inherit;
   font-size: 12px;
+  font-feature-settings: "tnum" 1;
   color: var(--cf-text);
   background: var(--cf-bg);
-  border: 1px solid var(--cf-hairline);
+  border: 1px solid var(--cf-chrome);
+  border-radius: 0;
   outline: none;
 }
 
@@ -130,13 +141,16 @@ body {
 }
 
 .btn {
-  padding: 6px 12px;
+  padding: 4px 10px;
   font: inherit;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--cf-text);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #000000;
   background: var(--cf-accent);
   border: 1px solid var(--cf-accent);
+  border-radius: 0;
   cursor: pointer;
 }
 
@@ -164,12 +178,12 @@ body {
 .error {
   margin: 0;
   font-size: 12px;
-  color: var(--cf-accent-bright);
+  color: var(--cf-down);
 }
 
 .panel-grid {
   display: grid;
-  gap: 12px;
+  gap: 6px;
 }
 
 @media (min-width: 860px) {
@@ -180,14 +194,14 @@ body {
 }
 
 .grid-wrap {
-  height: 260px;
+  height: 248px;
   width: 100%;
 }
 
 .chart-wrap {
-  height: 260px;
+  height: 248px;
   width: 100%;
-  padding-top: 4px;
+  padding-top: 2px;
 }
 
 .ag-theme-cashflow {
