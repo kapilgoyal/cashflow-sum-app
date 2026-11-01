@@ -59,6 +59,14 @@ body {
   border-bottom: 1px solid var(--cf-hairline);
 }
 
+.topbar-mark {
+  width: 16px;
+  height: 16px;
+  display: block;
+  flex: 0 0 auto;
+  margin-right: -2px;
+}
+
 .topbar-name {
   font-size: 12px;
   font-weight: 600;
@@ -81,7 +89,7 @@ body {
   padding: 8px 10px 12px;
   display: grid;
   gap: 6px;
-  max-width: 1100px;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
 }
@@ -99,6 +107,88 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--cf-accent);
+}
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 6px;
+}
+
+.section-head .section-title {
+  margin: 0;
+}
+
+.section-meta {
+  margin: 0;
+  font-size: 10px;
+  color: var(--cf-muted);
+}
+
+.muted {
+  margin: 12px 0;
+  font-size: 12px;
+  color: var(--cf-muted);
+}
+
+.linkish {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cf-accent);
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.linkish:hover {
+  color: var(--cf-accent-bright);
+}
+
+.scatter-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  justify-content: center;
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.scatter-legend-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  border: 1px solid var(--cf-hairline);
+  background: var(--cf-bg);
+  color: var(--cf-text);
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.scatter-legend-btn.is-active {
+  border-color: var(--cluster-color, var(--cf-accent));
+  color: var(--cf-text);
+}
+
+.scatter-legend-all.is-active {
+  border-color: var(--cf-accent);
+}
+
+.scatter-legend-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cluster-color, var(--cf-accent));
+  flex: 0 0 auto;
 }
 
 .sum-row {
@@ -198,10 +288,18 @@ body {
   width: 100%;
 }
 
+.grid-wrap-tall {
+  height: min(420px, 55vh);
+}
+
 .chart-wrap {
   height: 248px;
   width: 100%;
   padding-top: 2px;
+}
+
+.chart-wrap-tall {
+  height: min(380px, 48vh);
 }
 
 .ag-theme-cashflow {
