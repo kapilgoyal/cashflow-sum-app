@@ -4,9 +4,29 @@ export default function App() {
   const [a, setA] = useState("2");
   const [b, setB] = useState("3");
   const [sum, setSum] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  function handleSum() {
-    setSum(Number(a) + Number(b));
+  async function handleSum() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/sum", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ a: Number(a), b: Number(b) }),
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      setSum(data.sum);
+    } catch (err) {
+      setSum(null);
+      setError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -30,10 +50,16 @@ export default function App() {
         />
       </label>
       <br />
-      <button type="button" onClick={handleSum} style={{ marginTop: 12 }}>
-        Add
+      <button
+        type="button"
+        onClick={handleSum}
+        disabled={loading}
+        style={{ marginTop: 12 }}
+      >
+        {loading ? "Adding…" : "Add"}
       </button>
       {sum !== null && <p>Sum: {sum}</p>}
+      {error && <p style={{ color: "crimson" }}>Error: {error}</p>}
     </main>
   );
 }
