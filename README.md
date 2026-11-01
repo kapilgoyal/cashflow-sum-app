@@ -33,7 +33,7 @@ uvicorn app.main:app --reload
 
 ### Scenario grid
 
-- Cohorts: `LLTV-LRI`, `HLTV-HRI`, `HLTV-LRI`
+- Cohorts: `moderate RI`, `strong RI`, `weak RI`
 - PSA multiples: **75 / 100 / 125** (base case = **100 PSA**)
 - SDA multiples: **50 / 100 / 200**
 - Full cross = **27 rows** in `data/securitization_scenarios.csv`

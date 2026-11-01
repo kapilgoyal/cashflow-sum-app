@@ -29,9 +29,9 @@ MAX_ITER = 50
 RANDOM_STATE = 42
 
 CLUSTER_META = {
-    0: {"code": "LLTV-LRI", "color": "#1f77b4", "label": "LLTV-LRI"},
-    1: {"code": "HLTV-HRI", "color": "#ff7f0e", "label": "HLTV-HRI"},
-    2: {"code": "HLTV-LRI", "color": "#2ca02c", "label": "HLTV-LRI"},
+    0: {"code": "moderate RI", "color": "#1f77b4", "label": "moderate RI"},
+    1: {"code": "strong RI", "color": "#ff7f0e", "label": "strong RI"},
+    2: {"code": "weak RI", "color": "#2ca02c", "label": "weak RI"},
 }
 
 
@@ -164,9 +164,9 @@ def main() -> None:
             "counts": counts,
             "colors": {m["code"]: m["color"] for m in CLUSTER_META.values()},
             "labels": {
-                "HLTV-HRI": "Orange — high CLTV / high refinance incentive",
-                "HLTV-LRI": "Green — high CLTV / low refinance incentive",
-                "LLTV-LRI": "Blue — low CLTV / low refinance incentive",
+                "strong RI": "Orange — high CLTV / high refinance incentive",
+                "weak RI": "Green — high CLTV / low refinance incentive",
+                "moderate RI": "Blue — low CLTV / low refinance incentive",
             },
         },
         "hulls": hulls,

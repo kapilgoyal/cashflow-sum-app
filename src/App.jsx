@@ -26,16 +26,16 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 const FONT = '"Source Sans 3", "Segoe UI", system-ui, sans-serif';
 
 /** Match matplotlib CLUSTER_META order (0→1→2). */
-const CLUSTER_ORDER = ["LLTV-LRI", "HLTV-HRI", "HLTV-LRI"];
+const CLUSTER_ORDER = ["moderate RI", "strong RI", "weak RI"];
 const CLUSTER_COLORS = {
-  "LLTV-LRI": "#1f77b4",
-  "HLTV-HRI": "#ff7f0e",
-  "HLTV-LRI": "#2ca02c",
+  "moderate RI": "#1f77b4",
+  "strong RI": "#ff7f0e",
+  "weak RI": "#2ca02c",
 };
 const CLUSTER_FALLBACK_COUNTS = {
-  "LLTV-LRI": 339,
-  "HLTV-HRI": 329,
-  "HLTV-LRI": 375,
+  "moderate RI": 339,
+  "strong RI": 329,
+  "weak RI": 375,
 };
 
 /** Domains/ticks aligned to labeled PNG. */

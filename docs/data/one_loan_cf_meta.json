@@ -12,13 +12,13 @@
   },
   "scenario": {
     "scenario_id": "S05",
-    "cohort": "LLTV-LRI",
+    "cohort": "moderate RI",
     "psa_multiple": 100,
     "sda_multiple": 100,
     "recovery_period_months": 6,
     "recovery_lag_months": 0,
     "recovery_rate": 0.6,
-    "note": "LLTV-LRI PSA100/SDA100; BASE CASE (100 PSA / 100 SDA); LLTV prepay-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now",
+    "note": "moderate RI PSA100/SDA100; BASE CASE (100 PSA / 100 SDA); moderate RI prepay-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now",
     "state_varying_recovery_todo": true
   },
   "n_months": 360,

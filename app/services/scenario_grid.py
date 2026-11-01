@@ -5,21 +5,23 @@ SDA multiples: 50 / 100 / 200.
 Full cross: 3 cohorts × 3 PSA × 3 SDA = 27 rows.
 
 Cohorts map to tape strata:
-- HLTV-HRI — high LTV + high refinance incentive
-- HLTV-LRI — high LTV + low refinance incentive
-- LLTV-LRI — low LTV (low refinance incentive / cleaner credit)
+- strong RI — high LTV + high refinance incentive
+- weak RI — high LTV + low refinance incentive
+- moderate RI — low LTV (low refinance incentive / cleaner credit)
 
 Historical pairing note (credit vs prepay stress) still applies when
-*selecting* cells: HLTV rows lean toward higher-SDA cells; LLTV toward
-higher-PSA / lower-SDA. The grid itself exposes the full product so
-sensitivities are comparable across cohorts.
+*selecting* cells: strong RI / weak RI rows lean toward higher-SDA cells;
+moderate RI toward higher-PSA / lower-SDA. The grid itself exposes the full
+product so sensitivities are comparable across cohorts.
 """
 
 from __future__ import annotations
 
 from app.models.scenario import Scenario
 
-COHORTS = ("LLTV-LRI", "HLTV-HRI", "HLTV-LRI")
+COHORTS = ("moderate RI", "strong RI", "weak RI")
+# High-LTV family (strong RI + weak RI) — credit-lean note keeps family wording.
+CREDIT_LEAN_COHORTS = ("strong RI", "weak RI")
 PSA_MULTIPLES = (75, 100, 125)
 SDA_MULTIPLES = (50, 100, 200)
 BASE_PSA = 100
@@ -39,10 +41,10 @@ def _cell_note(cohort: str, psa: int, sda: int) -> str:
     bits = [f"{cohort} PSA{psa}/SDA{sda}"]
     if psa == BASE_PSA and sda == BASE_SDA:
         bits.append("BASE CASE (100 PSA / 100 SDA)")
-    if "HLTV" in cohort and sda >= 100:
-        bits.append("HLTV credit-leaning cell")
-    if cohort == "LLTV-LRI" and psa >= 100 and sda <= 100:
-        bits.append("LLTV prepay-leaning cell")
+    if cohort in CREDIT_LEAN_COHORTS and sda >= 100:
+        bits.append("strong RI credit-leaning cell")
+    if cohort == "moderate RI" and psa >= 100 and sda <= 100:
+        bits.append("moderate RI prepay-leaning cell")
     bits.append(STATE_TODO_NOTE)
     return "; ".join(bits)
 
@@ -92,7 +94,7 @@ def scenarios_to_records(scenarios: list[Scenario]) -> list[dict]:
 
 
 def base_case_scenario(scenarios: list[Scenario] | None = None) -> Scenario:
-    """First-cohort (LLTV-LRI) base cell at 100 PSA / 100 SDA."""
+    """First-cohort (moderate RI) base cell at 100 PSA / 100 SDA."""
     scenarios = scenarios or build_scenario_grid()
     for s in scenarios:
         if (

@@ -1,28 +1,28 @@
 scenario_id,cohort,psa_multiple,sda_multiple,recovery_period_months,recovery_lag_months,recovery_rate,state_varying_recovery_todo,note
-S01,LLTV-LRI,75,50,6,6,0.6,True,LLTV-LRI PSA75/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S02,LLTV-LRI,75,100,6,6,0.6,True,LLTV-LRI PSA75/SDA100; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S03,LLTV-LRI,75,200,6,6,0.6,True,LLTV-LRI PSA75/SDA200; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S04,LLTV-LRI,100,50,6,6,0.6,True,LLTV-LRI PSA100/SDA50; LLTV prepay-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S05,LLTV-LRI,100,100,6,6,0.6,True,LLTV-LRI PSA100/SDA100; BASE CASE (100 PSA / 100 SDA); LLTV prepay-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S06,LLTV-LRI,100,200,6,6,0.6,True,LLTV-LRI PSA100/SDA200; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S07,LLTV-LRI,125,50,6,6,0.6,True,LLTV-LRI PSA125/SDA50; LLTV prepay-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S08,LLTV-LRI,125,100,6,6,0.6,True,LLTV-LRI PSA125/SDA100; LLTV prepay-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S09,LLTV-LRI,125,200,6,6,0.6,True,LLTV-LRI PSA125/SDA200; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S10,HLTV-HRI,75,50,6,6,0.6,True,HLTV-HRI PSA75/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S11,HLTV-HRI,75,100,6,6,0.6,True,HLTV-HRI PSA75/SDA100; HLTV credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S12,HLTV-HRI,75,200,6,6,0.6,True,HLTV-HRI PSA75/SDA200; HLTV credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S13,HLTV-HRI,100,50,6,6,0.6,True,HLTV-HRI PSA100/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S14,HLTV-HRI,100,100,6,6,0.6,True,HLTV-HRI PSA100/SDA100; BASE CASE (100 PSA / 100 SDA); HLTV credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S15,HLTV-HRI,100,200,6,6,0.6,True,HLTV-HRI PSA100/SDA200; HLTV credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S16,HLTV-HRI,125,50,6,6,0.6,True,HLTV-HRI PSA125/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S17,HLTV-HRI,125,100,6,6,0.6,True,HLTV-HRI PSA125/SDA100; HLTV credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S18,HLTV-HRI,125,200,6,6,0.6,True,HLTV-HRI PSA125/SDA200; HLTV credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S19,HLTV-LRI,75,50,6,6,0.6,True,HLTV-LRI PSA75/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S20,HLTV-LRI,75,100,6,6,0.6,True,HLTV-LRI PSA75/SDA100; HLTV credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S21,HLTV-LRI,75,200,6,6,0.6,True,HLTV-LRI PSA75/SDA200; HLTV credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S22,HLTV-LRI,100,50,6,6,0.6,True,HLTV-LRI PSA100/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S23,HLTV-LRI,100,100,6,6,0.6,True,HLTV-LRI PSA100/SDA100; BASE CASE (100 PSA / 100 SDA); HLTV credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S24,HLTV-LRI,100,200,6,6,0.6,True,HLTV-LRI PSA100/SDA200; HLTV credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S25,HLTV-LRI,125,50,6,6,0.6,True,HLTV-LRI PSA125/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S26,HLTV-LRI,125,100,6,6,0.6,True,HLTV-LRI PSA125/SDA100; HLTV credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
-S27,HLTV-LRI,125,200,6,6,0.6,True,HLTV-LRI PSA125/SDA200; HLTV credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S01,moderate RI,75,50,6,6,0.6,True,moderate RI PSA75/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S02,moderate RI,75,100,6,6,0.6,True,moderate RI PSA75/SDA100; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S03,moderate RI,75,200,6,6,0.6,True,moderate RI PSA75/SDA200; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S04,moderate RI,100,50,6,6,0.6,True,moderate RI PSA100/SDA50; moderate RI prepay-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S05,moderate RI,100,100,6,6,0.6,True,moderate RI PSA100/SDA100; BASE CASE (100 PSA / 100 SDA); moderate RI prepay-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S06,moderate RI,100,200,6,6,0.6,True,moderate RI PSA100/SDA200; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S07,moderate RI,125,50,6,6,0.6,True,moderate RI PSA125/SDA50; moderate RI prepay-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S08,moderate RI,125,100,6,6,0.6,True,moderate RI PSA125/SDA100; moderate RI prepay-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S09,moderate RI,125,200,6,6,0.6,True,moderate RI PSA125/SDA200; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S10,strong RI,75,50,6,6,0.6,True,strong RI PSA75/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S11,strong RI,75,100,6,6,0.6,True,strong RI PSA75/SDA100; strong RI credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S12,strong RI,75,200,6,6,0.6,True,strong RI PSA75/SDA200; strong RI credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S13,strong RI,100,50,6,6,0.6,True,strong RI PSA100/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S14,strong RI,100,100,6,6,0.6,True,strong RI PSA100/SDA100; BASE CASE (100 PSA / 100 SDA); strong RI credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S15,strong RI,100,200,6,6,0.6,True,strong RI PSA100/SDA200; strong RI credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S16,strong RI,125,50,6,6,0.6,True,strong RI PSA125/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S17,strong RI,125,100,6,6,0.6,True,strong RI PSA125/SDA100; strong RI credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S18,strong RI,125,200,6,6,0.6,True,strong RI PSA125/SDA200; strong RI credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S19,weak RI,75,50,6,6,0.6,True,weak RI PSA75/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S20,weak RI,75,100,6,6,0.6,True,weak RI PSA75/SDA100; strong RI credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S21,weak RI,75,200,6,6,0.6,True,weak RI PSA75/SDA200; strong RI credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S22,weak RI,100,50,6,6,0.6,True,weak RI PSA100/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S23,weak RI,100,100,6,6,0.6,True,weak RI PSA100/SDA100; BASE CASE (100 PSA / 100 SDA); strong RI credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S24,weak RI,100,200,6,6,0.6,True,weak RI PSA100/SDA200; strong RI credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S25,weak RI,125,50,6,6,0.6,True,weak RI PSA125/SDA50; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S26,weak RI,125,100,6,6,0.6,True,weak RI PSA125/SDA100; strong RI credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
+S27,weak RI,125,200,6,6,0.6,True,weak RI PSA125/SDA200; strong RI credit-leaning cell; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now
