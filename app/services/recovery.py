@@ -6,7 +6,7 @@ from collections.abc import Iterable
 
 
 # Pool-level defaults until state tables exist.
-DEFAULT_RECOVERY_LAG_MONTHS = 0
+DEFAULT_RECOVERY_LAG_MONTHS = 6
 DEFAULT_RECOVERY_PERIOD_MONTHS = 6
 DEFAULT_RECOVERY_RATE = 0.60
 

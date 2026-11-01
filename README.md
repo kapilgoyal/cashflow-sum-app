@@ -37,7 +37,7 @@ uvicorn app.main:app --reload
 - PSA multiples: **75 / 100 / 125** (base case = **100 PSA**)
 - SDA multiples: **50 / 100 / 200**
 - Full cross = **27 rows** in `data/securitization_scenarios.csv`
-- Recovery: `recovery_period_months=6`, `recovery_lag_months=0`, static `recovery_rate=0.60`
+- Recovery: `recovery_period_months=6`, `recovery_lag_months=6`, static `recovery_rate=0.60` (state-varying lag TODO)
 
 ### One-loan CF sample
 

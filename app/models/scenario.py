@@ -22,7 +22,7 @@ class Scenario(BaseModel):
     psa_multiple: int = Field(description="PSA speed multiple, e.g. 75/100/125")
     sda_multiple: int = Field(description="SDA speed multiple, e.g. 50/100/200")
     recovery_period_months: int = 6
-    recovery_lag_months: int = 0
+    recovery_lag_months: int = 6
     recovery_rate: float = Field(
         default=0.60,
         description="Fraction of defaulted principal recovered (static)",
@@ -39,7 +39,7 @@ class ScenarioORM(Base):
     psa_multiple: Mapped[int] = mapped_column(Integer, nullable=False)
     sda_multiple: Mapped[int] = mapped_column(Integer, nullable=False)
     recovery_period_months: Mapped[int] = mapped_column(Integer, nullable=False, default=6)
-    recovery_lag_months: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    recovery_lag_months: Mapped[int] = mapped_column(Integer, nullable=False, default=6)
     recovery_rate: Mapped[float] = mapped_column(Float, nullable=False, default=0.60)
     state_varying_recovery_todo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     note: Mapped[str] = mapped_column(Text, nullable=False, default="")
