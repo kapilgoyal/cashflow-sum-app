@@ -1,8 +1,19 @@
-# Sum App
+# CashFlow Sum App
 
-Minimal **Vite + React** frontend with a Vercel Python serverless function at `api/sum.py`. No FastAPI, no `local-backend/`.
+Vite + React frontend with a Vercel Python serverless function at `api/sum.py`. No FastAPI, no `local-backend/`.
 
-> **Vercel:** Import as a **single** Vite project. The `api/` folder is Vercel’s Python runtime (BaseHTTPRequestHandler), not a separate FastAPI root.
+Dense blue / white / pink UI (`THEME.md`). Compact AG Grid sample tape + Recharts cohort chart. Top bar: **CashFlow** + pink `v0.1.0`.
+
+## Theme hexes
+
+| Role | Hex |
+| --- | --- |
+| Background | `#0B2A4A` |
+| Panel / top bar | `#0A3A6B` |
+| Text | `#FFFFFF` |
+| Muted text | `#B8C5D6` |
+| Accent | `#E85A9B` |
+| Accent bright | `#FF6B9D` |
 
 ## Deploy (Vercel)
 
@@ -24,7 +35,8 @@ Open the URL Vite prints (usually http://localhost:5173). `/api/sum` only works 
 .
 ├── api/
 │   └── sum.py          # Vercel Python serverless (GET/POST → {sum})
-├── src/                # React app
+├── src/                # React app (AG Grid + Recharts)
+├── THEME.md
 ├── index.html
 ├── package.json
 └── vite.config.js
