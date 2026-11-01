@@ -1,6 +1,12 @@
+"""Loan Pydantic schema + SQLAlchemy ORM stub."""
+
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
+from sqlalchemy import Float, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.models.base import Base
 
 
 class Loan(BaseModel):
@@ -18,3 +24,17 @@ class Loan(BaseModel):
     remaining_io_months: int = Field(ge=0, default=0)
     state: str | None = None
     cohort: str | None = None
+
+
+class LoanORM(Base):
+    __tablename__ = "loans"
+
+    loan_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    current_balance: Mapped[float] = mapped_column(Float, nullable=False)
+    annual_rate: Mapped[float] = mapped_column(Float, nullable=False)
+    remaining_term_months: Mapped[int] = mapped_column(Integer, nullable=False)
+    loan_age_months: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    monthly_payment: Mapped[float | None] = mapped_column(Float, nullable=True)
+    remaining_io_months: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    state: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    cohort: Mapped[str | None] = mapped_column(String(32), nullable=True)

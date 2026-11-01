@@ -2,3 +2,9 @@
 dist/
 .DS_Store
 .env
+__pycache__/
+*.py[cod]
+.Python
+*.egg-info/
+.venv/
+venv/
