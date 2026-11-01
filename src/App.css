@@ -130,6 +130,28 @@ body {
   margin: 0;
 }
 
+.section-head-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.section-title-chart {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cf-text);
+}
+
+.scatter-subtitle {
+  margin: 0;
+  font-size: 10px;
+  color: var(--cf-muted);
+  letter-spacing: 0.01em;
+}
+
 .section-meta {
   margin: 0;
   font-size: 10px;
@@ -158,13 +180,28 @@ body {
   color: var(--cf-accent-bright);
 }
 
+.scatter-legend-box {
+  display: inline-block;
+  padding: 4px 8px 5px;
+  background: rgba(33, 32, 38, 0.92);
+  border: 1px solid var(--cf-hairline);
+  pointer-events: auto;
+}
+
+.scatter-legend-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--cf-text);
+  margin-bottom: 3px;
+  letter-spacing: 0.02em;
+}
+
 .scatter-legend {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  justify-content: center;
+  flex-direction: column;
+  gap: 2px;
   list-style: none;
-  margin: 4px 0 0;
+  margin: 0;
   padding: 0;
 }
 
@@ -172,23 +209,28 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 6px;
-  border: 1px solid var(--cf-hairline);
-  background: var(--cf-bg);
+  padding: 1px 2px;
+  border: 0;
+  background: transparent;
   color: var(--cf-text);
   font: inherit;
   font-size: 10px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   cursor: pointer;
+  text-align: left;
 }
 
 .scatter-legend-btn.is-active {
-  border-color: var(--cluster-color, var(--cf-accent));
-  color: var(--cf-text);
+  color: var(--cf-accent);
+}
+
+.scatter-legend-all {
+  color: var(--cf-muted);
+  margin-top: 2px;
 }
 
 .scatter-legend-all.is-active {
-  border-color: var(--cf-accent);
+  color: var(--cf-accent);
 }
 
 .scatter-legend-swatch {
@@ -197,6 +239,36 @@ body {
   border-radius: 50%;
   background: var(--cluster-color, var(--cf-accent));
   flex: 0 0 auto;
+}
+
+.scatter-offaxis-note {
+  position: absolute;
+  left: 56px;
+  bottom: 36px;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  color: #808080;
+  font-size: 9px;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.scatter-offaxis-note ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.scatter-offaxis-mark {
+  color: #808080;
+  font-size: 8px;
+  line-height: 1.35;
+  opacity: 0.85;
 }
 
 .sum-row {
@@ -308,6 +380,16 @@ body {
 
 .chart-wrap-tall {
   height: min(380px, 48vh);
+}
+
+/* Match matplotlib figsize (9.5 × 6.5) — avoid squeezed clusters */
+.chart-wrap-scatter {
+  position: relative;
+  width: min(100%, calc(70vh * 9.5 / 6.5));
+  height: auto;
+  aspect-ratio: 9.5 / 6.5;
+  padding-top: 0;
+  margin-inline: auto;
 }
 
 .ag-theme-cashflow {
