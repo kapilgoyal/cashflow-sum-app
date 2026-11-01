@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="CashFlow">
+  <rect width="32" height="32" fill="#000000"/>
+  <!-- Stylized C + rising bar mark in Terminal amber -->
+  <path
+    fill="none"
+    stroke="#FD9D24"
+    stroke-width="2.5"
+    stroke-linecap="square"
+    stroke-linejoin="miter"
+    d="M22.5 9.5 A8.2 8.2 0 1 0 22.5 22.5"
+  />
+  <path
+    fill="none"
+    stroke="#FD9D24"
+    stroke-width="2"
+    stroke-linecap="square"
+    d="M14 20 V16 M17.5 20 V13.5 M21 20 V11"
+  />
+</svg>
