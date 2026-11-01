@@ -1,13 +1,16 @@
 :root {
+  /* Sampled from Bloomberg Terminal Pure Factor Returns screenshot */
   --cf-bg: #000000;
-  --cf-bg-deep: #0d0d0d;
-  --cf-panel: #1a1a1a;
-  --cf-text: #ffffff;
-  --cf-muted: #a0a0a0;
-  --cf-accent: #ff6600;
-  --cf-accent-bright: #ff8533;
-  --cf-hairline: #2a2a2a;
-  --cf-grid: #0d0d0d;
+  --cf-bg-deep: #010101;
+  --cf-panel: #212026;
+  --cf-text: #fcfcfc;
+  --cf-muted: #808080;
+  --cf-accent: #fd9d24;
+  --cf-accent-bright: #fca024;
+  --cf-hairline: #585858;
+  --cf-grid: #1a1a1a;
+  --cf-up: #40b065;
+  --cf-down: #c41e3a;
   --cf-font: "IBM Plex Sans", "Segoe UI", sans-serif;
 }
 
