@@ -36,14 +36,14 @@ const CHART_DATA = [
 ];
 
 const gridTheme = themeQuartz.withParams({
-  backgroundColor: "#0B2A4A",
+  backgroundColor: "#00204E",
   foregroundColor: "#FFFFFF",
-  headerBackgroundColor: "#163A5C",
+  headerBackgroundColor: "#001A3F",
   headerTextColor: "#B8C5D6",
-  oddRowBackgroundColor: "#0A3A6B",
-  rowHoverColor: "#12406A",
-  selectedRowBackgroundColor: "#1A4F7C",
-  borderColor: "#1E4A6E",
+  oddRowBackgroundColor: "#001A3F",
+  rowHoverColor: "#0A2B55",
+  selectedRowBackgroundColor: "#0A3568",
+  borderColor: "#0A3568",
   rowBorder: true,
   fontFamily: '"IBM Plex Sans", "Segoe UI", sans-serif',
   fontSize: 11,
@@ -186,14 +186,14 @@ export default function App() {
                   margin={{ top: 4, right: 8, left: -12, bottom: 0 }}
                 >
                   <CartesianGrid
-                    stroke="#1E4A6E"
+                    stroke="#0A3568"
                     strokeDasharray="3 3"
                     vertical={false}
                   />
                   <XAxis
                     dataKey="cohort"
                     tick={{ fill: "#B8C5D6", fontSize: 11 }}
-                    axisLine={{ stroke: "#1E4A6E" }}
+                    axisLine={{ stroke: "#0A3568" }}
                     tickLine={false}
                   />
                   <YAxis
@@ -205,8 +205,8 @@ export default function App() {
                   />
                   <Tooltip
                     contentStyle={{
-                      background: "#0B2A4A",
-                      border: "1px solid #1E4A6E",
+                      background: "#00204E",
+                      border: "1px solid #0A3568",
                       fontSize: 11,
                       color: "#FFFFFF",
                     }}

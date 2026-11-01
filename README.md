@@ -2,14 +2,14 @@
 
 Vite + React frontend with a Vercel Python serverless function at `api/sum.py`. No FastAPI, no `local-backend/`.
 
-Dense blue / white / pink UI (`THEME.md`). Compact AG Grid sample tape + Recharts cohort chart. Top bar: **CashFlow** + pink `v0.1.0`.
+Dense GIC navy / white / pink UI (`THEME.md`). Compact AG Grid sample tape + Recharts cohort chart. Top bar: **CashFlow** + pink `v0.1.0`.
 
 ## Theme hexes
 
 | Role | Hex |
 | --- | --- |
-| Background | `#0B2A4A` |
-| Panel / top bar | `#0A3A6B` |
+| Background | `#00204E` |
+| Panel / top bar | `#001A3F` |
 | Text | `#FFFFFF` |
 | Muted text | `#B8C5D6` |
 | Accent | `#E85A9B` |

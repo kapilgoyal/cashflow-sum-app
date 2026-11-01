@@ -1,12 +1,12 @@
 :root {
-  --cf-bg: #0b2a4a;
-  --cf-bg-deep: #0a3a6b;
+  --cf-bg: #00204e;
+  --cf-bg-deep: #001a3f;
   --cf-text: #ffffff;
   --cf-muted: #b8c5d6;
   --cf-accent: #e85a9b;
   --cf-accent-bright: #ff6b9d;
-  --cf-hairline: #1e4a6e;
-  --cf-grid: #163a5c;
+  --cf-hairline: #0a3568;
+  --cf-grid: #001a3f;
   --cf-font: "IBM Plex Sans", "Segoe UI", sans-serif;
 }
 

@@ -1,6 +1,6 @@
 # CashFlow theme
 
-Dense professional UI. Small fonts. Blue field, white type, pink accents.
+Dense professional UI. Small fonts. GIC navy field, white type, pink accents.
 
 ## Top bar
 
@@ -10,14 +10,14 @@ Height 32px (range 28–36px). White **CashFlow** name + pink **v0.1.0**.
 
 | Token | Hex | Role |
 | --- | --- | --- |
-| Background | `#0B2A4A` | Page / shell |
-| Background deep | `#0A3A6B` | Panels / top bar |
+| Background | `#00204E` | Page / shell (GIC navy) |
+| Background deep | `#001A3F` | Panels / top bar |
 | Text | `#FFFFFF` | Primary type |
 | Text muted | `#B8C5D6` | Secondary labels |
 | Accent | `#E85A9B` | Version / CTA / chart |
 | Accent bright | `#FF6B9D` | Hover / highlight |
-| Hairline | `#1E4A6E` | Borders on blue |
-| Grid mute | `#163A5C` | Table chrome |
+| Hairline | `#0A3568` | Borders on navy |
+| Grid mute | `#001A3F` | Table chrome |
 
 ## Typography
 
