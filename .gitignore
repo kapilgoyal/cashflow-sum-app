@@ -11,3 +11,8 @@ venv/
 data/loan_cf_month1.json
 data/loan_cf_month1.sqlite
 data/*.sqlite
+
+.env.local
+.env*.local
+.vercel
+.env*
