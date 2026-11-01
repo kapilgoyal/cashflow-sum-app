@@ -1,8 +1,9 @@
 /**
  * Shared AG Grid theme, column helpers, and DataGrid wrapper for CashFlow.
- * Every tabular React view uses this — one look, one drill interaction.
+ * Every tabular React view uses this — one look, one drill interaction,
+ * CSV export + clipboard copy.
  */
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz } from "ag-grid-community";
 
@@ -32,6 +33,8 @@ export const gridTheme = themeQuartz.withParams({
   rangeSelectionBorderColor: "#FD9D24",
   iconSize: 12,
   headerColumnResizeHandleWidth: 2,
+  /* Prefer dark OS/chrome scrollbars; App.css overrides WebKit thumb/track. */
+  browserColorScheme: "dark",
 });
 
 export function fmtMoney(v) {
@@ -63,6 +66,53 @@ export function pcaLabel(row) {
 export function staLabel(row) {
   if (!row) return "";
   return row.sta_level || STA[row.sda_multiple] || row.sda_multiple || "";
+}
+
+/** PSA×SDA axis label used for Scenario column merge. */
+export function scenarioAxisLabel(row) {
+  if (!row) return "";
+  const psa = row.psa_multiple ?? "";
+  const sda = row.sda_multiple ?? "";
+  return `PSA ${psa} / SDA ${sda}`;
+}
+
+export function scenarioAxisKey(row) {
+  if (!row) return "";
+  return `${row.psa_multiple}|${row.sda_multiple}`;
+}
+
+/**
+ * Sort by PSA→SDA→cohort and stamp `_scenarioLabel` / `_scenarioSpan`
+ * so adjacent same-axis rows can rowspan the Scenario column.
+ */
+export function withScenarioRowSpans(rows) {
+  const sorted = [...(rows || [])].sort((a, b) => {
+    const pa = Number(a.psa_multiple) || 0;
+    const pb = Number(b.psa_multiple) || 0;
+    if (pa !== pb) return pa - pb;
+    const sa = Number(a.sda_multiple) || 0;
+    const sb = Number(b.sda_multiple) || 0;
+    if (sa !== sb) return sa - sb;
+    return String(a.cohort || "").localeCompare(String(b.cohort || ""));
+  });
+  const out = sorted.map((r) => ({
+    ...r,
+    _scenarioLabel: scenarioAxisLabel(r),
+    _scenarioSpan: 1,
+  }));
+  let i = 0;
+  while (i < out.length) {
+    let j = i + 1;
+    while (j < out.length && out[j]._scenarioLabel === out[i]._scenarioLabel) {
+      j += 1;
+    }
+    out[i]._scenarioSpan = j - i;
+    for (let k = i + 1; k < j; k += 1) {
+      out[k]._scenarioSpan = 0;
+    }
+    i = j;
+  }
+  return out;
 }
 
 export const sharedDefaultColDef = {
@@ -124,7 +174,55 @@ export function intCol(field, headerName, width = 72) {
   };
 }
 
-/** Shared DataGrid — one theme, selection, click-to-drill. */
+function escapeTsv(v) {
+  if (v == null) return "";
+  const s = String(v);
+  if (/[\t\n\r"]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function rowsToTsv(api, rows) {
+  const cols = (api.getColumns?.() || api.getAllDisplayedColumns?.() || [])
+    .filter((c) => {
+      const id = c.getColId?.() || c.colId;
+      return id && id !== "ag-Grid-ControlsColumn" && !String(id).startsWith("_");
+    });
+  const headers = cols.map(
+    (c) => c.getColDef?.()?.headerName || c.getColId?.() || ""
+  );
+  const lines = [headers.join("\t")];
+  for (const row of rows) {
+    const cells = cols.map((c) => {
+      const field = c.getColDef?.()?.field;
+      const getter = c.getColDef?.()?.valueGetter;
+      let val;
+      if (typeof getter === "function") {
+        try {
+          val = getter({ data: row, node: { data: row }, colDef: c.getColDef() });
+        } catch {
+          val = field ? row[field] : "";
+        }
+      } else if (field) {
+        val = row[field];
+      } else {
+        val = "";
+      }
+      const fmt = c.getColDef?.()?.valueFormatter;
+      if (typeof fmt === "function" && val !== "" && val != null) {
+        try {
+          val = fmt({ value: val, data: row });
+        } catch {
+          /* keep raw */
+        }
+      }
+      return escapeTsv(val);
+    });
+    lines.push(cells.join("\t"));
+  }
+  return lines.join("\n");
+}
+
+/** Shared DataGrid — theme, drill, CSV export, clipboard copy. */
 export function DataGrid({
   rowData,
   columnDefs,
@@ -133,10 +231,23 @@ export function DataGrid({
   onGridReady,
   scheduleSave,
   persistLayout = false,
-  className = "grid-wrap grid-wrap-fill ag-theme-cashflow",
+  className = "grid-wrap grid-wrap-fill",
   heightClass,
+  exportName = "cashflow",
+  showToolbar = true,
+  gridProps = {},
 }) {
   const defaultColDef = useMemo(() => ({ ...sharedDefaultColDef }), []);
+  const apiRef = useRef(null);
+  const wrapRef = useRef(null);
+
+  const handleGridReady = useCallback(
+    (e) => {
+      apiRef.current = e.api;
+      onGridReady?.(e);
+    },
+    [onGridReady]
+  );
 
   const onRowClicked = useCallback(
     (e) => {
@@ -155,34 +266,109 @@ export function DataGrid({
     [onRowDrill]
   );
 
+  const collectRows = useCallback(() => {
+    const api = apiRef.current;
+    if (!api) return [];
+    const selected = api.getSelectedRows?.() || [];
+    if (selected.length) return selected;
+    const out = [];
+    api.forEachNodeAfterFilterAndSort?.((n) => {
+      if (n?.data) out.push(n.data);
+    });
+    return out;
+  }, []);
+
+  const exportCsv = useCallback(() => {
+    const api = apiRef.current;
+    if (!api) return;
+    api.exportDataAsCsv({
+      fileName: `${exportName}.csv`,
+      processCellCallback: (p) => {
+        if (p.value == null) return "";
+        return p.value;
+      },
+    });
+  }, [exportName]);
+
+  const copyRows = useCallback(async () => {
+    const api = apiRef.current;
+    if (!api) return;
+    const rows = collectRows();
+    if (!rows.length) return;
+    const tsv = rowsToTsv(api, rows);
+    try {
+      await navigator.clipboard.writeText(tsv);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = tsv;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+  }, [collectRows]);
+
+  const onKeyDown = useCallback(
+    (e) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "c") return;
+      const sel = window.getSelection?.()?.toString?.();
+      if (sel && sel.length > 0) return; /* native text copy */
+      e.preventDefault();
+      copyRows();
+    },
+    [copyRows]
+  );
+
   const wrapClass = heightClass
-    ? `grid-wrap ${heightClass} ag-theme-cashflow`
-    : className;
+    ? `grid-wrap ${heightClass}`
+    : className.replace(/\bag-theme-cashflow\b/g, "").trim() ||
+      "grid-wrap grid-wrap-fill";
 
   return (
-    <div className={wrapClass}>
-      <AgGridReact
-        theme={gridTheme}
-        rowData={rowData}
-        columnDefs={columnDefs}
-        defaultColDef={defaultColDef}
-        columnTypes={sharedColTypes}
-        suppressCellFocus
-        animateRows={false}
-        rowSelection="single"
-        enableCellTextSelection
-        ensureDomOrder
-        getRowId={getRowId}
-        onGridReady={onGridReady}
-        onRowClicked={onRowClicked}
-        onRowDoubleClicked={onRowDoubleClicked}
-        onColumnMoved={persistLayout ? scheduleSave : undefined}
-        onColumnVisible={persistLayout ? scheduleSave : undefined}
-        onColumnPinned={persistLayout ? scheduleSave : undefined}
-        onColumnResized={persistLayout ? scheduleSave : undefined}
-        onSortChanged={persistLayout ? scheduleSave : undefined}
-        onFilterChanged={persistLayout ? scheduleSave : undefined}
-      />
+    <div
+      className={wrapClass}
+      ref={wrapRef}
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+    >
+      {showToolbar && (
+        <div className="cf-grid-toolbar" role="toolbar" aria-label="Grid actions">
+          <button type="button" className="linkish cf-grid-tool" onClick={exportCsv}>
+            Export CSV
+          </button>
+          <button type="button" className="linkish cf-grid-tool" onClick={copyRows}>
+            Copy
+          </button>
+          <span className="cf-grid-tool-hint">Ctrl+C copies selection</span>
+        </div>
+      )}
+      <div className="cf-grid-host ag-theme-cashflow">
+        <AgGridReact
+          theme={gridTheme}
+          rowData={rowData}
+          columnDefs={columnDefs}
+          defaultColDef={defaultColDef}
+          columnTypes={sharedColTypes}
+          suppressCellFocus
+          animateRows={false}
+          rowSelection="single"
+          enableCellTextSelection
+          ensureDomOrder
+          getRowId={getRowId}
+          onGridReady={handleGridReady}
+          onRowClicked={onRowClicked}
+          onRowDoubleClicked={onRowDoubleClicked}
+          onColumnMoved={persistLayout ? scheduleSave : undefined}
+          onColumnVisible={persistLayout ? scheduleSave : undefined}
+          onColumnPinned={persistLayout ? scheduleSave : undefined}
+          onColumnResized={persistLayout ? scheduleSave : undefined}
+          onSortChanged={persistLayout ? scheduleSave : undefined}
+          onFilterChanged={persistLayout ? scheduleSave : undefined}
+          {...gridProps}
+        />
+      </div>
     </div>
   );
 }
