@@ -1,3 +1,7 @@
+# Fallback if builder is ever switched back to NIXPACKS.
+# Critical: do NOT let Node/package.json win in this monorepo.
+providers = ["python"]
+
 [phases.setup]
 nixPkgs = ["python312", "gcc"]
 
