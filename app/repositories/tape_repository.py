@@ -67,18 +67,34 @@ class TapeRepository:
         return out
 
     def _row_to_loan(self, row: pd.Series, cohort: str | None) -> Loan:
+        from app.services.seasoning import age_at_cutoff, as_date
+
+        orig = as_date(row["ORIGINATION_DATE"]) if "ORIGINATION_DATE" in row.index else None
+        cutoff = as_date(row["CUTOFF_DATE"]) if "CUTOFF_DATE" in row.index else None
+        raw_age = row.get("LOAN_AGE_MONTHS")
+        if raw_age is not None and pd.notna(raw_age):
+            age_months = int(raw_age)
+        else:
+            # Fall back to months since origination (standard seasoning proxy).
+            age_months = age_at_cutoff(
+                loan_age_months=None,
+                origination_date=orig,
+                cutoff_date=cutoff,
+            )
         return Loan(
             loan_id=str(row["LOAN_ID"]),
             current_balance=float(row["CURRENT_LOAN_AMOUNT"]),
             annual_rate=float(row["CURRENT_INTEREST_RATE"]),
             remaining_term_months=int(row["REMAINING_TERM"]),
-            loan_age_months=int(row.get("LOAN_AGE_MONTHS", 0) or 0),
+            loan_age_months=age_months,
             monthly_payment=float(row["CURRENT_PAYMENT_AMOUNT_DUE"])
             if pd.notna(row.get("CURRENT_PAYMENT_AMOUNT_DUE"))
             else None,
             remaining_io_months=int(row.get("REMAINING_IO_MONTHS", 0) or 0),
             state=str(row["STATE"]) if pd.notna(row.get("STATE")) else None,
             cohort=cohort,
+            origination_date=orig,
+            cutoff_date=cutoff,
         )
 
     def get_loan(self, loan_id: str | None = None) -> Loan:
