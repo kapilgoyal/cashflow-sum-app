@@ -67,6 +67,7 @@ class TapeRepository:
         return out
 
     def _row_to_loan(self, row: pd.Series, cohort: str | None) -> Loan:
+        from app.services.assumptions import default_has_mi
         from app.services.seasoning import age_at_cutoff, as_date
 
         orig = as_date(row["ORIGINATION_DATE"]) if "ORIGINATION_DATE" in row.index else None
@@ -81,6 +82,8 @@ class TapeRepository:
                 origination_date=orig,
                 cutoff_date=cutoff,
             )
+        fico = row.get("ORIGINAL_FICO")
+        ltv = row.get("ORIGINAL_LTV")
         return Loan(
             loan_id=str(row["LOAN_ID"]),
             current_balance=float(row["CURRENT_LOAN_AMOUNT"]),
@@ -95,6 +98,10 @@ class TapeRepository:
             cohort=cohort,
             origination_date=orig,
             cutoff_date=cutoff,
+            original_fico=int(fico) if pd.notna(fico) else None,
+            original_ltv=float(ltv) if pd.notna(ltv) else None,
+            # From data/assumptions.csv — not from monthly_insurance_cost.
+            has_mi=default_has_mi(),
         )
 
     def get_loan(self, loan_id: str | None = None) -> Loan:

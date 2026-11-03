@@ -38,6 +38,7 @@ const NAV = [
   { id: "cohort", label: "Cohort" },
   { id: "scenarios", label: "Scenarios" },
   { id: "cashflow", label: "Cash Flow" },
+  { id: "assumptions", label: "Assumptions" },
 ];
 
 const STRAT_DIMS = [
@@ -252,6 +253,11 @@ export default function App() {
   const [qcMeta, setQcMeta] = useState(null);
   const [qcLoading, setQcLoading] = useState(false);
   const [qcError, setQcError] = useState(null);
+
+  const [assumptionRows, setAssumptionRows] = useState([]);
+  const [assumptionMeta, setAssumptionMeta] = useState(null);
+  const [assumptionLoading, setAssumptionLoading] = useState(false);
+  const [assumptionError, setAssumptionError] = useState(null);
 
   const gridApiRef = useRef(null);
   const restoringRef = useRef(false);
@@ -606,6 +612,42 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setAssumptionLoading(true);
+      setAssumptionError(null);
+      try {
+        const res = await fetch("/api/assumptions");
+        if (!res.ok) {
+          const detail = await res.text();
+          throw new Error(`HTTP ${res.status}: ${detail}`);
+        }
+        const data = await res.json();
+        if (cancelled) return;
+        setAssumptionRows(
+          Array.isArray(data.assumptions) ? data.assumptions : []
+        );
+        setAssumptionMeta({
+          n: data.n,
+          source: data.source,
+          bootstrap: data.bootstrap,
+        });
+      } catch (err) {
+        if (!cancelled) {
+          setAssumptionError(err.message || String(err));
+          setAssumptionRows([]);
+          setAssumptionMeta(null);
+        }
+      } finally {
+        if (!cancelled) setAssumptionLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const qcSummary = useMemo(() => {
     const pass = qcRows.filter((r) => r.outcome === "pass").length;
     const fail = qcRows.filter((r) => r.outcome === "fail").length;
@@ -660,6 +702,82 @@ export default function App() {
         cellClass: "cf-num",
       },
       { field: "cohort", headerName: "Cohort", flex: 1.4, minWidth: 160 },
+      {
+        field: "has_mi",
+        headerName: "Has MI",
+        width: 80,
+        valueFormatter: (p) =>
+          p.value === true ? "true" : p.value === false ? "false" : "",
+      },
+    ],
+    []
+  );
+
+  const assumptionColumnDefs = useMemo(
+    () => [
+      {
+        field: "assumption_id",
+        headerName: "ID",
+        width: 200,
+        cellClass: "cf-id",
+      },
+      { field: "category", headerName: "Category", width: 120 },
+      { field: "name", headerName: "Name", width: 180 },
+      {
+        field: "value",
+        headerName: "Value",
+        flex: 1.4,
+        minWidth: 160,
+        wrapText: true,
+        autoHeight: true,
+      },
+      { field: "unit", headerName: "Unit", width: 88 },
+      {
+        field: "applies_to",
+        headerName: "Applies to",
+        flex: 1,
+        minWidth: 140,
+      },
+      {
+        field: "related_data_path",
+        headerName: "Data path",
+        flex: 1.1,
+        minWidth: 160,
+      },
+      {
+        field: "source_name",
+        headerName: "Source",
+        flex: 1.2,
+        minWidth: 160,
+      },
+      {
+        field: "source_url",
+        headerName: "Source URL",
+        flex: 1.4,
+        minWidth: 180,
+        cellRenderer: (p) => {
+          const url = p.value;
+          if (!url) return "";
+          return (
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "#FD9D24" }}
+            >
+              {url}
+            </a>
+          );
+        },
+      },
+      {
+        field: "notes",
+        headerName: "Notes",
+        flex: 1.6,
+        minWidth: 200,
+        wrapText: true,
+        autoHeight: true,
+      },
     ],
     []
   );
@@ -1910,6 +2028,39 @@ export default function App() {
                   onRowDrill={drillAggScenario}
                   heightClass="grid-wrap-fill"
                   exportName="cf-aggregates"
+                />
+              )}
+            </section>
+          )}
+
+          {pane === "assumptions" && (
+            <section className="section section-fill">
+              <div className="section-head">
+                <h2 className="section-title">Assumptions</h2>
+                <p className="section-meta">
+                  {assumptionMeta?.source || "data/assumptions.csv"}
+                  {assumptionMeta?.n != null ? ` · ${assumptionMeta.n} rows` : ""}
+                  {assumptionMeta?.bootstrap?.has_mi_all != null
+                    ? ` · has_mi_all=${assumptionMeta.bootstrap.has_mi_all}`
+                    : ""}
+                  {" · CSV not DB"}
+                </p>
+              </div>
+              {assumptionLoading ? (
+                <p className="muted">Loading assumptions…</p>
+              ) : assumptionError ? (
+                <StatusBanner tone="error">
+                  Assumptions: {assumptionError}
+                </StatusBanner>
+              ) : !assumptionRows.length ? (
+                <p className="muted">No assumptions loaded.</p>
+              ) : (
+                <DataGrid
+                  rowData={assumptionRows}
+                  columnDefs={assumptionColumnDefs}
+                  getRowId={(p) => String(p.data.assumption_id)}
+                  heightClass="grid-wrap-fill"
+                  exportName="assumptions"
                 />
               )}
             </section>

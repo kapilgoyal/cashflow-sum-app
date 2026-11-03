@@ -5,8 +5,9 @@ Three-panel row semantics (see docs/cf-panel-refs/):
 2. Default roll — Beg Def / New / Liquidated (after lag) / Recovery / Loss / End Def
 3. Actual cash — Interest + Sched + Prepay + Recovery (= Total Cash); defaults ≠ cash
 
-Recovery rate stays cohort (60/55/75). Liquidation lag from Fannie Mae state
-time frames when loan.state is known.
+Recovery rate: Urban/Freddie severity grid when has_mi (recovery = 1 − severity);
+else cohort rate (60/55/75). Liquidation lag from Fannie Mae state time frames
+when loan.state is known.
 
 PSA/SDA seasoning: curve age for projection month ``k`` is
 ``age_at_cutoff + k`` (from ``loan_age_months`` or origination→cutoff),
@@ -30,6 +31,7 @@ from app.services.psa_sda import (
 )
 from app.services.recovery import resolve_recovery_lag_months
 from app.services.seasoning import age_at_cutoff, curve_age
+from app.services.severity import resolve_loan_recovery_rate
 
 
 def project_loan_cashflows(
@@ -46,8 +48,9 @@ def project_loan_cashflows(
     4. New default = MDR × beginning UPB (capped)
     5. Prepay = SMM × max(0, begin − sched − new_default)
     6. Liquidate aged default inventory after used_recovery_lag_months,
-       spread evenly over recovery_period_months; recovery = liq × rate;
-       realized loss = liq × (1 − rate). Defaults themselves are not cash.
+       spread evenly over recovery_period_months; recovery = liq × rate
+       (Urban grid when has_mi; else cohort); realized loss = liq × (1 − rate).
+       Defaults themselves are not cash.
     """
     bal = float(loan.current_balance)
     rate = float(loan.annual_rate)
@@ -70,7 +73,12 @@ def project_loan_cashflows(
         scenario_lag_months=int(scenario.recovery_lag_months),
     )
     period = max(int(scenario.recovery_period_months), 1)
-    rec_rate = float(scenario.recovery_rate)
+    rec_rate, _rec_src = resolve_loan_recovery_rate(
+        has_mi=loan.has_mi,
+        original_fico=loan.original_fico,
+        original_ltv=loan.original_ltv,
+        cohort_recovery_rate=float(scenario.recovery_rate),
+    )
 
     # month → face amount of default inventory liquidating that month
     pending_liq: dict[int, float] = defaultdict(float)

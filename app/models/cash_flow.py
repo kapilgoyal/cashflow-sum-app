@@ -64,7 +64,10 @@ class CashFlowRow(BaseModel):
     )
     recovery_rate: float | None = Field(
         default=None,
-        description="Cohort recovery rate applied to liquidated default",
+        description=(
+            "Recovery rate on liquidated default: Urban/Freddie "
+            "1−severity when has_mi, else cohort rate"
+        ),
     )
 
     @model_validator(mode="after")

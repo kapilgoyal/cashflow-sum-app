@@ -51,8 +51,15 @@ CREATE TABLE IF NOT EXISTS public.asf_tape (
     rental_income_used_for_dscr           double precision,
     refinance_incentive                   double precision,
     cohort                                text,
+    has_mi                                boolean,
     loaded_at                             timestamptz NOT NULL DEFAULT now()
 );
+"""
+
+# Idempotent add for DBs created before has_mi existed.
+ASF_TAPE_HAS_MI_ALTER_SQL = """
+ALTER TABLE public.asf_tape
+    ADD COLUMN IF NOT EXISTS has_mi boolean;
 """
 
 QC_CHECKS_TABLE_SQL = """
@@ -135,6 +142,7 @@ ASF_TAPE_COLUMNS = (
     "rental_income_used_for_dscr",
     "refinance_incentive",
     "cohort",
+    "has_mi",
 )
 
 # Excel Loan Tape header → asf_tape column

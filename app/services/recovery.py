@@ -33,8 +33,16 @@ _STATE_ALIASES: dict[str, str] = {
 
 
 def _data_csv_path() -> Path:
-    """Resolve committed timeframe CSV under repo ``data/``."""
-    return Path(__file__).resolve().parents[2] / "data" / FANNIE_CSV_NAME
+    """Resolve committed timeframe CSV under repo ``data/``.
+
+    Prefers path from ``data/assumptions.csv`` when that catalog is loaded.
+    """
+    try:
+        from app.services.assumptions import fannie_lag_relpath, resolve_data_path
+
+        return resolve_data_path(fannie_lag_relpath())
+    except Exception:  # noqa: BLE001 — fall back if assumptions not bootstrapped
+        return Path(__file__).resolve().parents[2] / "data" / FANNIE_CSV_NAME
 
 
 @lru_cache(maxsize=1)
