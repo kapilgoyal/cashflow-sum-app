@@ -4,7 +4,11 @@ from __future__ import annotations
 
 
 def cdr_at_age(age_months: int, sda_multiple: float) -> float:
-    """Annual CDR under n% SDA (GFMI ramp / peak / tail)."""
+    """Annual CDR under n% SDA (GFMI ramp / peak / tail).
+
+    ``age_months`` is seasoned curve age (age_at_cutoff + projection month),
+    not the projection month index alone.
+    """
     age = max(int(age_months), 1)
     if age <= 30:
         base = 0.0002 * age  # 0.02% × age → 0.60% at month 30

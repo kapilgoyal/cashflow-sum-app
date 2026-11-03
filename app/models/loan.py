@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from pydantic import BaseModel, Field
 from sqlalchemy import Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -16,7 +18,11 @@ class Loan(BaseModel):
     current_balance: float = Field(gt=0)
     annual_rate: float = Field(ge=0, description="Decimal, e.g. 0.08781")
     remaining_term_months: int = Field(gt=0)
-    loan_age_months: int = Field(ge=0, default=0)
+    loan_age_months: int = Field(
+        ge=0,
+        default=0,
+        description="Seasoning at cutoff (scheduled payments before cutoff)",
+    )
     monthly_payment: float | None = Field(
         default=None,
         description="If None, level payment is computed from balance/rate/term",
@@ -24,6 +30,14 @@ class Loan(BaseModel):
     remaining_io_months: int = Field(ge=0, default=0)
     state: str | None = None
     cohort: str | None = None
+    origination_date: date | None = Field(
+        default=None,
+        description="Optional; used to derive seasoning when age is unavailable",
+    )
+    cutoff_date: date | None = Field(
+        default=None,
+        description="Optional tape cutoff; pairs with origination_date",
+    )
 
 
 class LoanORM(Base):

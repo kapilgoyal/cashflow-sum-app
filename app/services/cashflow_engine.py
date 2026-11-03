@@ -15,6 +15,7 @@ from app.services.psa_sda import (
     round_money,
     smm_from_cpr,
 )
+from app.services.seasoning import age_at_cutoff, curve_age
 
 
 def project_loan_cashflows(
@@ -33,12 +34,20 @@ def project_loan_cashflows(
     6. Recovery of defaulted principal at scenario.recovery_rate, starting
        after recovery_lag_months, spread evenly over recovery_period_months
 
+    PSA/SDA seasoning: curve age for projection month ``k`` is
+    ``age_at_cutoff + k`` (from ``loan_age_months`` or origination→cutoff),
+    never projection month alone (which would force every loan to t=1).
+
     TODO: state-level foreclosure/REO lag — not applied (pool constants only).
     """
     bal = float(loan.current_balance)
     rate = float(loan.annual_rate)
     rem_term = int(loan.remaining_term_months)
-    age0 = int(loan.loan_age_months)
+    age0 = age_at_cutoff(
+        loan_age_months=int(loan.loan_age_months),
+        origination_date=loan.origination_date,
+        cutoff_date=loan.cutoff_date,
+    )
     io_left = int(loan.remaining_io_months or 0)
     payment = loan.monthly_payment
     if payment is None or payment <= 0:
@@ -56,6 +65,7 @@ def project_loan_cashflows(
     horizon = max(int(months), rem_term)
 
     for m in range(1, horizon + 1):
+        age = curve_age(age0, m)
         if bal <= 0.005 and not any(pending[k] for k in range(m, m + lag + period + 1)):
             # Still emit remaining months with zeros if requested, else stop early
             if m > months:
@@ -71,7 +81,7 @@ def project_loan_cashflows(
                     prepay=0.0,
                     recovery=recovery,
                     ending_balance=0.0,
-                    loan_age=age0 + m,
+                    loan_age=age,
                     cpr=0.0,
                     smm=0.0,
                     cdr=0.0,
@@ -83,7 +93,6 @@ def project_loan_cashflows(
             continue
 
         begin = bal
-        age = age0 + m
         months_left = max(rem_term - m + 1, 1)
         r_mo = rate / 12.0
         interest = begin * r_mo
@@ -99,6 +108,7 @@ def project_loan_cashflows(
                 pmt = level_payment(begin, rate, months_left)
             sched = min(max(pmt - interest, 0.0), begin)
 
+        # Index CPR/CDR by seasoned curve age — not by projection month alone.
         cpr = cpr_at_age(age, psa)
         cdr = cdr_at_age(age, sda)
         smm = smm_from_cpr(cpr)
