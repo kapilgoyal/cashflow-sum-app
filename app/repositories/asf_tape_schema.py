@@ -51,15 +51,29 @@ CREATE TABLE IF NOT EXISTS public.asf_tape (
     rental_income_used_for_dscr           double precision,
     refinance_incentive                   double precision,
     cohort                                text,
-    has_mi                                boolean,
+    has_mi                                boolean NOT NULL DEFAULT true,
     loaded_at                             timestamptz NOT NULL DEFAULT now()
 );
 """
 
-# Idempotent add for DBs created before has_mi existed.
+# Idempotent add for DBs created before has_mi existed (nullable first so IF NOT EXISTS is safe).
 ASF_TAPE_HAS_MI_ALTER_SQL = """
 ALTER TABLE public.asf_tape
-    ADD COLUMN IF NOT EXISTS has_mi boolean;
+    ADD COLUMN IF NOT EXISTS has_mi boolean DEFAULT true;
+"""
+
+# Backfill nulls after ADD COLUMN (existing rows stay NULL without this).
+ASF_TAPE_HAS_MI_BACKFILL_SQL = """
+UPDATE public.asf_tape
+SET has_mi = true
+WHERE has_mi IS NULL;
+"""
+
+# Enforce DEFAULT true NOT NULL once every row is non-null.
+ASF_TAPE_HAS_MI_NOT_NULL_SQL = """
+ALTER TABLE public.asf_tape
+    ALTER COLUMN has_mi SET DEFAULT true,
+    ALTER COLUMN has_mi SET NOT NULL;
 """
 
 QC_CHECKS_TABLE_SQL = """

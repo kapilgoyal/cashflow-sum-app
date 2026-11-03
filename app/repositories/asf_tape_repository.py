@@ -17,6 +17,8 @@ from app.repositories.asf_qc_checks import ALL_CHECKS, checks_as_rows
 from app.repositories.asf_tape_schema import (
     ASF_TAPE_COLUMNS,
     ASF_TAPE_HAS_MI_ALTER_SQL,
+    ASF_TAPE_HAS_MI_BACKFILL_SQL,
+    ASF_TAPE_HAS_MI_NOT_NULL_SQL,
     ASF_TAPE_TABLE_SQL,
     EXCEL_TO_ASF,
     QC_CHECKS_TABLE_SQL,
@@ -62,9 +64,27 @@ class AsfTapeRepository:
             with conn.cursor() as cur:
                 cur.execute(ASF_TAPE_TABLE_SQL)
                 cur.execute(ASF_TAPE_HAS_MI_ALTER_SQL)
+                cur.execute(ASF_TAPE_HAS_MI_BACKFILL_SQL)
+                cur.execute(ASF_TAPE_HAS_MI_NOT_NULL_SQL)
                 cur.execute(QC_CHECKS_TABLE_SQL)
                 cur.execute(QC_RESULTS_TABLE_SQL)
             conn.commit()
+
+    def ensure_has_mi_column(self) -> bool:
+        """Add + backfill has_mi DEFAULT true NOT NULL. Returns True if present."""
+        with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
+            with conn.cursor() as cur:
+                cur.execute(ASF_TAPE_HAS_MI_ALTER_SQL)
+                cur.execute(ASF_TAPE_HAS_MI_BACKFILL_SQL)
+            conn.commit()
+            with conn.cursor() as cur:
+                try:
+                    cur.execute(ASF_TAPE_HAS_MI_NOT_NULL_SQL)
+                    conn.commit()
+                except Exception:  # noqa: BLE001
+                    # Column usable even if NOT NULL enforcement fails.
+                    conn.rollback()
+        return "has_mi" in self.tape_columns()
 
     def load_excel(self, path: Path | str | None = None) -> pd.DataFrame:
         tape_path = Path(path) if path else DEFAULT_TAPE
@@ -105,6 +125,11 @@ class AsfTapeRepository:
             with conn.cursor() as cur:
                 cur.execute(ASF_TAPE_TABLE_SQL)
                 cur.execute(ASF_TAPE_HAS_MI_ALTER_SQL)
+                cur.execute(ASF_TAPE_HAS_MI_BACKFILL_SQL)
+                try:
+                    cur.execute(ASF_TAPE_HAS_MI_NOT_NULL_SQL)
+                except Exception:  # noqa: BLE001
+                    pass
                 cur.execute("TRUNCATE public.asf_tape")
                 with cur.copy(
                     f"COPY public.asf_tape ({INSERT_COLS}) FROM STDIN"
@@ -307,7 +332,15 @@ class AsfTapeRepository:
             "cohort",
             "has_mi",
         )
-        col_sql = ", ".join(cols)
+        # Migrate before SELECT — production Neon may predate has_mi.
+        has_mi_col = False
+        try:
+            has_mi_col = self.ensure_has_mi_column()
+        except Exception:  # noqa: BLE001
+            has_mi_col = "has_mi" in self.tape_columns()
+        select_cols = cols if has_mi_col else tuple(c for c in cols if c != "has_mi")
+        col_sql = ", ".join(select_cols)
+        default_mi = bool(default_has_mi())
         with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT COUNT(*) FROM public.asf_tape")
@@ -321,7 +354,14 @@ class AsfTapeRepository:
                     """,
                     (limit, offset),
                 )
-                rows = [dict(zip(cols, tup)) for tup in cur.fetchall()]
+                rows = []
+                for tup in cur.fetchall():
+                    row = dict(zip(select_cols, tup))
+                    if "has_mi" not in row:
+                        row["has_mi"] = default_mi
+                    elif row["has_mi"] is None:
+                        row["has_mi"] = default_mi
+                    rows.append(row)
         return rows, total
 
     def list_loans_from_excel(
