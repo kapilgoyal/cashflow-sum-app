@@ -1,5 +1,5 @@
 :root {
-  /* Professional light: white content + #001A41 navy typography; navy chrome */
+  /* Professional light: white content + #001A41 navy typography; light-blue nav strip */
   --cf-bg: #ffffff;
   --cf-bg-deep: #001a41;
   --cf-panel: #ffffff;
@@ -16,8 +16,11 @@
   --cf-up: #1f8a44;
   --cf-down: #c51d46;
   --cf-on-accent: #001a41;
-  --cf-nav-text: #d7e0ec;
-  --cf-nav-hover: #eef3f9;
+  --cf-nav-strip: #e8f0fe;
+  --cf-nav-text: #001a41;
+  --cf-nav-hover: #dce6f5;
+  --cf-nav-width: 152px;
+  --cf-nav-width-collapsed: 48px;
   /* Bloomberg Prop/Fixed are proprietary; Source Sans 3 is the closest OFL UI sans
      (Bergoom, an open Terminal recreation, was derived from Source Sans 3). */
   --cf-font: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
@@ -60,13 +63,22 @@ body {
 }
 
 .sidenav {
-  flex: 0 0 176px;
+  flex: 0 0 var(--cf-nav-width);
+  width: var(--cf-nav-width);
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: 10px 8px;
-  background: var(--cf-bg-deep);
-  border-right: 1px solid #0a274f;
+  padding: 8px 6px;
+  background: var(--cf-nav-strip);
+  border-right: 1px solid var(--cf-hairline);
+  transition: flex-basis 0.16s ease, width 0.16s ease, padding 0.16s ease;
+  overflow: hidden;
+}
+
+.sidenav.is-collapsed {
+  flex-basis: var(--cf-nav-width-collapsed);
+  width: var(--cf-nav-width-collapsed);
+  padding: 8px 4px;
 }
 
 .sidenav-btn {
@@ -84,17 +96,37 @@ body {
   text-align: left;
   cursor: pointer;
   border-radius: 0;
+  white-space: nowrap;
 }
 
 .sidenav-btn:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--cf-text);
+  background: var(--cf-nav-hover);
 }
 
 .sidenav-btn.is-active {
   color: var(--cf-on-accent);
   background: var(--cf-accent);
   border-color: var(--cf-accent);
+}
+
+.sidenav-label-short {
+  display: none;
+}
+
+.sidenav.is-collapsed .sidenav-label-full {
+  display: none;
+}
+
+.sidenav.is-collapsed .sidenav-label-short {
+  display: inline;
+}
+
+.sidenav.is-collapsed .sidenav-btn {
+  padding: 8px 2px;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 0.02em;
 }
 
 .section-actions {
@@ -107,14 +139,45 @@ body {
 .topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   height: 36px;
   min-height: 36px;
   max-height: 36px;
-  padding: 0 12px;
+  padding: 0 10px;
   background: var(--cf-bg-deep);
   border-bottom: 1px solid #0a274f;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nav-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--cf-nav-hover);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.nav-toggle:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-toggle:focus-visible {
+  outline: 2px solid var(--cf-accent);
+  outline-offset: 1px;
 }
 
 .topbar-brand {
@@ -146,15 +209,15 @@ body {
   letter-spacing: 0.04em;
   color: var(--cf-accent);
   line-height: 1;
-  margin-left: auto;
+  margin-left: 2px;
 }
 
 .main {
   flex: 1;
-  padding: 10px 14px 14px;
+  padding: 8px 10px 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
   min-width: 0;
   min-height: 0;
@@ -580,13 +643,13 @@ body {
   height: min(420px, 55vh);
 }
 
-/* 3 cohort rows + header ≈ 28 + 3×24; keep fixed so Loans gets remaining space */
+/* 3 cohort rows + denser header ≈ 22 + 3×20 + toolbar; Loans keeps remaining space */
 .grid-wrap-mid,
 .grid-wrap-cohort-stats {
-  height: 140px;
-  max-height: 160px;
-  min-height: 140px;
-  flex: 0 0 140px;
+  height: 110px;
+  max-height: 128px;
+  min-height: 100px;
+  flex: 0 0 110px;
 }
 
 .grid-wrap-fill {
@@ -610,8 +673,10 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
   padding: 0;
   border: 1px solid transparent;
   border-radius: 2px;
@@ -619,6 +684,8 @@ body {
   color: var(--cf-muted);
   cursor: pointer;
   line-height: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .cf-grid-icon-btn:hover {
@@ -631,6 +698,62 @@ body {
   outline: 2px solid var(--cf-accent);
   outline-offset: 1px;
   color: var(--cf-text);
+}
+
+.cf-grid-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.strat-toolbar {
+  gap: 6px 10px;
+  padding: 0;
+  min-height: 0;
+}
+
+.strat-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 10px 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding-bottom: 4px;
+}
+
+.strat-chart-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--cf-hairline);
+  background: var(--cf-panel);
+  padding: 6px 8px 4px;
+}
+
+.strat-chart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.strat-chart-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--cf-text);
+}
+
+.strat-chart-meta {
+  font-size: 10px;
+  color: var(--cf-muted);
+}
+
+.strat-chart-empty {
+  margin: 24px 0;
+  text-align: center;
 }
 
 .cf-grid-host {
@@ -751,4 +874,152 @@ body {
 .ag-theme-cashflow .ag-header-cell {
   padding-left: 8px;
   padding-right: 6px;
+}
+
+.nav-backdrop {
+  display: none;
+}
+
+/* —— Responsive: mobile + narrow desktop —— */
+@media (pointer: coarse) {
+  .cf-grid-icon-btn,
+  .nav-toggle {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .sidenav-btn {
+    min-height: 40px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .cf-grid-toolbar {
+    min-height: 40px;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 900px) {
+  .strat-charts {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  }
+
+  .chart-wrap-scatter {
+    width: 100%;
+    max-height: none;
+    aspect-ratio: 9.5 / 6.5;
+  }
+}
+
+@media (max-width: 720px) {
+  .shell {
+    position: relative;
+  }
+
+  .nav-backdrop {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 25;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: rgba(0, 26, 65, 0.28);
+    cursor: pointer;
+  }
+
+  .sidenav:not(.is-collapsed) {
+    position: absolute;
+    z-index: 30;
+    inset: 0 auto 0 0;
+    flex: none;
+    width: min(220px, 82vw);
+    box-shadow: 4px 0 18px rgba(0, 26, 65, 0.14);
+  }
+
+  .sidenav.is-collapsed {
+    flex-basis: var(--cf-nav-width-collapsed);
+    width: var(--cf-nav-width-collapsed);
+  }
+
+  .main {
+    padding: 6px 8px 8px;
+    gap: 6px;
+  }
+
+  .section {
+    padding: 6px 8px 8px;
+  }
+
+  .section-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .section-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .strat-toolbar {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .strat-charts {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .grid-wrap-fill {
+    min-height: 240px;
+  }
+
+  .grid-wrap-mid,
+  .grid-wrap-cohort-stats {
+    height: 110px;
+    flex: 0 0 110px;
+  }
+
+  .qc-summary {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  .topbar {
+    padding: 0 8px;
+  }
+
+  .field-inline {
+    flex-wrap: wrap;
+  }
+
+  .field-inline .select {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidenav.is-collapsed {
+    /* maximize content: hide rail; open via header toggle as drawer */
+    display: none;
+  }
+
+  .sidenav:not(.is-collapsed) {
+    width: min(240px, 88vw);
+  }
+
+  .topbar-name {
+    font-size: 12px;
+  }
+
+  .chart-wrap,
+  .chart-wrap-tall {
+    height: min(280px, 42vh);
+  }
 }

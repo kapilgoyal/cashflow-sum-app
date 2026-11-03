@@ -25,9 +25,10 @@ export const gridTheme = themeQuartz.withParams({
   fontSize: 11,
   headerFontSize: 10,
   headerFontWeight: 600,
-  spacing: 4,
-  headerHeight: 28,
-  rowHeight: 24,
+  /* Tighter vertical density — same type size/family, more rows on screen. */
+  spacing: 2,
+  headerHeight: 22,
+  rowHeight: 20,
   borderRadius: 0,
   wrapperBorderRadius: 0,
   rangeSelectionBorderColor: "#FD9D24",

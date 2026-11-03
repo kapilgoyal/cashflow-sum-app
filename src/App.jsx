@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import {
+  Bar,
+  BarChart,
   CartesianGrid,
+  Cell,
   ComposedChart,
   Legend,
+  Pie,
+  PieChart,
   Polygon,
   ResponsiveContainer,
   Scatter,
@@ -41,16 +46,241 @@ const NAV = [
   { id: "assumptions", label: "Assumptions" },
 ];
 
+/** Standard mortgage strat cuts. chart: bar | hbar | pie */
 const STRAT_DIMS = [
-  { id: "documentation_type", label: "Documentation" },
-  { id: "ltv_bucket", label: "LTV bucket" },
-  { id: "cltv_bucket", label: "CLTV bucket" },
-  { id: "fico_band", label: "FICO band" },
-  { id: "state", label: "State" },
-  { id: "property_type", label: "Property type" },
-  { id: "occupancy", label: "Occupancy" },
-  { id: "loan_purpose", label: "Loan purpose" },
+  { id: "ltv_bucket", label: "LTV", chart: "bar" },
+  { id: "cltv_bucket", label: "CLTV", chart: "bar" },
+  { id: "fico_band", label: "FICO", chart: "bar" },
+  { id: "balance_band", label: "Balance", chart: "bar" },
+  { id: "orig_year", label: "Orig year", chart: "bar" },
+  { id: "state", label: "State", chart: "hbar" },
+  { id: "documentation_type", label: "Documentation", chart: "hbar" },
+  { id: "occupancy", label: "Occupancy", chart: "pie" },
+  { id: "loan_purpose", label: "Purpose", chart: "pie" },
+  { id: "property_type", label: "Property type", chart: "hbar" },
 ];
+
+const STRAT_BAR_COLOR = "#001A41";
+const STRAT_PIE_COLORS = [
+  "#001A41",
+  "#FD9D24",
+  "#4A5F7A",
+  "#1F8A44",
+  "#8A9BB0",
+  "#C51D46",
+  "#0B4F9C",
+  "#6B7C93",
+];
+
+function fmtUpbShort(v) {
+  if (v == null || Number.isNaN(Number(v))) return "";
+  const n = Number(v);
+  if (Math.abs(n) >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (Math.abs(n) >= 1e3) return `$${(n / 1e3).toFixed(0)}k`;
+  return `$${n.toFixed(0)}`;
+}
+
+function StratDimChart({ dim, rows, metric }) {
+  const data = rows || [];
+  const valueKey = metric === "loans" ? "loan_count" : "upb";
+  const tick = {
+    fill: "#4A5F7A",
+    fontSize: 10,
+    fontFamily: FONT,
+  };
+  const tipFmt = (v) =>
+    metric === "loans" ? Number(v).toLocaleString() : fmtUpbShort(v);
+
+  if (!data.length) {
+    return <p className="muted strat-chart-empty">No buckets</p>;
+  }
+
+  if (dim.chart === "pie") {
+    return (
+      <ResponsiveContainer width="100%" height={200}>
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey={valueKey}
+            nameKey="bucket"
+            cx="50%"
+            cy="50%"
+            innerRadius={42}
+            outerRadius={72}
+            paddingAngle={1}
+          >
+            {data.map((row, i) => (
+              <Cell
+                key={row.bucket}
+                fill={STRAT_PIE_COLORS[i % STRAT_PIE_COLORS.length]}
+              />
+            ))}
+          </Pie>
+          <Tooltip
+            formatter={(v) => tipFmt(v)}
+            contentStyle={{
+              fontSize: 11,
+              fontFamily: FONT,
+              border: "1px solid #D0D7E2",
+            }}
+          />
+          <Legend
+            wrapperStyle={{ fontSize: 10, fontFamily: FONT }}
+            iconSize={8}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  }
+
+  if (dim.chart === "hbar") {
+    const h = Math.min(280, Math.max(140, data.length * 22 + 28));
+    return (
+      <ResponsiveContainer width="100%" height={h}>
+        <BarChart
+          layout="vertical"
+          data={data}
+          margin={{ top: 4, right: 12, left: 4, bottom: 4 }}
+        >
+          <CartesianGrid
+            stroke="#D0D7E2"
+            strokeDasharray="2 4"
+            horizontal={false}
+          />
+          <XAxis
+            type="number"
+            tick={tick}
+            tickFormatter={tipFmt}
+            axisLine={{ stroke: "#8A9BB0" }}
+            tickLine={{ stroke: "#8A9BB0" }}
+          />
+          <YAxis
+            type="category"
+            dataKey="bucket"
+            width={92}
+            tick={tick}
+            axisLine={{ stroke: "#8A9BB0" }}
+            tickLine={false}
+          />
+          <Tooltip
+            formatter={(v) => tipFmt(v)}
+            labelFormatter={(l) => String(l)}
+            contentStyle={{
+              fontSize: 11,
+              fontFamily: FONT,
+              border: "1px solid #D0D7E2",
+            }}
+          />
+          <Bar
+            dataKey={valueKey}
+            fill={STRAT_BAR_COLOR}
+            name={metric === "loans" ? "Loans" : "UPB"}
+            radius={[0, 1, 1, 0]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    );
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <BarChart
+        data={data}
+        margin={{ top: 8, right: 8, left: 0, bottom: 28 }}
+      >
+        <CartesianGrid stroke="#D0D7E2" strokeDasharray="2 4" vertical={false} />
+        <XAxis
+          dataKey="bucket"
+          tick={tick}
+          interval={0}
+          angle={data.length > 6 ? -30 : 0}
+          textAnchor={data.length > 6 ? "end" : "middle"}
+          height={data.length > 6 ? 48 : 28}
+          axisLine={{ stroke: "#8A9BB0" }}
+          tickLine={{ stroke: "#8A9BB0" }}
+        />
+        <YAxis
+          tick={tick}
+          tickFormatter={tipFmt}
+          width={48}
+          axisLine={{ stroke: "#8A9BB0" }}
+          tickLine={{ stroke: "#8A9BB0" }}
+        />
+        <Tooltip
+          formatter={(v) => tipFmt(v)}
+          labelFormatter={(l) => String(l)}
+          contentStyle={{
+            fontSize: 11,
+            fontFamily: FONT,
+            border: "1px solid #D0D7E2",
+          }}
+        />
+        <Bar
+          dataKey={valueKey}
+          fill={STRAT_BAR_COLOR}
+          name={metric === "loans" ? "Loans" : "UPB"}
+          radius={[1, 1, 0, 0]}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+function IconExportCsvMini({ size = 14 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M8 2v8.5M5.5 8.5 8 11l2.5-2.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3 13.5h10"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconCopyMini({ size = 14 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect
+        x="5.25"
+        y="5.25"
+        width="7.5"
+        height="8.5"
+        rx="1"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M10.75 5.25V3.75A1.5 1.5 0 0 0 9.25 2.25H3.75A1.5 1.5 0 0 0 2.25 3.75v7.5A1.5 1.5 0 0 0 3.75 12.75h1.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 /** Match matplotlib CLUSTER_META order (0→1→2). No "RI" in labels. */
 const CLUSTER_ORDER = [
@@ -79,6 +309,17 @@ const OFF_AXIS_FEATURES = ["Documentation", "Remaining Term"];
 const LS_CLUSTER_KEY = "cashflow.clusterFilter";
 const LS_GRID_KEY = "cashflow.agGridState";
 const LS_NAV_KEY = "cashflow.navPane";
+const LS_NAV_COLLAPSE_KEY = "cashflow.navCollapsed";
+
+const NAV_SHORT = {
+  asf: "ASF",
+  qc: "QC",
+  strat: "Strat",
+  cohort: "Cohort",
+  scenarios: "Scen",
+  cashflow: "CF",
+  assumptions: "Asm",
+};
 
 function readClusterFilter() {
   try {
@@ -88,6 +329,24 @@ function readClusterFilter() {
     /* ignore */
   }
   return "all";
+}
+
+function isNarrowViewport() {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 720px)").matches
+  );
+}
+
+function readNavCollapsed() {
+  try {
+    const v = localStorage.getItem(LS_NAV_COLLAPSE_KEY);
+    if (v === "1") return true;
+    if (v === "0") return false;
+  } catch {
+    /* ignore */
+  }
+  return isNarrowViewport();
 }
 
 function readNav() {
@@ -209,6 +468,7 @@ function HullFills({ hullSeries, activeCluster }) {
 
 export default function App() {
   const [pane, setPane] = useState(readNav);
+  const [navCollapsed, setNavCollapsed] = useState(readNavCollapsed);
   const [loans, setLoans] = useState([]);
   const [hulls, setHulls] = useState({});
   const [counts, setCounts] = useState(CLUSTER_FALLBACK_COUNTS);
@@ -226,6 +486,7 @@ export default function App() {
   const [stratMeta, setStratMeta] = useState(null);
   const [stratLoading, setStratLoading] = useState(false);
   const [stratError, setStratError] = useState(null);
+  const [stratMetric, setStratMetric] = useState("upb");
 
   const [cohortStats, setCohortStats] = useState([]);
   const [cohortStatsError, setCohortStatsError] = useState(null);
@@ -816,55 +1077,82 @@ export default function App() {
     []
   );
 
-  const stratColumnDefs = useMemo(
-    () => [
-      {
-        field: "dimension",
-        headerName: "Dimension",
-        width: 130,
-        cellClass: "cf-id",
-      },
-      { field: "bucket", headerName: "Bucket", flex: 1.4, minWidth: 140 },
-      intCol("loan_count", "Loans", 80),
-      moneyCol("upb", "UPB", 120),
-      {
-        field: "avg_ltv",
-        headerName: "Avg LTV",
-        width: 88,
-        valueFormatter: (p) => fmtPct(p.value, 1),
-        cellClass: "cf-num",
-      },
-      {
-        field: "avg_cltv",
-        headerName: "Avg CLTV",
-        width: 88,
-        valueFormatter: (p) => fmtPct(p.value, 1),
-        cellClass: "cf-num",
-      },
-      {
-        field: "avg_fico",
-        headerName: "Avg FICO",
-        width: 88,
-        valueFormatter: (p) => fmtNum(p.value, 0),
-        cellClass: "cf-num",
-      },
-      {
-        field: "avg_rate",
-        headerName: "Avg rate",
-        width: 88,
-        valueFormatter: (p) => fmtPct(p.value, 2),
-        cellClass: "cf-num",
-      },
-      {
-        field: "avg_refi_incentive",
-        headerName: "Avg refi",
-        width: 88,
-        valueFormatter: (p) => fmtNum(p.value, 3),
-        cellClass: "cf-num",
-      },
-    ],
-    []
-  );
+  const stratByDim = useMemo(() => {
+    const map = {};
+    for (const dim of STRAT_DIMS) map[dim.id] = [];
+    for (const row of stratRows) {
+      if (!map[row.dimension_id]) map[row.dimension_id] = [];
+      map[row.dimension_id].push(row);
+    }
+    return map;
+  }, [stratRows]);
+
+  const exportStratCsv = useCallback(() => {
+    const headers = [
+      "dimension",
+      "bucket",
+      "loan_count",
+      "upb",
+      "avg_ltv",
+      "avg_cltv",
+      "avg_fico",
+      "avg_rate",
+      "avg_refi_incentive",
+    ];
+    const lines = [headers.join(",")];
+    for (const row of stratRows) {
+      lines.push(
+        headers
+          .map((h) => {
+            const v = row[h];
+            if (v == null) return "";
+            const s = String(v);
+            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+          })
+          .join(",")
+      );
+    }
+    const blob = new Blob([lines.join("\n")], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "stratification.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [stratRows]);
+
+  const copyStratRows = useCallback(async () => {
+    const headers = [
+      "dimension",
+      "bucket",
+      "loan_count",
+      "upb",
+      "avg_ltv",
+      "avg_cltv",
+      "avg_fico",
+      "avg_rate",
+      "avg_refi_incentive",
+    ];
+    const lines = [headers.join("\t")];
+    for (const row of stratRows) {
+      lines.push(headers.map((h) => (row[h] == null ? "" : String(row[h]))).join("\t"));
+    }
+    const tsv = lines.join("\n");
+    try {
+      await navigator.clipboard.writeText(tsv);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = tsv;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+  }, [stratRows]);
 
   const cohortStatsColumnDefs = useMemo(
     () => [
@@ -1295,6 +1583,9 @@ export default function App() {
 
   const selectPane = useCallback((id) => {
     setPane(id);
+    if (isNarrowViewport()) {
+      setNavCollapsed(true);
+    }
   }, []);
 
   const drillLoan = useCallback((row) => {
@@ -1472,32 +1763,106 @@ export default function App() {
     return ids;
   }, [scenarios, aggregates]);
 
+  const toggleNav = useCallback(() => {
+    setNavCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(LS_NAV_COLLAPSE_KEY, next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
+
   return (
     <div className="app">
       <header className="topbar">
-        <div className="topbar-brand">
-          <img
-            className="topbar-mark"
-            src="/favicon.svg"
-            alt=""
-            width={16}
-            height={16}
-          />
-          <span className="topbar-name">CashFlow</span>
+        <div className="topbar-left">
+          <button
+            type="button"
+            className="nav-toggle"
+            onClick={toggleNav}
+            title={navCollapsed ? "Expand navigation" : "Collapse navigation"}
+            aria-label={navCollapsed ? "Expand navigation" : "Collapse navigation"}
+            aria-expanded={!navCollapsed}
+            aria-controls="primary-nav"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+              focusable="false"
+            >
+              {navCollapsed ? (
+                <path
+                  d="M6 3.5 10.5 8 6 12.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              ) : (
+                <path
+                  d="M10 3.5 5.5 8 10 12.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              )}
+            </svg>
+          </button>
+          <div className="topbar-brand">
+            <img
+              className="topbar-mark"
+              src="/favicon.svg"
+              alt=""
+              width={16}
+              height={16}
+            />
+            <span className="topbar-name">CashFlow</span>
+            <span className="topbar-version">v0.3.0</span>
+          </div>
         </div>
-        <span className="topbar-version">v0.3.0</span>
       </header>
 
-      <div className="shell">
-        <nav className="sidenav" aria-label="Primary">
+      <div className={`shell${navCollapsed ? "" : " nav-open"}`}>
+        {!navCollapsed && (
+          <button
+            type="button"
+            className="nav-backdrop"
+            aria-label="Close navigation"
+            onClick={() => {
+              setNavCollapsed(true);
+              try {
+                localStorage.setItem(LS_NAV_COLLAPSE_KEY, "1");
+              } catch {
+                /* ignore */
+              }
+            }}
+          />
+        )}
+        <nav
+          id="primary-nav"
+          className={`sidenav${navCollapsed ? " is-collapsed" : ""}`}
+          aria-label="Primary"
+        >
           {NAV.map((item) => (
             <button
               key={item.id}
               type="button"
               className={`sidenav-btn${pane === item.id ? " is-active" : ""}`}
               onClick={() => selectPane(item.id)}
+              title={item.label}
+              aria-label={item.label}
             >
-              {item.label}
+              <span className="sidenav-label-full">{item.label}</span>
+              <span className="sidenav-label-short" aria-hidden="true">
+                {NAV_SHORT[item.id] || item.label.slice(0, 3)}
+              </span>
             </button>
           ))}
         </nav>
@@ -1506,7 +1871,6 @@ export default function App() {
           {pane === "asf" && (
             <section className="section section-fill">
               <div className="section-head">
-                <h2 className="section-title">ASF Tape</h2>
                 <p className="section-meta">
                   {asfSource || "asf_tape"}
                   {asfTotal ? ` · ${asfTotal} loans` : ""}
@@ -1533,7 +1897,6 @@ export default function App() {
           {pane === "qc" && (
             <section className="section section-fill">
               <div className="section-head">
-                <h2 className="section-title">Loan Quality QC</h2>
                 <p className="section-meta">
                   Neon asf_tape
                   {qcMeta?.tape_row_count != null
@@ -1583,23 +1946,62 @@ export default function App() {
           {pane === "strat" && (
             <section className="section section-fill">
               <div className="section-head">
-                <h2 className="section-title">Stratification</h2>
+                <p className="section-meta">
+                  Standard mortgage cuts
+                  {stratMeta?.n_dimensions != null
+                    ? ` · ${stratMeta.n_dimensions} dimensions`
+                    : ""}
+                  {stratMeta?.n_buckets != null
+                    ? ` · ${stratMeta.n_buckets} buckets`
+                    : ""}
+                  {stratMeta?.tape_row_count != null
+                    ? ` · ${stratMeta.tape_row_count} loans`
+                    : ""}
+                  {stratMeta?.tape_upb != null
+                    ? ` · UPB ${Number(stratMeta.tape_upb).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                    : ""}
+                </p>
                 <div className="section-actions">
-                  <p className="section-meta">
-                    All alternate tape cuts (not K-prototype)
-                    {stratMeta?.n_dimensions != null
-                      ? ` · ${stratMeta.n_dimensions} dimensions`
-                      : ""}
-                    {stratMeta?.n_buckets != null
-                      ? ` · ${stratMeta.n_buckets} buckets`
-                      : ""}
-                    {stratMeta?.tape_row_count != null
-                      ? ` · ${stratMeta.tape_row_count} loans`
-                      : ""}
-                    {stratMeta?.tape_upb != null
-                      ? ` · UPB ${Number(stratMeta.tape_upb).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
-                      : ""}
-                  </p>
+                  <div
+                    className="cf-grid-toolbar strat-toolbar"
+                    role="toolbar"
+                    aria-label="Stratification actions"
+                  >
+                    <button
+                      type="button"
+                      className={`linkish${stratMetric === "upb" ? " is-active" : ""}`}
+                      onClick={() => setStratMetric("upb")}
+                    >
+                      UPB
+                    </button>
+                    <button
+                      type="button"
+                      className={`linkish${stratMetric === "loans" ? " is-active" : ""}`}
+                      onClick={() => setStratMetric("loans")}
+                    >
+                      Loans
+                    </button>
+                    <button
+                      type="button"
+                      className="cf-grid-icon-btn"
+                      onClick={exportStratCsv}
+                      title="Export CSV"
+                      aria-label="Export CSV"
+                      disabled={!stratRows.length}
+                    >
+                      <IconExportCsvMini />
+                    </button>
+                    <button
+                      type="button"
+                      className="cf-grid-icon-btn"
+                      onClick={copyStratRows}
+                      title="Copy"
+                      aria-label="Copy rows to clipboard"
+                      disabled={!stratRows.length}
+                    >
+                      <IconCopyMini />
+                    </button>
+                  </div>
                 </div>
               </div>
               {stratLoading ? (
@@ -1607,13 +2009,23 @@ export default function App() {
               ) : stratError ? (
                 <StatusBanner tone="error">Strat: {stratError}</StatusBanner>
               ) : (
-                <DataGrid
-                  rowData={stratRows}
-                  columnDefs={stratColumnDefs}
-                  getRowId={(p) => String(p.data.row_key)}
-                  heightClass="grid-wrap-fill"
-                  exportName="stratification"
-                />
+                <div className="strat-charts">
+                  {STRAT_DIMS.map((dim) => (
+                    <div key={dim.id} className="strat-chart-panel">
+                      <div className="strat-chart-head">
+                        <h3 className="strat-chart-title">{dim.label}</h3>
+                        <span className="strat-chart-meta">
+                          {(stratByDim[dim.id] || []).length} buckets
+                        </span>
+                      </div>
+                      <StratDimChart
+                        dim={dim}
+                        rows={stratByDim[dim.id] || []}
+                        metric={stratMetric}
+                      />
+                    </div>
+                  ))}
+                </div>
               )}
             </section>
           )}
@@ -1837,18 +2249,17 @@ export default function App() {
           {pane === "scenarios" && (
             <section className="section section-fill">
               <div className="section-head">
-                <h2 className="section-title">Cash Flow Scenarios</h2>
+                <p className="section-meta">
+                  Neon securitization_scenarios
+                  {selectedCohort
+                    ? ` · cohort filter: ${selectedCohort}`
+                    : " · 27 cells"}
+                  {" · "}
+                  Scenario col merges PSA×SDA across cohorts
+                  {" · "}
+                  Click row → all-loan month-1 CF
+                </p>
                 <div className="section-actions">
-                  <p className="section-meta">
-                    Neon securitization_scenarios
-                    {selectedCohort
-                      ? ` · cohort filter: ${selectedCohort}`
-                      : " · 27 cells"}
-                    {" · "}
-                    Scenario col merges PSA×SDA across cohorts
-                    {" · "}
-                    Click row → all-loan month-1 CF
-                  </p>
                   {(selectedCohort || selectedLoanId) && (
                     <button
                       type="button"
@@ -1898,13 +2309,13 @@ export default function App() {
           {pane === "cashflow" && (
             <section className="section section-fill">
               <div className="section-head">
-                <h2 className="section-title">
+                <p className="section-meta">
                   {cfView === "loanMonth"
-                    ? "Cash Flow · multi-month"
+                    ? "Multi-month loan path"
                     : cfView === "month1"
-                      ? "Cash Flow · all loans · month 1"
-                      : "Cash Flow · scenario aggregates"}
-                </h2>
+                      ? "All loans · month 1"
+                      : "Scenario aggregates"}
+                </p>
                 <div className="section-actions">
                   <label className="field-inline">
                     <span>Scenario</span>
@@ -2036,7 +2447,6 @@ export default function App() {
           {pane === "assumptions" && (
             <section className="section section-fill">
               <div className="section-head">
-                <h2 className="section-title">Assumptions</h2>
                 <p className="section-meta">
                   {assumptionMeta?.source || "data/assumptions.csv"}
                   {assumptionMeta?.n != null ? ` · ${assumptionMeta.n} rows` : ""}
