@@ -18,6 +18,8 @@ export const gridTheme = themeQuartz.withParams({
   rowHoverColor: "#EEF2F7",
   selectedRowBackgroundColor: "#E8F0FE",
   borderColor: "#D0D7E2",
+  /* No heavy outer frame — maximize usable area; keep light cell hairlines. */
+  wrapperBorder: false,
   rowBorder: { style: "solid", width: 1, color: "#D0D7E2" },
   columnBorder: { style: "solid", width: 1, color: "#E4E9F0" },
   headerColumnBorder: false,

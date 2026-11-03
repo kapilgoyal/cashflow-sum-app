@@ -39,7 +39,8 @@ Sizes: body 12px / lh 1.25; labels 10px caps; table cells 11px; top bar name 13p
 
 - Section padding `8–10px`, main gap `8px`.
 - AG Grid light Quartz params; denser `rowHeight`/`headerHeight` **20/22**, spacing **2** (font size unchanged), square corners.
-- Responsive: strat charts stack; touch-sized export/copy icons; mobile nav drawer.
+- No heavy outer grid/section frame (`wrapperBorder: false`); light row/column hairlines only.
+- Responsive: strat charts stack; touch-sized export/copy icons; mobile hamburger drawer.
 - Field labels muted navy uppercase.
 - Buttons square, navy text on amber.
 

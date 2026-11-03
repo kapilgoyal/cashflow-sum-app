@@ -227,11 +227,15 @@ body {
 
 .section {
   background: var(--cf-panel);
-  border: 1px solid var(--cf-hairline);
-  padding: 8px 10px 10px;
+  border: 0;
+  padding: 6px 8px 8px;
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+.section + .section {
+  border-top: 1px solid var(--cf-hairline);
 }
 
 .section-fill {
@@ -765,6 +769,19 @@ body {
 
 .cf-grid-host .ag-root-wrapper {
   height: 100%;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.ag-theme-cashflow .ag-root-wrapper,
+.ag-theme-cashflow .ag-root-wrapper-body,
+.ag-theme-cashflow .ag-body-viewport {
+  border: none;
+}
+
+.ag-theme-cashflow .ag-header {
+  border-bottom: 1px solid var(--cf-hairline);
 }
 
 .ag-theme-cashflow .cf-row-span {
