@@ -1410,7 +1410,7 @@ export default function App() {
                           margin={{ top: 12, right: 16, left: 8, bottom: 28 }}
                         >
                           <CartesianGrid
-                            stroke="#464646"
+                            stroke="#4A5F7A"
                             strokeDasharray="2 4"
                             strokeOpacity={0.45}
                           />
@@ -1420,8 +1420,8 @@ export default function App() {
                             name="Original CLTV"
                             tick={axisTick}
                             ticks={X_TICKS}
-                            axisLine={{ stroke: "#323232" }}
-                            tickLine={{ stroke: "#323232" }}
+                            axisLine={{ stroke: "#2A3D5C" }}
+                            tickLine={{ stroke: "#2A3D5C" }}
                             tickFormatter={(v) => Number(v).toFixed(1)}
                             domain={X_DOMAIN}
                             allowDataOverflow
@@ -1441,8 +1441,8 @@ export default function App() {
                             name="Refinance Incentive"
                             tick={axisTick}
                             ticks={Y_TICKS}
-                            axisLine={{ stroke: "#323232" }}
-                            tickLine={{ stroke: "#323232" }}
+                            axisLine={{ stroke: "#2A3D5C" }}
+                            tickLine={{ stroke: "#2A3D5C" }}
                             domain={Y_DOMAIN}
                             allowDataOverflow
                             width={44}
@@ -1461,11 +1461,11 @@ export default function App() {
                           <Tooltip
                             cursor={{
                               strokeDasharray: "3 3",
-                              stroke: "#464646",
+                              stroke: "#4A5F7A",
                             }}
                             contentStyle={{
-                              background: "#212026",
-                              border: "1px solid #323232",
+                              background: "#0A274F",
+                              border: "1px solid #2A3D5C",
                               borderRadius: 0,
                               fontSize: 11,
                               color: "#FCFCFC",
