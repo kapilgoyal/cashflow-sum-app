@@ -3,8 +3,6 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-import pandas as pd
-
 from app.models.scenario import Scenario
 from app.services.scenario_grid import build_scenario_grid, scenarios_to_records
 
@@ -29,6 +27,8 @@ class ScenarioRepository:
         self.csv_path = Path(csv_path)
 
     def save_csv(self, scenarios: list[Scenario] | None = None) -> Path:
+        import pandas as pd
+
         scenarios = scenarios or build_scenario_grid()
         self.csv_path.parent.mkdir(parents=True, exist_ok=True)
         df = pd.DataFrame(scenarios_to_records(scenarios))

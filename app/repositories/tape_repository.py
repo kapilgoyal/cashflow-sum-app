@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-
-import pandas as pd
+from typing import Any
 
 from app.models.loan import Loan
 from app.services.scenario_grid import (
@@ -11,6 +10,12 @@ from app.services.scenario_grid import (
     COHORT_HIGH_LTV_WEAK,
     COHORT_LOW_LTV_WEAK,
 )
+
+
+def _pd():
+    import pandas as pd
+
+    return pd
 
 DEFAULT_TAPE = Path(
     r"C:\Users\kgoya\AppData\Local\Cursor\AgentStores\cursor_agent_stores"
@@ -39,7 +44,8 @@ class TapeRepository:
             Path(cluster_tape_path) if cluster_tape_path else DEFAULT_CLUSTER_TAPE
         )
 
-    def load_loan_tape(self) -> pd.DataFrame:
+    def load_loan_tape(self) -> Any:
+        pd = _pd()
         if not self.path.exists():
             raise FileNotFoundError(f"Loan tape not found: {self.path}")
         df = pd.read_excel(self.path, sheet_name="Loan Tape")
@@ -66,10 +72,11 @@ class TapeRepository:
                 out[lid] = str(cohort)
         return out
 
-    def _row_to_loan(self, row: pd.Series, cohort: str | None) -> Loan:
+    def _row_to_loan(self, row: Any, cohort: str | None) -> Loan:
         from app.services.assumptions import default_has_mi
         from app.services.seasoning import age_at_cutoff, as_date
 
+        pd = _pd()
         orig = as_date(row["ORIGINATION_DATE"]) if "ORIGINATION_DATE" in row.index else None
         cutoff = as_date(row["CUTOFF_DATE"]) if "CUTOFF_DATE" in row.index else None
         raw_age = row.get("LOAN_AGE_MONTHS")
@@ -121,6 +128,7 @@ class TapeRepository:
             fixed = df[df["AMORTIZATION_TYPE"].astype(str).str.lower().eq("fixed")]
             row = (fixed if not fixed.empty else df).iloc[0]
 
+        pd = _pd()
         lid = str(row["LOAN_ID"])
         cohort = cluster_map.get(lid)
         if cohort is None and "cohort" in row and pd.notna(row.get("cohort")):
@@ -129,6 +137,7 @@ class TapeRepository:
 
     def load_all_loans(self) -> list[Loan]:
         """All tape loans tagged with k-proto cohort display names."""
+        pd = _pd()
         df = self.load_loan_tape()
         cluster_map = self.load_cluster_map()
         loans: list[Loan] = []
