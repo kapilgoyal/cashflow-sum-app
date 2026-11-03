@@ -1783,34 +1783,46 @@ export default function App() {
             type="button"
             className="nav-toggle"
             onClick={toggleNav}
-            title={navCollapsed ? "Expand navigation" : "Collapse navigation"}
-            aria-label={navCollapsed ? "Expand navigation" : "Collapse navigation"}
+            title={navCollapsed ? "Open menu" : "Close menu"}
+            aria-label={navCollapsed ? "Open menu" : "Close menu"}
             aria-expanded={!navCollapsed}
             aria-controls="primary-nav"
           >
             <svg
-              width="14"
-              height="14"
+              width="18"
+              height="18"
               viewBox="0 0 16 16"
               fill="none"
               aria-hidden="true"
               focusable="false"
             >
               {navCollapsed ? (
-                <path
-                  d="M6 3.5 10.5 8 6 12.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <>
+                  <path
+                    d="M2.5 4.25h11"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M2.5 8h11"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M2.5 11.75h11"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                  />
+                </>
               ) : (
                 <path
-                  d="M10 3.5 5.5 8 10 12.5"
+                  d="M3.5 3.5 12.5 12.5M12.5 3.5 3.5 12.5"
                   stroke="currentColor"
-                  strokeWidth="1.5"
+                  strokeWidth="1.6"
                   strokeLinecap="round"
-                  strokeLinejoin="round"
                 />
               )}
             </svg>

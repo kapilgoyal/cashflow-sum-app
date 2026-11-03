@@ -4,7 +4,7 @@ Professional **light** UI: white main content, navy (`#001A41`) typography, navy
 
 ## Top bar / nav
 
-Height **36px**. Deep navy `#001A41`. Left: nav toggle · white uppercase **CashFlow** · amber **v0.3.0**. Sidenav is a light-blue strip (`#E8F0FE`) with navy labels; selected tab amber + navy text. Collapsible (persisted); on narrow screens opens as a drawer over content.
+Height **36px** (48px on phone). Deep navy `#001A41`. Left: hamburger/close · white uppercase **CashFlow** · amber **v0.3.0**. Desktop sidenav is a light-blue strip (`#E8F0FE`) with navy labels; selected tab amber + navy text. Collapsible (persisted). On phone (≤720px): collapsed = no rail (full-bleed content); hamburger opens a left drawer over a dimmed backdrop; tap targets ≥44px.
 
 ## Palette
 
