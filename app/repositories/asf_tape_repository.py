@@ -419,11 +419,16 @@ class AsfTapeRepository:
             "ltv_bucket",
             "cltv_bucket",
             "fico_band",
+            "orig_year",
+            "balance_band",
         }
         if dimension not in allowed:
             raise ValueError(f"unsupported dimension: {dimension}")
 
+        # Ordered band dimensions: natural sort via sort_key, not UPB.
+        ordered = False
         if dimension == "ltv_bucket":
+            ordered = True
             bucket_expr = """
                 CASE
                   WHEN original_ltv IS NULL THEN 'missing'
@@ -434,7 +439,18 @@ class AsfTapeRepository:
                   ELSE '90+'
                 END
             """
+            sort_expr = """
+                CASE
+                  WHEN original_ltv IS NULL THEN 99
+                  WHEN original_ltv < 0.60 THEN 1
+                  WHEN original_ltv < 0.70 THEN 2
+                  WHEN original_ltv < 0.80 THEN 3
+                  WHEN original_ltv < 0.90 THEN 4
+                  ELSE 5
+                END
+            """
         elif dimension == "cltv_bucket":
+            ordered = True
             bucket_expr = """
                 CASE
                   WHEN original_cltv IS NULL THEN 'missing'
@@ -445,7 +461,18 @@ class AsfTapeRepository:
                   ELSE '90+'
                 END
             """
+            sort_expr = """
+                CASE
+                  WHEN original_cltv IS NULL THEN 99
+                  WHEN original_cltv < 0.60 THEN 1
+                  WHEN original_cltv < 0.70 THEN 2
+                  WHEN original_cltv < 0.80 THEN 3
+                  WHEN original_cltv < 0.90 THEN 4
+                  ELSE 5
+                END
+            """
         elif dimension == "fico_band":
+            ordered = True
             bucket_expr = """
                 CASE
                   WHEN original_fico IS NULL THEN 'missing'
@@ -456,28 +483,98 @@ class AsfTapeRepository:
                   ELSE '780+'
                 END
             """
+            sort_expr = """
+                CASE
+                  WHEN original_fico IS NULL THEN 99
+                  WHEN original_fico < 660 THEN 1
+                  WHEN original_fico < 700 THEN 2
+                  WHEN original_fico < 740 THEN 3
+                  WHEN original_fico < 780 THEN 4
+                  ELSE 5
+                END
+            """
+        elif dimension == "balance_band":
+            ordered = True
+            bucket_expr = """
+                CASE
+                  WHEN current_loan_amount IS NULL THEN 'missing'
+                  WHEN current_loan_amount < 100000 THEN '<100k'
+                  WHEN current_loan_amount < 200000 THEN '100-200k'
+                  WHEN current_loan_amount < 300000 THEN '200-300k'
+                  WHEN current_loan_amount < 400000 THEN '300-400k'
+                  WHEN current_loan_amount < 500000 THEN '400-500k'
+                  WHEN current_loan_amount < 750000 THEN '500-750k'
+                  ELSE '750k+'
+                END
+            """
+            sort_expr = """
+                CASE
+                  WHEN current_loan_amount IS NULL THEN 99
+                  WHEN current_loan_amount < 100000 THEN 1
+                  WHEN current_loan_amount < 200000 THEN 2
+                  WHEN current_loan_amount < 300000 THEN 3
+                  WHEN current_loan_amount < 400000 THEN 4
+                  WHEN current_loan_amount < 500000 THEN 5
+                  WHEN current_loan_amount < 750000 THEN 6
+                  ELSE 7
+                END
+            """
+        elif dimension == "orig_year":
+            ordered = True
+            bucket_expr = """
+                CASE
+                  WHEN origination_date IS NULL THEN 'missing'
+                  ELSE EXTRACT(YEAR FROM origination_date)::int::text
+                END
+            """
+            sort_expr = """
+                CASE
+                  WHEN origination_date IS NULL THEN 9999
+                  ELSE EXTRACT(YEAR FROM origination_date)::int
+                END
+            """
         else:
             bucket_expr = f"COALESCE({dimension}::text, 'missing')"
+            sort_expr = None
 
-        sql = f"""
-            SELECT
-                {bucket_expr} AS bucket,
-                COUNT(*)::int AS loan_count,
-                COALESCE(SUM(current_loan_amount), 0)::float AS upb,
-                AVG(original_ltv)::float AS avg_ltv,
-                AVG(original_cltv)::float AS avg_cltv,
-                AVG(original_fico)::float AS avg_fico,
-                AVG(current_interest_rate)::float AS avg_rate,
-                AVG(refinance_incentive)::float AS avg_refi_incentive
-            FROM public.asf_tape
-            GROUP BY 1
-            ORDER BY upb DESC NULLS LAST, loan_count DESC
-        """
+        if ordered:
+            sql = f"""
+                SELECT
+                    {bucket_expr} AS bucket,
+                    COUNT(*)::int AS loan_count,
+                    COALESCE(SUM(current_loan_amount), 0)::float AS upb,
+                    AVG(original_ltv)::float AS avg_ltv,
+                    AVG(original_cltv)::float AS avg_cltv,
+                    AVG(original_fico)::float AS avg_fico,
+                    AVG(current_interest_rate)::float AS avg_rate,
+                    AVG(refinance_incentive)::float AS avg_refi_incentive,
+                    MIN({sort_expr}) AS sort_key
+                FROM public.asf_tape
+                GROUP BY 1
+                ORDER BY sort_key ASC NULLS LAST, bucket ASC
+            """
+        else:
+            sql = f"""
+                SELECT
+                    {bucket_expr} AS bucket,
+                    COUNT(*)::int AS loan_count,
+                    COALESCE(SUM(current_loan_amount), 0)::float AS upb,
+                    AVG(original_ltv)::float AS avg_ltv,
+                    AVG(original_cltv)::float AS avg_cltv,
+                    AVG(original_fico)::float AS avg_fico,
+                    AVG(current_interest_rate)::float AS avg_rate,
+                    AVG(refinance_incentive)::float AS avg_refi_incentive
+                FROM public.asf_tape
+                GROUP BY 1
+                ORDER BY upb DESC NULLS LAST, loan_count DESC
+            """
         with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql)
                 cols = [d.name for d in cur.description]
                 rows = [dict(zip(cols, tup)) for tup in cur.fetchall()]
+                for row in rows:
+                    row.pop("sort_key", None)
                 cur.execute(
                     "SELECT COUNT(*)::int, COALESCE(SUM(current_loan_amount),0)::float "
                     "FROM public.asf_tape"
