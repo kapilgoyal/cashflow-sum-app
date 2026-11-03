@@ -1,16 +1,16 @@
 :root {
-  /* Sampled from Bloomberg Terminal Pure Factor Returns screenshot (733×355) */
-  --cf-bg: #000000;
-  --cf-bg-deep: #000000;
-  --cf-panel: #212026;
+  /* Deep navy field (~#001A41) from theme-navy-sample; amber/up/down unchanged */
+  --cf-bg: #001a41;
+  --cf-bg-deep: #001636;
+  --cf-panel: #0a274f;
   --cf-text: #fcfcfc;
   --cf-muted: #808080;
   --cf-accent: #fd9d24;
   --cf-accent-bright: #fca024;
-  --cf-hairline: #323232;
-  --cf-chrome: #464646;
-  --cf-grid: #0c0c0c;
-  --cf-row-alt: #121212;
+  --cf-hairline: #2a3d5c;
+  --cf-chrome: #4a5f7a;
+  --cf-grid: #001538;
+  --cf-row-alt: #0a2348;
   --cf-up: #43bc67;
   --cf-down: #c51d46;
   /* Bloomberg Prop/Fixed are proprietary; Source Sans 3 is the closest OFL UI sans
@@ -82,11 +82,11 @@ body {
 
 .sidenav-btn:hover {
   color: var(--cf-text);
-  background: #121212;
+  background: var(--cf-row-alt);
 }
 
 .sidenav-btn.is-active {
-  color: #000000;
+  color: var(--cf-bg);
   background: var(--cf-accent);
   border-color: var(--cf-accent);
 }
@@ -245,7 +245,7 @@ body {
 .scatter-legend-box {
   display: inline-block;
   padding: 4px 8px 5px;
-  background: rgba(33, 32, 38, 0.92);
+  background: rgba(10, 39, 79, 0.92);
   border: 1px solid var(--cf-hairline);
   pointer-events: auto;
 }
@@ -373,9 +373,9 @@ body {
 }
 
 .select {
-  background: #0c0c0c;
-  color: #fcfcfc;
-  border: 1px solid #323232;
+  background: var(--cf-grid);
+  color: var(--cf-text);
+  border: 1px solid var(--cf-hairline);
   border-radius: 0;
   font-family: inherit;
   font-size: 11px;
@@ -402,7 +402,7 @@ body {
 
 .drill-sep {
   margin: 0 6px;
-  color: #464646;
+  color: var(--cf-chrome);
 }
 
 .drill-current {
@@ -430,7 +430,7 @@ body {
 }
 
 .ag-theme-cashflow .ag-row-selected {
-  background-color: #2a2418 !important;
+  background-color: #2a3224 !important;
 }
 
 .btn {
@@ -440,7 +440,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #000000;
+  color: var(--cf-bg);
   background: var(--cf-accent);
   border: 1px solid var(--cf-accent);
   border-radius: 0;
@@ -479,7 +479,7 @@ body {
   padding: 5px 8px;
   font-size: 11px;
   border: 1px solid var(--cf-hairline);
-  background: #121212;
+  background: var(--cf-row-alt);
   color: var(--cf-muted);
 }
 
@@ -562,6 +562,8 @@ body {
 }
 
 .grid-wrap {
+  display: flex;
+  flex-direction: column;
   height: 248px;
   width: 100%;
   min-height: 0;
@@ -571,15 +573,60 @@ body {
   height: min(420px, 55vh);
 }
 
-.grid-wrap-mid {
-  height: min(220px, 28vh);
-  flex: 0 0 auto;
+/* 3 cohort rows + header ≈ 28 + 3×24; keep fixed so Loans gets remaining space */
+.grid-wrap-mid,
+.grid-wrap-cohort-stats {
+  height: 140px;
+  max-height: 160px;
+  min-height: 140px;
+  flex: 0 0 140px;
 }
 
 .grid-wrap-fill {
   flex: 1;
   height: auto;
-  min-height: 280px;
+  min-height: 200px;
+}
+
+.cf-grid-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  flex: 0 0 auto;
+  padding: 0 0 4px;
+  min-height: 18px;
+}
+
+.cf-grid-tool {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cf-grid-tool-hint {
+  font-size: 10px;
+  color: var(--cf-muted);
+  letter-spacing: 0.02em;
+}
+
+.cf-grid-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cf-grid-host .ag-root-wrapper {
+  height: 100%;
+}
+
+.ag-theme-cashflow .cf-row-span {
+  background-color: #1a1a1a;
+  border-bottom: 1px solid var(--cf-hairline);
+  align-items: flex-start;
+  padding-top: 4px;
+  font-weight: 600;
 }
 
 .chart-wrap {
@@ -592,19 +639,66 @@ body {
   height: min(380px, 48vh);
 }
 
-/* Match matplotlib figsize (9.5 × 6.5) — avoid squeezed clusters */
+/* Shrink scatter so Cohort stats + Loans fit without overlap */
 .chart-wrap-scatter {
   position: relative;
-  width: min(100%, calc(70vh * 9.5 / 6.5));
+  width: min(100%, calc(36vh * 9.5 / 6.5));
+  max-height: 36vh;
   height: auto;
   aspect-ratio: 9.5 / 6.5;
   padding-top: 0;
   margin-inline: auto;
+  flex: 0 0 auto;
+}
+
+.section-cohort-chart,
+.section-cohort-stats {
+  flex: 0 0 auto;
 }
 
 .ag-theme-cashflow {
   width: 100%;
   height: 100%;
+  /* Bloomberg-dark native scrollbars (Firefox + color-scheme hint) */
+  color-scheme: dark;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cf-chrome) var(--cf-row-alt);
+}
+
+/* All AG Grid viewports inherit — vertical + horizontal, no light OS chrome */
+.ag-theme-cashflow *:not(.ag-invisible-scrollbar)::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: var(--cf-row-alt);
+}
+
+.ag-theme-cashflow *:not(.ag-invisible-scrollbar)::-webkit-scrollbar-track {
+  background: var(--cf-row-alt);
+  border: none;
+}
+
+.ag-theme-cashflow *:not(.ag-invisible-scrollbar)::-webkit-scrollbar-thumb {
+  background: var(--cf-chrome);
+  border: 2px solid var(--cf-row-alt);
+  border-radius: 0;
+  min-height: 24px;
+  min-width: 24px;
+}
+
+.ag-theme-cashflow *:not(.ag-invisible-scrollbar)::-webkit-scrollbar-thumb:hover {
+  background: var(--cf-muted);
+}
+
+.ag-theme-cashflow *:not(.ag-invisible-scrollbar)::-webkit-scrollbar-corner {
+  background: var(--cf-row-alt);
+  border: none;
+}
+
+.ag-theme-cashflow .ag-body-horizontal-scroll,
+.ag-theme-cashflow .ag-body-vertical-scroll,
+.ag-theme-cashflow .ag-body-horizontal-scroll-viewport,
+.ag-theme-cashflow .ag-body-vertical-scroll-viewport {
+  background: var(--cf-row-alt);
 }
 
 /* Prevent header filter/menu icons from overlapping title text */

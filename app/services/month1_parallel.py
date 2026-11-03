@@ -220,6 +220,10 @@ def run_month1_parallel(
         },
         "assumptions": {
             "horizon_months": HORIZON_MONTHS,
+            "psa_sda_seasoning": (
+                "curve_age = loan_age_at_cutoff + projection_month "
+                "(loan_age_months or origination→cutoff); not t=1 for every loan"
+            ),
             "pca_levels": {"Down": 75, "Base": 100, "Up": 125},
             "sta_levels": {"Down": 50, "Base": 100, "Up": 200},
             "recovery_by_cohort": {

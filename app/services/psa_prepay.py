@@ -4,7 +4,11 @@ from __future__ import annotations
 
 
 def cpr_at_age(age_months: int, psa_multiple: float) -> float:
-    """Annual CPR under n% PSA. age_months is loan age at month-end (1+)."""
+    """Annual CPR under n% PSA.
+
+    ``age_months`` is seasoned curve age (age_at_cutoff + projection month),
+    not the projection month index alone.
+    """
     age = max(int(age_months), 1)
     if age <= 30:
         base = 0.002 * age  # 0.2% × age → 6% at month 30
