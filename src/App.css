@@ -1,18 +1,23 @@
 :root {
-  /* Deep navy field (~#001A41) from theme-navy-sample; amber/up/down unchanged */
-  --cf-bg: #001a41;
-  --cf-bg-deep: #001636;
-  --cf-panel: #0a274f;
-  --cf-text: #fcfcfc;
-  --cf-muted: #808080;
+  /* Professional light: white content + #001A41 navy typography; navy chrome */
+  --cf-bg: #ffffff;
+  --cf-bg-deep: #001a41;
+  --cf-panel: #ffffff;
+  --cf-text: #001a41;
+  --cf-muted: #4a5f7a;
   --cf-accent: #fd9d24;
   --cf-accent-bright: #fca024;
-  --cf-hairline: #2a3d5c;
-  --cf-chrome: #4a5f7a;
-  --cf-grid: #001538;
-  --cf-row-alt: #0a2348;
-  --cf-up: #43bc67;
+  --cf-hairline: #d0d7e2;
+  --cf-chrome: #8a9bb0;
+  --cf-grid: #f4f6f9;
+  --cf-row-alt: #f7f9fc;
+  --cf-row-hover: #eef2f7;
+  --cf-selected: #e8f0fe;
+  --cf-up: #1f8a44;
   --cf-down: #c51d46;
+  --cf-on-accent: #001a41;
+  --cf-nav-text: #d7e0ec;
+  --cf-nav-hover: #eef3f9;
   /* Bloomberg Prop/Fixed are proprietary; Source Sans 3 is the closest OFL UI sans
      (Bergoom, an open Terminal recreation, was derived from Source Sans 3). */
   --cf-font: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
@@ -55,22 +60,22 @@ body {
 }
 
 .sidenav {
-  flex: 0 0 168px;
+  flex: 0 0 176px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 6px;
+  gap: 3px;
+  padding: 10px 8px;
   background: var(--cf-bg-deep);
-  border-right: 1px solid var(--cf-hairline);
+  border-right: 1px solid #0a274f;
 }
 
 .sidenav-btn {
   display: block;
   width: 100%;
-  padding: 7px 8px;
+  padding: 8px 10px;
   border: 1px solid transparent;
   background: transparent;
-  color: var(--cf-muted);
+  color: var(--cf-nav-text);
   font: inherit;
   font-size: 11px;
   font-weight: 600;
@@ -78,15 +83,16 @@ body {
   text-transform: uppercase;
   text-align: left;
   cursor: pointer;
+  border-radius: 0;
 }
 
 .sidenav-btn:hover {
-  color: var(--cf-text);
-  background: var(--cf-row-alt);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .sidenav-btn.is-active {
-  color: var(--cf-bg);
+  color: var(--cf-on-accent);
   background: var(--cf-accent);
   border-color: var(--cf-accent);
 }
@@ -103,18 +109,18 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  height: 32px;
-  min-height: 32px;
-  max-height: 32px;
-  padding: 0 10px;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  padding: 0 12px;
   background: var(--cf-bg-deep);
-  border-bottom: 1px solid var(--cf-hairline);
+  border-bottom: 1px solid #0a274f;
 }
 
 .topbar-brand {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -126,11 +132,11 @@ body {
 }
 
 .topbar-name {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--cf-text);
+  color: #ffffff;
   line-height: 1;
 }
 
@@ -145,10 +151,10 @@ body {
 
 .main {
   flex: 1;
-  padding: 8px 10px 12px;
+  padding: 10px 14px 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
   min-width: 0;
   min-height: 0;
@@ -159,7 +165,7 @@ body {
 .section {
   background: var(--cf-panel);
   border: 1px solid var(--cf-hairline);
-  padding: 6px 8px 8px;
+  padding: 8px 10px 10px;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -173,10 +179,10 @@ body {
 .section-title {
   margin: 0 0 6px;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--cf-accent);
+  color: var(--cf-text);
 }
 
 .section-head {
@@ -230,7 +236,7 @@ body {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--cf-accent);
+  color: #0b4f9c;
   font: inherit;
   font-size: 10px;
   letter-spacing: 0.04em;
@@ -239,13 +245,13 @@ body {
 }
 
 .linkish:hover {
-  color: var(--cf-accent-bright);
+  color: var(--cf-accent);
 }
 
 .scatter-legend-box {
   display: inline-block;
   padding: 4px 8px 5px;
-  background: rgba(10, 39, 79, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   border: 1px solid var(--cf-hairline);
   pointer-events: auto;
 }
@@ -283,7 +289,8 @@ body {
 }
 
 .scatter-legend-btn.is-active {
-  color: var(--cf-accent);
+  color: #0b4f9c;
+  font-weight: 700;
 }
 
 .scatter-legend-all {
@@ -292,7 +299,7 @@ body {
 }
 
 .scatter-legend-all.is-active {
-  color: var(--cf-accent);
+  color: #0b4f9c;
 }
 
 .scatter-legend-swatch {
@@ -312,7 +319,7 @@ body {
   gap: 4px;
   margin: 0;
   padding: 0;
-  color: #808080;
+  color: var(--cf-muted);
   font-size: 9px;
   line-height: 1.35;
   letter-spacing: 0.01em;
@@ -327,7 +334,7 @@ body {
 }
 
 .scatter-offaxis-mark {
-  color: #808080;
+  color: var(--cf-muted);
   font-size: 8px;
   line-height: 1.35;
   opacity: 0.85;
@@ -352,7 +359,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--cf-accent);
+  color: var(--cf-muted);
 }
 
 .field input {
@@ -369,11 +376,11 @@ body {
 }
 
 .field input:focus {
-  border-color: var(--cf-accent);
+  border-color: var(--cf-bg-deep);
 }
 
 .select {
-  background: var(--cf-grid);
+  background: var(--cf-bg);
   color: var(--cf-text);
   border: 1px solid var(--cf-hairline);
   border-radius: 0;
@@ -406,8 +413,8 @@ body {
 }
 
 .drill-current {
-  color: var(--cf-accent);
-  font-weight: 600;
+  color: var(--cf-text);
+  font-weight: 700;
 }
 
 .drill-link {
@@ -430,7 +437,7 @@ body {
 }
 
 .ag-theme-cashflow .ag-row-selected {
-  background-color: #2a3224 !important;
+  background-color: var(--cf-selected) !important;
 }
 
 .btn {
@@ -440,7 +447,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--cf-bg);
+  color: var(--cf-on-accent);
   background: var(--cf-accent);
   border: 1px solid var(--cf-accent);
   border-radius: 0;
@@ -464,7 +471,7 @@ body {
 }
 
 .result strong {
-  color: var(--cf-accent-bright);
+  color: #0b4f9c;
   font-weight: 600;
 }
 
@@ -484,9 +491,9 @@ body {
 }
 
 .status-banner-error {
-  border-color: #5a1a28;
-  background: #1a0c10;
-  color: #e8a0b0;
+  border-color: #f0b4c0;
+  background: #fff5f7;
+  color: #9b1c32;
 }
 
 .status-banner-muted {
@@ -530,7 +537,7 @@ body {
 }
 
 .linkish.is-active {
-  color: var(--cf-accent-bright);
+  color: var(--cf-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -622,11 +629,12 @@ body {
 }
 
 .ag-theme-cashflow .cf-row-span {
-  background-color: #1a1a1a;
+  background-color: var(--cf-grid);
   border-bottom: 1px solid var(--cf-hairline);
   align-items: flex-start;
   padding-top: 4px;
   font-weight: 600;
+  color: var(--cf-text);
 }
 
 .chart-wrap {
@@ -659,13 +667,13 @@ body {
 .ag-theme-cashflow {
   width: 100%;
   height: 100%;
-  /* Bloomberg-dark native scrollbars (Firefox + color-scheme hint) */
-  color-scheme: dark;
+  /* Light native scrollbars */
+  color-scheme: light;
   scrollbar-width: thin;
   scrollbar-color: var(--cf-chrome) var(--cf-row-alt);
 }
 
-/* All AG Grid viewports inherit — vertical + horizontal, no light OS chrome */
+/* All AG Grid viewports inherit — vertical + horizontal */
 .ag-theme-cashflow *:not(.ag-invisible-scrollbar)::-webkit-scrollbar {
   width: 10px;
   height: 10px;

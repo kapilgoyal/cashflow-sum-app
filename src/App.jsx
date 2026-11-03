@@ -763,7 +763,7 @@ export default function App() {
               href={url}
               target="_blank"
               rel="noreferrer"
-              style={{ color: "#FD9D24" }}
+              style={{ color: "#0B4F9C" }}
             >
               {url}
             </a>
@@ -1449,7 +1449,7 @@ export default function App() {
   }
 
   const axisTick = {
-    fill: "#808080",
+    fill: "#4A5F7A",
     fontSize: 10,
     fontFamily: FONT,
   };
@@ -1643,9 +1643,9 @@ export default function App() {
                           margin={{ top: 12, right: 16, left: 8, bottom: 28 }}
                         >
                           <CartesianGrid
-                            stroke="#4A5F7A"
+                            stroke="#D0D7E2"
                             strokeDasharray="2 4"
-                            strokeOpacity={0.45}
+                            strokeOpacity={0.9}
                           />
                           <XAxis
                             type="number"
@@ -1653,8 +1653,8 @@ export default function App() {
                             name="Original CLTV"
                             tick={axisTick}
                             ticks={X_TICKS}
-                            axisLine={{ stroke: "#2A3D5C" }}
-                            tickLine={{ stroke: "#2A3D5C" }}
+                            axisLine={{ stroke: "#8A9BB0" }}
+                            tickLine={{ stroke: "#8A9BB0" }}
                             tickFormatter={(v) => Number(v).toFixed(1)}
                             domain={X_DOMAIN}
                             allowDataOverflow
@@ -1662,7 +1662,7 @@ export default function App() {
                               value: "Original CLTV",
                               position: "insideBottom",
                               offset: -14,
-                              fill: "#FCFCFC",
+                              fill: "#001A41",
                               fontSize: 11,
                               fontFamily: FONT,
                               fontWeight: 600,
@@ -1674,8 +1674,8 @@ export default function App() {
                             name="Refinance Incentive"
                             tick={axisTick}
                             ticks={Y_TICKS}
-                            axisLine={{ stroke: "#2A3D5C" }}
-                            tickLine={{ stroke: "#2A3D5C" }}
+                            axisLine={{ stroke: "#8A9BB0" }}
+                            tickLine={{ stroke: "#8A9BB0" }}
                             domain={Y_DOMAIN}
                             allowDataOverflow
                             width={44}
@@ -1684,7 +1684,7 @@ export default function App() {
                               angle: -90,
                               position: "insideLeft",
                               offset: 8,
-                              fill: "#FCFCFC",
+                              fill: "#001A41",
                               fontSize: 11,
                               fontFamily: FONT,
                               fontWeight: 600,
@@ -1694,17 +1694,17 @@ export default function App() {
                           <Tooltip
                             cursor={{
                               strokeDasharray: "3 3",
-                              stroke: "#4A5F7A",
+                              stroke: "#8A9BB0",
                             }}
                             contentStyle={{
-                              background: "#0A274F",
-                              border: "1px solid #2A3D5C",
+                              background: "#FFFFFF",
+                              border: "1px solid #D0D7E2",
                               borderRadius: 0,
                               fontSize: 11,
-                              color: "#FCFCFC",
+                              color: "#001A41",
                               fontFamily: FONT,
                             }}
-                            labelStyle={{ color: "#808080" }}
+                            labelStyle={{ color: "#4A5F7A" }}
                           />
                           <Legend
                             verticalAlign="top"

@@ -1,6 +1,6 @@
 # CashFlow Sum App
 
-Vite + React Bloomberg-themed frontend with a local FastAPI package under `app/` for securitization scenario grids and month-1 cohort cash flows.
+Vite + React professional light frontend (white content, `#001A41` type) with a local FastAPI package under `app/` for securitization scenario grids and month-1 cohort cash flows.
 
 Left nav: **Loan** · **Cash Flow Scenarios** · **Cash Flow**. In-memory scenario results (no full reload). Top bar: **CashFlow** + amber `v0.2.0`.
 

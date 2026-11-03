@@ -10,16 +10,16 @@ import { themeQuartz } from "ag-grid-community";
 export const FONT = '"Source Sans 3", "Segoe UI", system-ui, sans-serif';
 
 export const gridTheme = themeQuartz.withParams({
-  backgroundColor: "#0A274F",
-  foregroundColor: "#FCFCFC",
-  headerBackgroundColor: "#001538",
-  headerTextColor: "#808080",
-  oddRowBackgroundColor: "#0A2348",
-  rowHoverColor: "#0D274C",
-  selectedRowBackgroundColor: "#2A3224",
-  borderColor: "#2A3D5C",
-  rowBorder: { style: "solid", width: 1, color: "#2A3D5C" },
-  columnBorder: { style: "solid", width: 1, color: "#1A3355" },
+  backgroundColor: "#FFFFFF",
+  foregroundColor: "#001A41",
+  headerBackgroundColor: "#F4F6F9",
+  headerTextColor: "#4A5F7A",
+  oddRowBackgroundColor: "#F7F9FC",
+  rowHoverColor: "#EEF2F7",
+  selectedRowBackgroundColor: "#E8F0FE",
+  borderColor: "#D0D7E2",
+  rowBorder: { style: "solid", width: 1, color: "#D0D7E2" },
+  columnBorder: { style: "solid", width: 1, color: "#E4E9F0" },
   headerColumnBorder: false,
   fontFamily: FONT,
   fontSize: 11,
@@ -33,8 +33,8 @@ export const gridTheme = themeQuartz.withParams({
   rangeSelectionBorderColor: "#FD9D24",
   iconSize: 12,
   headerColumnResizeHandleWidth: 2,
-  /* Prefer dark OS/chrome scrollbars; App.css overrides WebKit thumb/track. */
-  browserColorScheme: "dark",
+  /* Light OS/chrome scrollbars; App.css overrides WebKit thumb/track. */
+  browserColorScheme: "light",
 });
 
 export function fmtMoney(v) {

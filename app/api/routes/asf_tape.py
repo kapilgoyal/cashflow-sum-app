@@ -23,6 +23,11 @@ def asf_tape(
     repo = _repo()
     try:
         if repo.url:
+            # Ensure has_mi exists before SELECT (Neon DBs predate the column).
+            try:
+                repo.ensure_has_mi_column()
+            except Exception:  # noqa: BLE001
+                pass
             rows, total = repo.list_loans(limit=limit, offset=offset)
             source = "neon.asf_tape"
         else:
