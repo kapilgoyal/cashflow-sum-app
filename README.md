@@ -37,13 +37,42 @@ uvicorn app.main:app --reload
 
 Optional Neon seed: set `DATABASE_URL`; scripts attempt insert and skip cleanly if unset/unreachable.
 
-## Deploy (Vercel)
+## Deploy (durable)
 
-1. Vite frontend (`dist/`) + FastAPI via Mangum at `api/index.py`.
-2. `vercel.json` rewrites `/api/*` → Mangum and SPA routes → `index.html`.
-3. Set `DATABASE_URL` (and ideally `DATABASE_URL_UNPOOLED`) in the Vercel project env.
-4. Left nav: **ASF Tape** · **Loan QC** · **Stratification** · **Cohort** · **Scenarios** · **Cash Flow** · **Assumptions**.
-5. **Run month 1** → `POST /api/cashflows/run-month1` (loads Neon cache on Vercel; full engine locally; persists loan-level CF).
+**Frontend (static)** — Vercel  
+**API (always-on)** — Railway (`uvicorn app.main:app`, see `Procfile` / `railway.toml`)
+
+Vercel no longer runs Python serverless (Mangum retired under `deploy/legacy-vercel-mangum/`). That avoided the 225 MB function size ceiling.
+
+### Railway (FastAPI)
+
+1. Create a Railway project from this repo (Nixpacks detects Python).
+2. Set env vars on the Railway service (never commit them):
+   - `DATABASE_URL` — Neon pooled Postgres URL
+   - `DATABASE_URL_UNPOOLED` — optional Neon direct URL
+3. Public HTTPS URL looks like `https://<service>.up.railway.app`.
+4. Health: `GET /health`.
+
+### Vercel (React)
+
+1. Build is Vite → `dist/` (`vercel.json` SPA rewrite only; no `/api` Python).
+2. Set **build** env `VITE_API_BASE_URL` to the Railway origin (no trailing slash), e.g. `https://<service>.up.railway.app`.
+3. Redeploy so the client embeds that base (`src/apiBase.js`).
+4. UI: https://cashflow-sum-app.vercel.app
+
+### Local
+
+```bash
+# API
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+
+# UI (proxies /api → :8000)
+npm install && npm run dev
+```
+
+Left nav: **ASF Tape** · **Loan QC** · **Stratification** · **Cohort** · **Scenarios** · **Cash Flow** · **Assumptions**.  
+**Run month 1** → `POST /api/cashflows/run-month1` (Neon when `DATABASE_URL` is set).
 
 ## Local frontend
 

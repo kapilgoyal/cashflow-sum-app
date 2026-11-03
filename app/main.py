@@ -22,7 +22,7 @@ def _bootstrap_csvs() -> None:
     bootstrap_severity()
 
 
-# Eager bootstrap for Vercel/Mangum (lifespan="off") and local uvicorn.
+# Eager bootstrap for always-on uvicorn (Railway) and local dev.
 _bootstrap_csvs()
 
 
