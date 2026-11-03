@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.vercel
+docs
+scripts
+public
+*.md
+!api/README.md
+.env
+.env.*
+__pycache__
+.venv
+venv
