@@ -12,9 +12,9 @@ from app.models.base import Base
 class Scenario(BaseModel):
     """One cell of the cohort × PSA × SDA securitization grid.
 
-    TODO (not implemented): state-varying foreclosure / REO lag and recovery
-    timing. recovery_period_months / recovery_lag_months are pool-level
-    constants until state logic exists.
+    recovery_rate / recovery_period_months are cohort constants (60%/12,
+    55%/15, 75%/9). recovery_lag_months on the scenario is a fallback only;
+    the engine applies Fannie Mae state foreclosure lag from loan.state.
     """
 
     scenario_id: str
@@ -25,10 +25,10 @@ class Scenario(BaseModel):
     recovery_lag_months: int = 6
     recovery_rate: float = Field(
         default=0.60,
-        description="Fraction of defaulted principal recovered (static)",
+        description="Cohort fraction of defaulted principal recovered (not one pool rate)",
     )
     note: str = ""
-    state_varying_recovery_todo: bool = True
+    state_varying_recovery_todo: bool = False
 
 
 class ScenarioORM(Base):

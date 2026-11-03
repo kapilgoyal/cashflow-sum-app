@@ -1,4 +1,17 @@
-"""Deterministic one-loan cash flows under PSA prepays + SDA defaults."""
+"""Deterministic one-loan cash flows under PSA prepays + SDA defaults.
+
+Three-panel row semantics (see docs/cf-panel-refs/):
+1. Performing UPB — Beg/Interest/Sched/CPR/CDR/Prepay/New Default/End
+2. Default roll — Beg Def / New / Liquidated (after lag) / Recovery / Loss / End Def
+3. Actual cash — Interest + Sched + Prepay + Recovery (= Total Cash); defaults ≠ cash
+
+Recovery rate stays cohort (60/55/75). Liquidation lag from Fannie Mae state
+time frames when loan.state is known.
+
+PSA/SDA seasoning: curve age for projection month ``k`` is
+``age_at_cutoff + k`` (from ``loan_age_months`` or origination→cutoff),
+never projection month alone (which would force every loan to t=1).
+"""
 
 from __future__ import annotations
 
@@ -15,6 +28,7 @@ from app.services.psa_sda import (
     round_money,
     smm_from_cpr,
 )
+from app.services.recovery import resolve_recovery_lag_months
 from app.services.seasoning import age_at_cutoff, curve_age
 
 
@@ -25,20 +39,15 @@ def project_loan_cashflows(
 ) -> list[CashflowRow]:
     """Project months 1..N with competing scheduled / default / prepay.
 
-    Timing convention (static minimum case):
-    1. Beginning UPB
+    Timing:
+    1. Beginning UPB / beginning default inventory
     2. Interest on beginning UPB
     3. Scheduled principal (level amort; IO until remaining_io exhausted)
-    4. Default = MDR × beginning UPB (capped)
-    5. Prepay = SMM × max(0, begin − sched − default)
-    6. Recovery of defaulted principal at scenario.recovery_rate, starting
-       after recovery_lag_months, spread evenly over recovery_period_months
-
-    PSA/SDA seasoning: curve age for projection month ``k`` is
-    ``age_at_cutoff + k`` (from ``loan_age_months`` or origination→cutoff),
-    never projection month alone (which would force every loan to t=1).
-
-    TODO: state-level foreclosure/REO lag — not applied (pool constants only).
+    4. New default = MDR × beginning UPB (capped)
+    5. Prepay = SMM × max(0, begin − sched − new_default)
+    6. Liquidate aged default inventory after used_recovery_lag_months,
+       spread evenly over recovery_period_months; recovery = liq × rate;
+       realized loss = liq × (1 − rate). Defaults themselves are not cash.
     """
     bal = float(loan.current_balance)
     rate = float(loan.annual_rate)
@@ -56,43 +65,63 @@ def project_loan_cashflows(
 
     psa = float(scenario.psa_multiple)
     sda = float(scenario.sda_multiple)
-    lag = int(scenario.recovery_lag_months)
+    lag = resolve_recovery_lag_months(
+        loan.state,
+        scenario_lag_months=int(scenario.recovery_lag_months),
+    )
     period = max(int(scenario.recovery_period_months), 1)
     rec_rate = float(scenario.recovery_rate)
 
-    pending: dict[int, float] = defaultdict(float)
+    # month → face amount of default inventory liquidating that month
+    pending_liq: dict[int, float] = defaultdict(float)
+    default_bal = 0.0
     rows: list[CashflowRow] = []
     horizon = max(int(months), rem_term)
 
     for m in range(1, horizon + 1):
         age = curve_age(age0, m)
-        if bal <= 0.005 and not any(pending[k] for k in range(m, m + lag + period + 1)):
-            # Still emit remaining months with zeros if requested, else stop early
+        still_pending = any(
+            pending_liq[k] for k in range(m, m + lag + period + 1)
+        )
+        if bal <= 0.005 and default_bal <= 0.005 and not still_pending:
             if m > months:
                 break
-            recovery = round_money(pending.pop(m, 0.0))
+            liquidated = pending_liq.pop(m, 0.0)
+            recovery = round_money(liquidated * rec_rate)
+            loss = round_money(liquidated * (1.0 - rec_rate))
+            end_def = max(default_bal + 0.0 - liquidated, 0.0)
             rows.append(
                 CashflowRow(
                     month=m,
                     beginning_balance=0.0,
                     interest=0.0,
                     scheduled_principal=0.0,
-                    default=0.0,
-                    prepay=0.0,
-                    recovery=recovery,
-                    ending_balance=0.0,
-                    loan_age=age,
                     cpr=0.0,
-                    smm=0.0,
                     cdr=0.0,
+                    prepay=0.0,
+                    new_default=0.0,
+                    default=0.0,
+                    ending_balance=0.0,
+                    beginning_default_balance=round_money(default_bal),
+                    liquidated_default=round_money(liquidated),
+                    recovery=recovery,
+                    realized_loss=loss,
+                    ending_default_balance=round_money(end_def),
+                    total_cash=recovery,
+                    loan_age=age,
+                    smm=0.0,
                     mdr=0.0,
+                    used_recovery_lag_months=lag,
+                    recovery_rate=rec_rate,
                 )
             )
+            default_bal = end_def
             if m >= months:
                 break
             continue
 
         begin = bal
+        begin_def = default_bal
         months_left = max(rem_term - m + 1, 1)
         r_mo = rate / 12.0
         interest = begin * r_mo
@@ -100,10 +129,8 @@ def project_loan_cashflows(
         if io_left > 0:
             sched = 0.0
             io_left -= 1
-            pmt = interest  # interest-only
         else:
             pmt = payment
-            # Recompute level payment if still None-like edge
             if pmt <= interest and begin > 0 and months_left > 0:
                 pmt = level_payment(begin, rate, months_left)
             sched = min(max(pmt - interest, 0.0), begin)
@@ -114,41 +141,58 @@ def project_loan_cashflows(
         smm = smm_from_cpr(cpr)
         mdr = mdr_from_cdr(cdr)
 
-        default = min(begin * mdr, max(begin - sched, 0.0))
-        surviving = max(begin - sched - default, 0.0)
+        new_default = min(begin * mdr, max(begin - sched, 0.0))
+        surviving = max(begin - sched - new_default, 0.0)
         prepay = min(surviving * smm, surviving)
-        end = max(begin - sched - default - prepay, 0.0)
+        end = max(begin - sched - new_default - prepay, 0.0)
 
-        if default > 0 and rec_rate > 0:
-            chunk = (default * rec_rate) / period
+        if new_default > 0:
+            chunk = new_default / period
             start = m + lag
             for k in range(period):
-                pending[start + k] += chunk
+                pending_liq[start + k] += chunk
 
-        recovery = round_money(pending.pop(m, 0.0))
-        bal = end
+        liquidated = pending_liq.pop(m, 0.0)
+        recovery = liquidated * rec_rate
+        realized_loss = liquidated * (1.0 - rec_rate)
+        end_def = max(begin_def + new_default - liquidated, 0.0)
+
+        interest_r = round_money(interest)
+        sched_r = round_money(sched)
+        prepay_r = round_money(prepay)
+        recovery_r = round_money(recovery)
+        total_cash = round_money(interest_r + sched_r + prepay_r + recovery_r)
 
         rows.append(
             CashflowRow(
                 month=m,
                 beginning_balance=round_money(begin),
-                interest=round_money(interest),
-                scheduled_principal=round_money(sched),
-                default=round_money(default),
-                prepay=round_money(prepay),
-                recovery=recovery,
-                ending_balance=round_money(end),
-                loan_age=age,
+                interest=interest_r,
+                scheduled_principal=sched_r,
                 cpr=round_money(cpr),
-                smm=round_money(smm),
                 cdr=round_money(cdr),
+                prepay=prepay_r,
+                new_default=round_money(new_default),
+                default=round_money(new_default),
+                ending_balance=round_money(end),
+                beginning_default_balance=round_money(begin_def),
+                liquidated_default=round_money(liquidated),
+                recovery=recovery_r,
+                realized_loss=round_money(realized_loss),
+                ending_default_balance=round_money(end_def),
+                total_cash=total_cash,
+                loan_age=age,
+                smm=round_money(smm),
                 mdr=round_money(mdr),
+                used_recovery_lag_months=lag,
+                recovery_rate=rec_rate,
             )
         )
+        bal = end
+        default_bal = end_def
         if m >= months:
             break
         if end <= 0.005 and m >= months:
             break
 
-    # Drain any recovery past horizon into last row if within requested months only
     return rows[:months]

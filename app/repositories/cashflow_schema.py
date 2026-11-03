@@ -3,6 +3,11 @@
 Fact tables keep scenario_id (FK → securitization_scenarios) + CF measures only.
 Scenario definition fields (cohort, PSA/SDA, PCA/STA, recovery params) live on
 securitization_scenarios and are re-exposed via *_enriched views.
+
+CF measures cover three panels:
+1. Performing UPB (beg/interest/sched/cpr/cdr/prepay/new default/end)
+2. Default roll (beg def / liquidated / recovery / realized loss / end def)
+3. Actual cash total (interest+sched+prepay+recovery; defaults ≠ cash)
 """
 
 from __future__ import annotations
@@ -24,9 +29,34 @@ CREATE TABLE IF NOT EXISTS loan_cashflows_month1 (
     smm DOUBLE PRECISION,
     cdr DOUBLE PRECISION,
     mdr DOUBLE PRECISION,
+    used_recovery_lag_months INTEGER,
+    beginning_default_balance DOUBLE PRECISION,
+    liquidated_default DOUBLE PRECISION,
+    realized_loss DOUBLE PRECISION,
+    ending_default_balance DOUBLE PRECISION,
+    total_cash DOUBLE PRECISION,
     PRIMARY KEY (scenario_id, loan_id, month)
 );
 """
+
+# Idempotent adds for existing Neon tables created before three-panel CF.
+LOAN_CF_MONTH1_ADD_PANEL_COLS_SQL = """
+ALTER TABLE loan_cashflows_month1
+    ADD COLUMN IF NOT EXISTS used_recovery_lag_months INTEGER;
+ALTER TABLE loan_cashflows_month1
+    ADD COLUMN IF NOT EXISTS beginning_default_balance DOUBLE PRECISION;
+ALTER TABLE loan_cashflows_month1
+    ADD COLUMN IF NOT EXISTS liquidated_default DOUBLE PRECISION;
+ALTER TABLE loan_cashflows_month1
+    ADD COLUMN IF NOT EXISTS realized_loss DOUBLE PRECISION;
+ALTER TABLE loan_cashflows_month1
+    ADD COLUMN IF NOT EXISTS ending_default_balance DOUBLE PRECISION;
+ALTER TABLE loan_cashflows_month1
+    ADD COLUMN IF NOT EXISTS total_cash DOUBLE PRECISION;
+"""
+
+# Back-compat alias name used by older import sites.
+LOAN_CF_MONTH1_ADD_USED_LAG_SQL = LOAN_CF_MONTH1_ADD_PANEL_COLS_SQL
 
 LOAN_CF_MONTH1_ENRICHED_VIEW_SQL = """
 CREATE OR REPLACE VIEW loan_cashflows_month1_enriched AS
@@ -38,6 +68,7 @@ SELECT
     cf.interest,
     cf.scheduled_principal,
     cf.default_amt,
+    cf.default_amt AS new_default,
     cf.prepay,
     cf.recovery,
     cf.ending_balance,
@@ -46,6 +77,12 @@ SELECT
     cf.smm,
     cf.cdr,
     cf.mdr,
+    cf.used_recovery_lag_months,
+    cf.beginning_default_balance,
+    cf.liquidated_default,
+    cf.realized_loss,
+    cf.ending_default_balance,
+    cf.total_cash,
     s.cohort,
     s.psa_multiple,
     s.sda_multiple,
@@ -79,9 +116,32 @@ CREATE TABLE IF NOT EXISTS loan_month_cf (
     smm DOUBLE PRECISION,
     cdr DOUBLE PRECISION,
     mdr DOUBLE PRECISION,
+    used_recovery_lag_months INTEGER,
+    beginning_default_balance DOUBLE PRECISION,
+    liquidated_default DOUBLE PRECISION,
+    realized_loss DOUBLE PRECISION,
+    ending_default_balance DOUBLE PRECISION,
+    total_cash DOUBLE PRECISION,
     PRIMARY KEY (scenario_id, loan_id, month)
 );
 """
+
+LOAN_MONTH_CF_ADD_PANEL_COLS_SQL = """
+ALTER TABLE loan_month_cf
+    ADD COLUMN IF NOT EXISTS used_recovery_lag_months INTEGER;
+ALTER TABLE loan_month_cf
+    ADD COLUMN IF NOT EXISTS beginning_default_balance DOUBLE PRECISION;
+ALTER TABLE loan_month_cf
+    ADD COLUMN IF NOT EXISTS liquidated_default DOUBLE PRECISION;
+ALTER TABLE loan_month_cf
+    ADD COLUMN IF NOT EXISTS realized_loss DOUBLE PRECISION;
+ALTER TABLE loan_month_cf
+    ADD COLUMN IF NOT EXISTS ending_default_balance DOUBLE PRECISION;
+ALTER TABLE loan_month_cf
+    ADD COLUMN IF NOT EXISTS total_cash DOUBLE PRECISION;
+"""
+
+LOAN_MONTH_CF_ADD_USED_LAG_SQL = LOAN_MONTH_CF_ADD_PANEL_COLS_SQL
 
 LOAN_MONTH_CF_ENRICHED_VIEW_SQL = """
 CREATE OR REPLACE VIEW loan_month_cf_enriched AS
@@ -93,15 +153,22 @@ SELECT
     cf.interest,
     cf.scheduled_principal,
     cf.default_amt,
+    cf.default_amt AS new_default,
     cf.prepay,
     cf.recovery,
-    (cf.default_amt * (1.0 - s.recovery_rate)) AS loss,
+    COALESCE(cf.realized_loss, cf.default_amt * (1.0 - s.recovery_rate)) AS loss,
+    COALESCE(cf.realized_loss, cf.default_amt * (1.0 - s.recovery_rate)) AS realized_loss,
     cf.ending_balance,
     cf.loan_age,
     cf.cpr,
     cf.smm,
     cf.cdr,
     cf.mdr,
+    cf.used_recovery_lag_months,
+    cf.beginning_default_balance,
+    cf.liquidated_default,
+    cf.ending_default_balance,
+    cf.total_cash,
     s.cohort,
     s.psa_multiple,
     s.sda_multiple,
@@ -134,6 +201,12 @@ MONTH1_FACT_COLS = (
     "smm",
     "cdr",
     "mdr",
+    "used_recovery_lag_months",
+    "beginning_default_balance",
+    "liquidated_default",
+    "realized_loss",
+    "ending_default_balance",
+    "total_cash",
 )
 
 MONTH1_DROPPED_COLS = (

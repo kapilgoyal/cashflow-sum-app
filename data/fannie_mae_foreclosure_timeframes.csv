@@ -1,0 +1,63 @@
+# Source: Fannie Mae Foreclosure Time Frames and Compensatory Fee Allowable Delays Exhibit
+# URL: https://singlefamily.fanniemae.com/media/6726/display
+# Effective: foreclosure sale date on or after 2025-07-01 (document dated 06.18.25)
+# state_time_frame_days = max allowable days from LPI due date to foreclosure sale
+# recovery_lag_months = round(state_time_frame_days / 30)
+# Method of Foreclosure is Fannie Mae preferred methodology per jurisdiction
+# Note: New York City has a separate row from New York state; Oregon preferred method Non-Judicial (judicial allowed case-by-case)
+state_code,state_name,method_of_foreclosure,state_time_frame_days,recovery_lag_months
+AL,Alabama,Non-Judicial,420,14
+AK,Alaska,Non-Judicial,480,16
+AZ,Arizona,Non-Judicial,450,15
+AR,Arkansas,Non-Judicial,420,14
+CA,California,Non-Judicial,600,20
+CO,Colorado,Non-Judicial,540,18
+CT,Connecticut,Judicial,780,26
+DE,Delaware,Judicial,720,24
+DC,District of Columbia,Judicial,1230,41
+FL,Florida,Judicial,720,24
+GA,Georgia,Non-Judicial,480,16
+GU,Guam,Non-Judicial,500,17
+HI,Hawaii,Judicial,900,30
+ID,Idaho,Non-Judicial,630,21
+IL,Illinois,Judicial,720,24
+IN,Indiana,Judicial,660,22
+IA,Iowa,Judicial,570,19
+KS,Kansas,Judicial,540,18
+KY,Kentucky,Judicial,720,24
+LA,Louisiana,Judicial,540,18
+ME,Maine,Judicial,1320,44
+MD,Maryland,Non-Judicial,780,26
+MA,Massachusetts,Judicial,810,27
+MI,Michigan,Non-Judicial,390,13
+MN,Minnesota,Non-Judicial,420,14
+MS,Mississippi,Non-Judicial,450,15
+MO,Missouri,Non-Judicial,450,15
+MT,Montana,Non-Judicial,450,15
+NE,Nebraska,Non-Judicial,480,16
+NV,Nevada,Non-Judicial,750,25
+NH,New Hampshire,Non-Judicial,480,16
+NJ,New Jersey,Judicial,810,27
+NM,New Mexico,Judicial,930,31
+NY,New York,Judicial,1740,58
+NYC,New York City,Judicial,2190,73
+NC,North Carolina,Non-Judicial,690,23
+ND,North Dakota,Judicial,630,21
+OH,Ohio,Judicial,690,23
+OK,Oklahoma,Judicial,690,23
+OR,Oregon,Non-Judicial,630,21
+PA,Pennsylvania,Judicial,780,26
+PR,Puerto Rico,Judicial,810,27
+RI,Rhode Island,Non-Judicial,900,30
+SC,South Carolina,Judicial,570,19
+SD,South Dakota,Judicial,540,18
+TN,Tennessee,Non-Judicial,420,14
+TX,Texas,Non-Judicial,480,16
+UT,Utah,Non-Judicial,540,18
+VT,Vermont,Judicial,1050,35
+VI,Virgin Islands,Judicial,510,17
+VA,Virginia,Non-Judicial,450,15
+WA,Washington,Non-Judicial,630,21
+WV,West Virginia,Non-Judicial,570,19
+WI,Wisconsin,Judicial,540,18
+WY,Wyoming,Non-Judicial,360,12
