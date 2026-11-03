@@ -17,7 +17,7 @@ ASSUMPTIONS_CSV_NAME = "assumptions.csv"
 _FALLBACK_HAS_MI = True
 _FALLBACK_SEVERITY_CSV = "data/urban_freddie_loss_severity_fico_ltv.csv"
 _FALLBACK_FANNIE_CSV = "data/fannie_mae_foreclosure_timeframes.csv"
-_FALLBACK_SEVERITY_YEAR = "Total"
+_FALLBACK_SEVERITY_YEAR = "2006"
 
 
 def _repo_root() -> Path:

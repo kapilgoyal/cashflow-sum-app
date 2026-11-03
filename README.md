@@ -26,8 +26,9 @@ uvicorn app.main:app --reload
 - PSA (PCA) Down/Base/Up: **75 / 100 / 125**
 - SDA (STA) Down/Base/Up: **50 / 100 / 200**
 - Full cross = **27 rows** in `data/securitization_scenarios.csv`
-- Recovery **rate** (per cohort — **not** one pool rate): high-LTV strong **60%/12mo**; high-LTV weak **55%/15mo**; low-LTV weak **75%/9mo**
+- Recovery **rate**: when `has_mi` (from `data/assumptions.csv`, synthetic → **true** for all loans) use Urban/Freddie Table 4 severity grid → `recovery = 1 − severity` (`data/urban_freddie_loss_severity_fico_ltv.csv`); else fall back to cohort rates (high-LTV strong **60%/12mo**; high-LTV weak **55%/15mo**; low-LTV weak **75%/9mo**).
 - Recovery **lag**: Fannie Mae state foreclosure time frames in `data/fannie_mae_foreclosure_timeframes.csv` (source: https://singlefamily.fanniemae.com/media/6726/display); `used_recovery_lag_months ≈ days/30`. Scenario `recovery_lag_months` is fallback only when state is unknown.
+- **Assumptions** (CSV, not DB): `data/assumptions.csv` + nav tab **Assumptions** / `GET /api/assumptions` — has_mi, severity & Fannie paths, cohort recovery, PSA/SDA seasoning, source URLs. See `docs/assumptions.md`.
 - CF rows cover three panels: performing UPB, default roll (lag liquidation → recovery + realized loss), actual cash (`total_cash`; defaults ≠ cash). See store `docs/cf-panel-refs/` and `docs/recovery-rate-benchmarks.md`.
 
 ### Month-1 parallel run
@@ -41,7 +42,7 @@ Optional Neon seed: set `DATABASE_URL`; scripts attempt insert and skip cleanly 
 1. Vite frontend (`dist/`) + FastAPI via Mangum at `api/index.py`.
 2. `vercel.json` rewrites `/api/*` → Mangum and SPA routes → `index.html`.
 3. Set `DATABASE_URL` (and ideally `DATABASE_URL_UNPOOLED`) in the Vercel project env.
-4. Left nav: **ASF Tape** · **Loan QC** · **Stratification** · **Cohort** · **Scenarios** · **Cash Flow**.
+4. Left nav: **ASF Tape** · **Loan QC** · **Stratification** · **Cohort** · **Scenarios** · **Cash Flow** · **Assumptions**.
 5. **Run month 1** → `POST /api/cashflows/run-month1` (loads Neon cache on Vercel; full engine locally; persists loan-level CF).
 
 ## Local frontend

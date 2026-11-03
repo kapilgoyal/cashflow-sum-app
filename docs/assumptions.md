@@ -19,7 +19,7 @@ All modeling assumptions live under repo `data/` as CSV. Neon does **not** store
 
 ## Recovery rate
 
-1. If `has_mi` is True → look up Urban Table 4 cell (default vintage band `Total`) by FICO × LTV → `recovery_rate = 1 − severity_pct/100`.
+1. If `has_mi` is True → look up Urban Table 4 cell (default vintage band **`2006`**, peak-crisis FICO×LTV) → `recovery_rate = 1 − severity_pct/100`. Falls back within-grid to `fico_band=Total` then `year_band=Total` (LTV-only).
 2. If no cell / `has_mi` False → fall back to **cohort** recovery rates in `assumptions.csv` / scenario grid (0.75 / 0.60 / 0.55).
 
 Source PDF: [Loss Severity on Residential Mortgages (Goodman & Zhu, Urban Institute, Feb 2015)](https://www.urban.org/sites/default/files/publication/39566/2000092-Loss-Severity-on-Residential-Mortgages.pdf) — Table 4. Agency collateral; LTV > 80 severities reflect MI.
