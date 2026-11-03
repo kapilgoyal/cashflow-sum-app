@@ -65,7 +65,14 @@ class AsfTapeRepository:
                 cur.execute(ASF_TAPE_TABLE_SQL)
                 cur.execute(ASF_TAPE_HAS_MI_ALTER_SQL)
                 cur.execute(ASF_TAPE_HAS_MI_BACKFILL_SQL)
-                cur.execute(ASF_TAPE_HAS_MI_NOT_NULL_SQL)
+            conn.commit()
+            with conn.cursor() as cur:
+                try:
+                    cur.execute(ASF_TAPE_HAS_MI_NOT_NULL_SQL)
+                    conn.commit()
+                except Exception:  # noqa: BLE001
+                    conn.rollback()
+            with conn.cursor() as cur:
                 cur.execute(QC_CHECKS_TABLE_SQL)
                 cur.execute(QC_RESULTS_TABLE_SQL)
             conn.commit()
