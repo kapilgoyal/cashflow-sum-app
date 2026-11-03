@@ -597,24 +597,40 @@ body {
 
 .cf-grid-toolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 8px 12px;
+  justify-content: flex-end;
+  gap: 2px;
   flex: 0 0 auto;
   padding: 0 0 4px;
-  min-height: 18px;
+  min-height: 22px;
 }
 
-.cf-grid-tool {
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.cf-grid-tool-hint {
-  font-size: 10px;
+.cf-grid-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
   color: var(--cf-muted);
-  letter-spacing: 0.02em;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.cf-grid-icon-btn:hover {
+  color: var(--cf-text);
+  background: var(--cf-row-hover);
+  border-color: var(--cf-hairline);
+}
+
+.cf-grid-icon-btn:focus-visible {
+  outline: 2px solid var(--cf-accent);
+  outline-offset: 1px;
+  color: var(--cf-text);
 }
 
 .cf-grid-host {

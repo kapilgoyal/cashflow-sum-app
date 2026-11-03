@@ -222,6 +222,64 @@ function rowsToTsv(api, rows) {
   return lines.join("\n");
 }
 
+function IconExportCsv({ size = 14 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M8 2v8.5M5.5 8.5 8 11l2.5-2.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3 13.5h10"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconCopy({ size = 14 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect
+        x="5.25"
+        y="5.25"
+        width="7.5"
+        height="8.5"
+        rx="1"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M10.75 5.25V3.75A1.5 1.5 0 0 0 9.25 2.25H3.75A1.5 1.5 0 0 0 2.25 3.75v7.5A1.5 1.5 0 0 0 3.75 12.75h1.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 /** Shared DataGrid — theme, drill, CSV export, clipboard copy. */
 export function DataGrid({
   rowData,
@@ -335,13 +393,24 @@ export function DataGrid({
     >
       {showToolbar && (
         <div className="cf-grid-toolbar" role="toolbar" aria-label="Grid actions">
-          <button type="button" className="linkish cf-grid-tool" onClick={exportCsv}>
-            Export CSV
+          <button
+            type="button"
+            className="cf-grid-icon-btn"
+            onClick={exportCsv}
+            title="Export CSV"
+            aria-label="Export CSV"
+          >
+            <IconExportCsv />
           </button>
-          <button type="button" className="linkish cf-grid-tool" onClick={copyRows}>
-            Copy
+          <button
+            type="button"
+            className="cf-grid-icon-btn"
+            onClick={copyRows}
+            title="Copy (Ctrl+C)"
+            aria-label="Copy rows to clipboard"
+          >
+            <IconCopy />
           </button>
-          <span className="cf-grid-tool-hint">Ctrl+C copies selection</span>
         </div>
       )}
       <div className="cf-grid-host ag-theme-cashflow">
