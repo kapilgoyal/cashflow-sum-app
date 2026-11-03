@@ -32,6 +32,7 @@ import {
   staLabel,
   withScenarioRowSpans,
 } from "./cashflowGrid";
+import { apiUrl } from "./apiBase";
 import "./App.css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -566,7 +567,7 @@ export default function App() {
       setAsfLoading(true);
       setAsfError(null);
       try {
-        const res = await fetch("/api/asf/tape?limit=2000");
+        const res = await fetch(apiUrl("/api/asf/tape?limit=2000"));
         if (!res.ok) {
           const detail = await res.text();
           throw new Error(`HTTP ${res.status}: ${detail}`);
@@ -600,7 +601,7 @@ export default function App() {
         const results = await Promise.all(
           STRAT_DIMS.map(async (dim) => {
             const res = await fetch(
-              `/api/asf/stratification?by=${encodeURIComponent(dim.id)}`
+              apiUrl(`/api/asf/stratification?by=${encodeURIComponent(dim.id)}`)
             );
             if (!res.ok) {
               const detail = await res.text();
@@ -657,7 +658,7 @@ export default function App() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/asf/cohort-stats");
+        const res = await fetch(apiUrl("/api/asf/cohort-stats"));
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!cancelled) {
@@ -683,8 +684,8 @@ export default function App() {
       let loadedFromNeon = false;
       try {
         const [neonScenRes, neonStatusRes] = await Promise.all([
-          fetch("/api/neon/scenarios").catch(() => null),
-          fetch("/api/neon/status").catch(() => null),
+          fetch(apiUrl("/api/neon/scenarios")).catch(() => null),
+          fetch(apiUrl("/api/neon/status")).catch(() => null),
         ]);
         if (cancelled) return;
 
@@ -705,7 +706,7 @@ export default function App() {
           setScenarios(g.scenarios || []);
           loadedFromNeon = true;
         } else {
-          const gridRes = await fetch("/api/scenarios/grid").catch(() => null);
+          const gridRes = await fetch(apiUrl("/api/scenarios/grid")).catch(() => null);
           if (gridRes?.ok) {
             const g = await gridRes.json();
             setScenarios(g.scenarios || []);
@@ -716,7 +717,7 @@ export default function App() {
       }
 
       try {
-        const monthRes = await fetch("/api/cashflows/month1").catch(() => null);
+        const monthRes = await fetch(apiUrl("/api/cashflows/month1")).catch(() => null);
         if (!cancelled && monthRes?.ok) {
           const m = await monthRes.json();
           setAggregates(m.aggregates || []);
@@ -770,9 +771,11 @@ export default function App() {
       setNeonCfLoading(true);
       try {
         const res = await fetch(
-          `/api/neon/cashflows/month1?scenario_id=${encodeURIComponent(
-            selectedScenarioId
-          )}&limit=5000`
+          apiUrl(
+            `/api/neon/cashflows/month1?scenario_id=${encodeURIComponent(
+              selectedScenarioId
+            )}&limit=5000`
+          )
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -816,7 +819,7 @@ export default function App() {
           loan_id: selectedLoanId,
           scenario_id: selectedScenarioId,
         });
-        const res = await fetch(`/api/neon/cashflows/loan-month?${qs}`);
+        const res = await fetch(apiUrl(`/api/neon/cashflows/loan-month?${qs}`));
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!cancelled) setLoanMonthRows(data.rows || []);
@@ -845,7 +848,7 @@ export default function App() {
       setQcLoading(true);
       setQcError(null);
       try {
-        const res = await fetch("/api/qc/results");
+        const res = await fetch(apiUrl("/api/qc/results"));
         if (!res.ok) {
           const detail = await res.text();
           throw new Error(`HTTP ${res.status}: ${detail}`);
@@ -879,7 +882,7 @@ export default function App() {
       setAssumptionLoading(true);
       setAssumptionError(null);
       try {
-        const res = await fetch("/api/assumptions");
+        const res = await fetch(apiUrl("/api/assumptions"));
         if (!res.ok) {
           const detail = await res.text();
           throw new Error(`HTTP ${res.status}: ${detail}`);
@@ -1701,7 +1704,9 @@ export default function App() {
     setRunning(true);
     setRunError(null);
     try {
-      const res = await fetch("/api/cashflows/run-month1", { method: "POST" });
+      const res = await fetch(apiUrl("/api/cashflows/run-month1"), {
+        method: "POST",
+      });
       if (!res.ok) {
         const detail = await res.text();
         throw new Error(`HTTP ${res.status}: ${detail}`);
