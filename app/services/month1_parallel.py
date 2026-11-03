@@ -30,9 +30,15 @@ SUM_FIELDS = (
     "interest",
     "scheduled_principal",
     "default",
+    "new_default",
     "prepay",
     "recovery",
     "ending_balance",
+    "beginning_default_balance",
+    "liquidated_default",
+    "realized_loss",
+    "ending_default_balance",
+    "total_cash",
 )
 
 
@@ -59,6 +65,7 @@ def _worker(payload: dict[str, Any]) -> dict[str, Any]:
                     "sda_multiple": scenario.sda_multiple,
                     "pca_level": PSA_LEVEL_NAME[scenario.psa_multiple],
                     "sta_level": SDA_LEVEL_NAME[scenario.sda_multiple],
+                    "state": loan.state,
                     **row,
                 }
             )
@@ -83,6 +90,18 @@ def _worker(payload: dict[str, Any]) -> dict[str, Any]:
                 "month": HORIZON_MONTHS,
                 "n_loans": len(loans),
                 **{k: round(v, 8) for k, v in totals.items()},
+                "avg_used_recovery_lag_months": (
+                    round(
+                        sum(
+                            float(r.get("used_recovery_lag_months") or 0)
+                            for r in loan_rows
+                        )
+                        / len(loan_rows),
+                        3,
+                    )
+                    if loan_rows
+                    else None
+                ),
             },
             "loan_rows": loan_rows,
             "error": None,
@@ -207,22 +226,25 @@ def run_month1_parallel(
                 "high LTV and strong refinance incentive": {
                     "rate": 0.60,
                     "period_months": 12,
-                    "lag_months": 0,
+                    "lag_months_fallback": 0,
                 },
                 "high LTV and weak refinance incentive": {
                     "rate": 0.55,
                     "period_months": 15,
-                    "lag_months": 0,
+                    "lag_months_fallback": 0,
                 },
                 "low LTV and weak refinance incentive": {
                     "rate": 0.75,
                     "period_months": 9,
-                    "lag_months": 0,
+                    "lag_months_fallback": 0,
                 },
             },
             "note": (
                 "PCA=PSA, STA=SDA. Down/Base/Up from CF-41 grid. "
-                "Each of 27 cells runs its cohort loans for month 1 only."
+                "Each of 27 cells runs its cohort loans for month 1 only. "
+                "Cohort recovery_rate 60/55/75 (not one pool rate). "
+                "used_recovery_lag_months from Fannie Mae state time frames "
+                "(https://singlefamily.fanniemae.com/media/6726/display)."
             ),
         },
         "aggregates": aggregates,

@@ -15,6 +15,7 @@ from typing import Any
 import pandas as pd
 
 from app.repositories.cashflow_schema import (
+    LOAN_CF_MONTH1_ADD_PANEL_COLS_SQL,
     LOAN_CF_MONTH1_ENRICHED_VIEW_SQL,
     LOAN_CF_MONTH1_TABLE_SQL,
     MONTH1_FACT_COLS,
@@ -41,7 +42,8 @@ def _resolve_db_url() -> str | None:
 
 
 def _fact_tuple(r: dict[str, Any]) -> tuple:
-    default_amt = r.get("default_amt", r.get("default"))
+    default_amt = r.get("default_amt", r.get("default", r.get("new_default")))
+    used_lag = r.get("used_recovery_lag_months")
     return (
         r.get("scenario_id"),
         r.get("loan_id"),
@@ -58,6 +60,12 @@ def _fact_tuple(r: dict[str, Any]) -> tuple:
         r.get("smm"),
         r.get("cdr"),
         r.get("mdr"),
+        int(used_lag) if used_lag is not None else None,
+        r.get("beginning_default_balance"),
+        r.get("liquidated_default"),
+        r.get("realized_loss"),
+        r.get("ending_default_balance"),
+        r.get("total_cash"),
     )
 
 
@@ -130,7 +138,6 @@ class CashflowRepository:
         return status
 
     def _save_sqlite(self, loan_rows: list[dict[str, Any]]) -> str:
-        # SQLite offline copy stays denorm-free for consistency; no FK enforce.
         sqlite_ddl = """
         CREATE TABLE IF NOT EXISTS loan_cashflows_month1 (
             scenario_id TEXT NOT NULL,
@@ -148,6 +155,12 @@ class CashflowRepository:
             smm REAL,
             cdr REAL,
             mdr REAL,
+            used_recovery_lag_months INTEGER,
+            beginning_default_balance REAL,
+            liquidated_default REAL,
+            realized_loss REAL,
+            ending_default_balance REAL,
+            total_cash REAL,
             PRIMARY KEY (scenario_id, loan_id, month)
         );
         """
@@ -175,8 +188,6 @@ class CashflowRepository:
         with psycopg.connect(url, connect_timeout=30) as conn:
             with conn.cursor() as cur:
                 cur.execute(SCENARIO_SQL)
-                # Prefer migrate path for existing denorm tables; for fresh
-                # writes ensure normalized table + view exist.
                 cur.execute(
                     """
                     SELECT column_name FROM information_schema.columns
@@ -185,11 +196,14 @@ class CashflowRepository:
                 )
                 cols = {r[0] for r in cur.fetchall()}
                 if not cols or "cohort" in cols or "psa_multiple" in cols:
-                    # Caller should run migrate script; refuse silent denorm rewrite.
                     raise RuntimeError(
                         "loan_cashflows_month1 is missing or denormalized — "
                         "run scripts/migrate_normalize_loan_cf_month1.py first"
                     )
+                for stmt in LOAN_CF_MONTH1_ADD_PANEL_COLS_SQL.strip().split(";"):
+                    s = stmt.strip()
+                    if s:
+                        cur.execute(s)
                 cur.execute("DELETE FROM loan_cashflows_month1")
                 copy = sql.SQL(
                     "COPY loan_cashflows_month1 ({}) FROM STDIN"

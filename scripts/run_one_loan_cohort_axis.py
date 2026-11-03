@@ -20,6 +20,7 @@ from app.repositories.neon_cf_repository import NeonCfRepository  # noqa: E402
 from app.repositories.tape_repository import TapeRepository  # noqa: E402
 from app.services.cashflow_engine import project_loan_cashflows  # noqa: E402
 from app.services.psa_sda import round_money  # noqa: E402
+from app.services.recovery import resolve_recovery_lag_months  # noqa: E402
 from app.services.scenario_grid import (  # noqa: E402
     PSA_LEVEL_NAME,
     SDA_LEVEL_NAME,
@@ -49,8 +50,11 @@ def _trim_at_payoff(rows: list) -> list:
     return rows[: last + 1]
 
 
-def _verify(rows: list, scenario) -> dict[str, Any]:
-    lag = int(scenario.recovery_lag_months)
+def _verify(rows: list, scenario, loan=None) -> dict[str, Any]:
+    lag = resolve_recovery_lag_months(
+        getattr(loan, "state", None) if loan is not None else None,
+        scenario_lag_months=int(scenario.recovery_lag_months),
+    )
     period = max(int(scenario.recovery_period_months), 1)
     rec_rate = float(scenario.recovery_rate)
 
@@ -211,9 +215,8 @@ def main() -> int:
     for scenario in axis:
         projected = project_loan_cashflows(loan, scenario, months=months)
         trimmed = _trim_at_payoff(projected)
-        verifications.append(_verify(trimmed, scenario))
+        verifications.append(_verify(trimmed, scenario, loan=loan))
         for r in trimmed:
-            loss = round_money(r.default * (1.0 - float(scenario.recovery_rate)))
             all_db_rows.append(
                 {
                     "scenario_id": scenario.scenario_id,
@@ -222,7 +225,7 @@ def main() -> int:
                     "beginning_balance": r.beginning_balance,
                     "interest": r.interest,
                     "scheduled_principal": r.scheduled_principal,
-                    "default_amt": r.default,
+                    "default_amt": r.new_default,
                     "prepay": r.prepay,
                     "recovery": r.recovery,
                     "ending_balance": r.ending_balance,
@@ -231,6 +234,12 @@ def main() -> int:
                     "smm": r.smm,
                     "cdr": r.cdr,
                     "mdr": r.mdr,
+                    "used_recovery_lag_months": r.used_recovery_lag_months,
+                    "beginning_default_balance": r.beginning_default_balance,
+                    "liquidated_default": r.liquidated_default,
+                    "realized_loss": r.realized_loss,
+                    "ending_default_balance": r.ending_default_balance,
+                    "total_cash": r.total_cash,
                 }
             )
             csv_rows.append(

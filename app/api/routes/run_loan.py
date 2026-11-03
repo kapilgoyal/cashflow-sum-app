@@ -8,7 +8,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.models.cash_flow import RunLoanRequest, RunLoanResponse
-from app.services.recovery import STATE_VARYING_TODO
+from app.services.recovery import FANNIE_TIMEFRAMES_SOURCE_URL
 
 router = APIRouter(prefix="/api", tags=["cashflows"])
 
@@ -21,7 +21,8 @@ router = APIRouter(prefix="/api", tags=["cashflows"])
         "Accepts ``loan_id`` + scenario selectors and returns the documented "
         "360-month cash-flow response schema. Scaffold returns an empty "
         "``cash_flows`` list — the projection engine is not called.\n\n"
-        f"{STATE_VARYING_TODO}"
+        "When wired: cohort recovery_rate (60/55/75); recovery lag from "
+        f"loan.state via Fannie Mae time frames ({FANNIE_TIMEFRAMES_SOURCE_URL})."
     ),
 )
 def run_loan(body: RunLoanRequest) -> RunLoanResponse:

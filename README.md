@@ -26,15 +26,13 @@ uvicorn app.main:app --reload
 - PSA (PCA) Down/Base/Up: **75 / 100 / 125**
 - SDA (STA) Down/Base/Up: **50 / 100 / 200**
 - Full cross = **27 rows** in `data/securitization_scenarios.csv`
-- Recovery (per cohort, lag=0): high-LTV strong **60%/12mo**; high-LTV weak **55%/15mo**; low-LTV weak **75%/9mo**
+- Recovery **rate** (per cohort — **not** one pool rate): high-LTV strong **60%/12mo**; high-LTV weak **55%/15mo**; low-LTV weak **75%/9mo**
+- Recovery **lag**: Fannie Mae state foreclosure time frames in `data/fannie_mae_foreclosure_timeframes.csv` (source: https://singlefamily.fanniemae.com/media/6726/display); `used_recovery_lag_months ≈ days/30`. Scenario `recovery_lag_months` is fallback only when state is unknown.
+- CF rows cover three panels: performing UPB, default roll (lag liquidation → recovery + realized loss), actual cash (`total_cash`; defaults ≠ cash). See store `docs/cf-panel-refs/` and `docs/recovery-rate-benchmarks.md`.
 
 ### Month-1 parallel run
 
 `scripts/run_27_month1_parallel.py` runs **one month** for every loan in each scenario's cohort via `ProcessPoolExecutor(max_workers=27)`. Loan-level CF → Neon when `DATABASE_URL` is set; else SQLite + JSON under `data/`. Cohort aggregates → `data/cohort_month1_cf.json` (+ `public/cohort-month1.json` for the UI).
-
-### TODO — state-varying recovery / foreclosure lag
-
-**Not implemented.** Recovery period and lag are pool-level constants.
 
 Optional Neon seed: set `DATABASE_URL`; scripts attempt insert and skip cleanly if unset/unreachable.
 

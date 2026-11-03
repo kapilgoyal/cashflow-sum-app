@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from app.repositories.cashflow_schema import (
+    LOAN_CF_MONTH1_ADD_PANEL_COLS_SQL,
     LOAN_CF_MONTH1_ENRICHED_VIEW_SQL,
+    LOAN_MONTH_CF_ADD_PANEL_COLS_SQL,
     LOAN_MONTH_CF_ENRICHED_VIEW_SQL,
     LOAN_MONTH_CF_TABLE_SQL,
     MONTH1_FACT_COLS,
@@ -15,6 +17,24 @@ from app.repositories.scenario_repository import CREATE_SQL as SCENARIO_SQL
 
 PCA = {75: "Down", 100: "Base", 125: "Up"}
 STA = {50: "Down", 100: "Base", 200: "Up"}
+
+ENRICHED_SELECT_COLS = """
+    scenario_id, loan_id, month, beginning_balance, interest,
+    scheduled_principal, default_amt, new_default, prepay, recovery,
+    ending_balance, loan_age, cpr, smm, cdr, mdr,
+    used_recovery_lag_months,
+    beginning_default_balance, liquidated_default, realized_loss,
+    ending_default_balance, total_cash,
+    cohort, psa_multiple, sda_multiple, pca_level, sta_level,
+    recovery_period_months, recovery_lag_months, recovery_rate
+"""
+
+
+def _exec_multi(cur, sql_block: str) -> None:
+    for stmt in sql_block.strip().split(";"):
+        s = stmt.strip()
+        if s:
+            cur.execute(s)
 
 
 class NeonCfRepository:
@@ -37,7 +57,9 @@ class NeonCfRepository:
             with conn.cursor() as cur:
                 cur.execute(SCENARIO_SQL)
                 cur.execute(LOAN_MONTH_CF_TABLE_SQL)
+                _exec_multi(cur, LOAN_MONTH_CF_ADD_PANEL_COLS_SQL)
                 cur.execute(LOAN_MONTH_CF_ENRICHED_VIEW_SQL)
+                _exec_multi(cur, LOAN_CF_MONTH1_ADD_PANEL_COLS_SQL)
                 cur.execute(LOAN_CF_MONTH1_ENRICHED_VIEW_SQL)
             conn.commit()
 
@@ -99,14 +121,7 @@ class NeonCfRepository:
         limit: int = 500,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
-        sql = """
-            SELECT scenario_id, loan_id, month, beginning_balance, interest,
-                   scheduled_principal, default_amt, prepay, recovery,
-                   ending_balance, loan_age, cpr, smm, cdr, mdr,
-                   cohort, psa_multiple, sda_multiple, pca_level, sta_level,
-                   recovery_period_months, recovery_lag_months, recovery_rate
-            FROM public.loan_cashflows_month1_enriched
-        """
+        sql = f"SELECT {ENRICHED_SELECT_COLS} FROM public.loan_cashflows_month1_enriched"
         params: list[Any] = []
         if scenario_id:
             sql += " WHERE scenario_id = %s"
@@ -150,6 +165,13 @@ class NeonCfRepository:
                         (loan_id, scenario_ids),
                     )
                 for r in rows:
+                    payload = dict(r)
+                    if "default_amt" not in payload:
+                        payload["default_amt"] = payload.get(
+                            "default", payload.get("new_default")
+                        )
+                    for key in MONTH1_FACT_COLS:
+                        payload.setdefault(key, None)
                     cur.execute(
                         f"""
                         INSERT INTO public.loan_month_cf (
@@ -159,10 +181,14 @@ class NeonCfRepository:
                             %(beginning_balance)s, %(interest)s,
                             %(scheduled_principal)s, %(default_amt)s,
                             %(prepay)s, %(recovery)s, %(ending_balance)s,
-                            %(loan_age)s, %(cpr)s, %(smm)s, %(cdr)s, %(mdr)s
+                            %(loan_age)s, %(cpr)s, %(smm)s, %(cdr)s, %(mdr)s,
+                            %(used_recovery_lag_months)s,
+                            %(beginning_default_balance)s,
+                            %(liquidated_default)s, %(realized_loss)s,
+                            %(ending_default_balance)s, %(total_cash)s
                         )
                         """,
-                        r,
+                        payload,
                     )
             conn.commit()
         return len(rows)
@@ -172,15 +198,10 @@ class NeonCfRepository:
         loan_id: str,
         scenario_id: str | None = None,
     ) -> list[dict[str, Any]]:
-        sql = """
-            SELECT scenario_id, loan_id, month, beginning_balance, interest,
-                   scheduled_principal, default_amt, prepay, recovery, loss,
-                   ending_balance, loan_age, cpr, smm, cdr, mdr,
-                   cohort, psa_multiple, sda_multiple, pca_level, sta_level,
-                   recovery_period_months, recovery_lag_months, recovery_rate
-            FROM public.loan_month_cf_enriched
-            WHERE loan_id = %s
-        """
+        sql = (
+            f"SELECT {ENRICHED_SELECT_COLS}, loss "
+            "FROM public.loan_month_cf_enriched WHERE loan_id = %s"
+        )
         params: list[Any] = [loan_id]
         if scenario_id:
             sql += " AND scenario_id = %s"

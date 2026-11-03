@@ -48,9 +48,11 @@ COHORT_RECOVERY: dict[str, tuple[float, int, int]] = {
     COHORT_LOW_LTV_WEAK: (0.75, 9, 0),
 }
 
-STATE_TODO_NOTE = (
-    "TODO: state-varying foreclosure/REO lag not implemented; "
-    "recovery_period/lag are pool constants for now"
+STATE_LAG_NOTE = (
+    "recovery_rate is cohort (not one pool rate); "
+    "engine lag from Fannie Mae state foreclosure time frames "
+    "(https://singlefamily.fanniemae.com/media/6726/display); "
+    "scenario recovery_lag_months is fallback when state unknown"
 )
 
 
@@ -72,8 +74,8 @@ def _cell_note(cohort: str, psa: int, sda: int) -> str:
     if cohort == PREPAY_LEAN_COHORT and psa >= 100 and sda <= 100:
         bits.append(f"{cohort} prepay-leaning cell")
     rate, period, lag = recovery_for_cohort(cohort)
-    bits.append(f"recovery {rate:.0%}/{period}mo lag={lag}")
-    bits.append(STATE_TODO_NOTE)
+    bits.append(f"cohort recovery {rate:.0%}/{period}mo scenario_lag_fallback={lag}")
+    bits.append(STATE_LAG_NOTE)
     return "; ".join(bits)
 
 
@@ -95,7 +97,7 @@ def build_scenario_grid() -> list[Scenario]:
                         recovery_lag_months=lag,
                         recovery_rate=rate,
                         note=_cell_note(cohort, psa, sda),
-                        state_varying_recovery_todo=True,
+                        state_varying_recovery_todo=False,
                     )
                 )
     return rows
