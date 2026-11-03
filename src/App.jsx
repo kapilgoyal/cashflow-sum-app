@@ -25,6 +25,7 @@ import {
   moneyCol,
   pcaLabel,
   staLabel,
+  withScenarioRowSpans,
 } from "./cashflowGrid";
 import "./App.css";
 
@@ -77,7 +78,6 @@ const OFF_AXIS_FEATURES = ["Documentation", "Remaining Term"];
 const LS_CLUSTER_KEY = "cashflow.clusterFilter";
 const LS_GRID_KEY = "cashflow.agGridState";
 const LS_NAV_KEY = "cashflow.navPane";
-const LS_STRAT_KEY = "cashflow.stratDim";
 
 function readClusterFilter() {
   try {
@@ -98,16 +98,6 @@ function readNav() {
     /* ignore */
   }
   return "asf";
-}
-
-function readStratDim() {
-  try {
-    const v = localStorage.getItem(LS_STRAT_KEY);
-    if (STRAT_DIMS.some((d) => d.id === v)) return v;
-  } catch {
-    /* ignore */
-  }
-  return "documentation_type";
 }
 
 function readGridState() {
@@ -231,7 +221,6 @@ export default function App() {
   const [asfLoading, setAsfLoading] = useState(false);
   const [asfError, setAsfError] = useState(null);
 
-  const [stratDim, setStratDim] = useState(readStratDim);
   const [stratRows, setStratRows] = useState([]);
   const [stratMeta, setStratMeta] = useState(null);
   const [stratLoading, setStratLoading] = useState(false);
@@ -275,14 +264,6 @@ export default function App() {
       /* ignore */
     }
   }, [pane]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(LS_STRAT_KEY, stratDim);
-    } catch {
-      /* ignore */
-    }
-  }, [stratDim]);
 
   useEffect(() => {
     let cancelled = false;
@@ -342,28 +323,52 @@ export default function App() {
     };
   }, []);
 
-  // Stratification buckets.
+  // Stratification — fetch ALL dimensions so every cut is visible.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setStratLoading(true);
       setStratError(null);
       try {
-        const res = await fetch(
-          `/api/asf/stratification?by=${encodeURIComponent(stratDim)}`
+        const results = await Promise.all(
+          STRAT_DIMS.map(async (dim) => {
+            const res = await fetch(
+              `/api/asf/stratification?by=${encodeURIComponent(dim.id)}`
+            );
+            if (!res.ok) {
+              const detail = await res.text();
+              throw new Error(`${dim.label}: HTTP ${res.status}: ${detail}`);
+            }
+            const data = await res.json();
+            return { dim, data };
+          })
         );
-        if (!res.ok) {
-          const detail = await res.text();
-          throw new Error(`HTTP ${res.status}: ${detail}`);
-        }
-        const data = await res.json();
         if (cancelled) return;
-        setStratRows(data.rows || []);
+        const combined = [];
+        let tape_row_count = null;
+        let tape_upb = null;
+        for (const { dim, data } of results) {
+          if (tape_row_count == null && data.tape_row_count != null) {
+            tape_row_count = data.tape_row_count;
+          }
+          if (tape_upb == null && data.tape_upb != null) {
+            tape_upb = data.tape_upb;
+          }
+          for (const row of data.rows || []) {
+            combined.push({
+              ...row,
+              dimension: dim.label,
+              dimension_id: dim.id,
+              row_key: `${dim.id}::${row.bucket}`,
+            });
+          }
+        }
+        setStratRows(combined);
         setStratMeta({
-          dimension: data.dimension,
-          n_buckets: data.n_buckets,
-          tape_row_count: data.tape_row_count,
-          tape_upb: data.tape_upb,
+          n_dimensions: STRAT_DIMS.length,
+          n_buckets: combined.length,
+          tape_row_count,
+          tape_upb,
         });
       } catch (err) {
         if (!cancelled) {
@@ -378,7 +383,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [stratDim]);
+  }, []);
 
   // Cohort pool stats from Neon asf_tape.
   useEffect(() => {
@@ -695,6 +700,12 @@ export default function App() {
 
   const stratColumnDefs = useMemo(
     () => [
+      {
+        field: "dimension",
+        headerName: "Dimension",
+        width: 130,
+        cellClass: "cf-id",
+      },
       { field: "bucket", headerName: "Bucket", flex: 1.4, minWidth: 140 },
       intCol("loan_count", "Loans", 80),
       moneyCol("upb", "UPB", 120),
@@ -835,8 +846,22 @@ export default function App() {
 
   const scenarioColumnDefs = useMemo(
     () => [
-      { field: "scenario_id", headerName: "ID", width: 72, cellClass: "cf-id" },
-      { field: "cohort", headerName: "Cohort", flex: 1.8, minWidth: 200 },
+      {
+        field: "_scenarioLabel",
+        headerName: "Scenario",
+        width: 140,
+        sortable: false,
+        filter: false,
+        rowSpan: (p) => Math.max(1, p.data?._scenarioSpan || 1),
+        cellClassRules: {
+          "cf-id": () => true,
+          "cf-row-span": (p) => (p.data?._scenarioSpan || 0) > 1,
+        },
+        valueGetter: (p) =>
+          p.data?._scenarioSpan === 0 ? "" : p.data?._scenarioLabel || "",
+      },
+      { field: "scenario_id", headerName: "ID", width: 64, cellClass: "cf-id" },
+      { field: "cohort", headerName: "Cohort", flex: 1.8, minWidth: 180 },
       {
         field: "pca_level",
         headerName: "PCA",
@@ -972,8 +997,10 @@ export default function App() {
           recovery_period_months: a.recovery_period_months,
           recovery_lag_months: a.recovery_lag_months,
         }));
-    if (!selectedCohort) return base;
-    return base.filter((s) => s.cohort === selectedCohort);
+    const filtered = selectedCohort
+      ? base.filter((s) => s.cohort === selectedCohort)
+      : base;
+    return withScenarioRowSpans(filtered);
   }, [scenarios, aggregates, selectedCohort]);
 
   const filteredLoans = useMemo(() => {
@@ -1286,6 +1313,7 @@ export default function App() {
                   getRowId={(p) => String(p.data.loan_id)}
                   onRowDrill={drillLoan}
                   heightClass="grid-wrap-fill"
+                  exportName="asf-tape"
                 />
               )}
             </section>
@@ -1335,6 +1363,7 @@ export default function App() {
                   columnDefs={qcColumnDefs}
                   getRowId={(p) => String(p.data.check_id)}
                   heightClass="grid-wrap-fill"
+                  exportName="loan-qc"
                 />
               )}
             </section>
@@ -1346,7 +1375,13 @@ export default function App() {
                 <h2 className="section-title">Stratification</h2>
                 <div className="section-actions">
                   <p className="section-meta">
-                    Alternate tape cuts (not K-prototype)
+                    All alternate tape cuts (not K-prototype)
+                    {stratMeta?.n_dimensions != null
+                      ? ` · ${stratMeta.n_dimensions} dimensions`
+                      : ""}
+                    {stratMeta?.n_buckets != null
+                      ? ` · ${stratMeta.n_buckets} buckets`
+                      : ""}
                     {stratMeta?.tape_row_count != null
                       ? ` · ${stratMeta.tape_row_count} loans`
                       : ""}
@@ -1354,20 +1389,6 @@ export default function App() {
                       ? ` · UPB ${Number(stratMeta.tape_upb).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                       : ""}
                   </p>
-                  <label className="field-inline">
-                    <span>By</span>
-                    <select
-                      className="select"
-                      value={stratDim}
-                      onChange={(e) => setStratDim(e.target.value)}
-                    >
-                      {STRAT_DIMS.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
                 </div>
               </div>
               {stratLoading ? (
@@ -1378,8 +1399,9 @@ export default function App() {
                 <DataGrid
                   rowData={stratRows}
                   columnDefs={stratColumnDefs}
-                  getRowId={(p) => String(p.data.bucket)}
+                  getRowId={(p) => String(p.data.row_key)}
                   heightClass="grid-wrap-fill"
+                  exportName="stratification"
                 />
               )}
             </section>
@@ -1387,7 +1409,7 @@ export default function App() {
 
           {pane === "cohort" && (
             <>
-              <section className="section">
+              <section className="section section-cohort-chart">
                 <div className="section-head section-head-stack">
                   <h2 className="section-title section-title-chart">
                     K-Prototypes (k=3, 4 Features): Original CLTV vs Refinance
@@ -1538,7 +1560,7 @@ export default function App() {
                 </div>
               </section>
 
-              <section className="section">
+              <section className="section section-cohort-stats">
                 <div className="section-head">
                   <h2 className="section-title">Cohort statistics</h2>
                   <p className="section-meta">
@@ -1554,7 +1576,8 @@ export default function App() {
                     rowData={cohortStats}
                     columnDefs={cohortStatsColumnDefs}
                     getRowId={(p) => String(p.data.cohort)}
-                    heightClass="grid-wrap-mid"
+                    heightClass="grid-wrap-cohort-stats"
+                    exportName="cohort-stats"
                   />
                 )}
               </section>
@@ -1594,6 +1617,7 @@ export default function App() {
                   scheduleSave={scheduleSave}
                   persistLayout
                   heightClass="grid-wrap-fill"
+                  exportName="loans"
                 />
               </section>
             </>
@@ -1609,6 +1633,8 @@ export default function App() {
                     {selectedCohort
                       ? ` · cohort filter: ${selectedCohort}`
                       : " · 27 cells"}
+                    {" · "}
+                    Scenario col merges PSA×SDA across cohorts
                     {" · "}
                     Click row → all-loan month-1 CF
                   </p>
@@ -1652,6 +1678,8 @@ export default function App() {
                 getRowId={(p) => String(p.data.scenario_id)}
                 onRowDrill={drillScenario}
                 heightClass="grid-wrap-fill"
+                exportName="scenarios"
+                gridProps={{ suppressRowTransform: true }}
               />
             </section>
           )}
@@ -1753,6 +1781,7 @@ export default function App() {
                       `${p.data.scenario_id}|${p.data.loan_id}|${p.data.month}`
                     }
                     heightClass="grid-wrap-fill"
+                    exportName="cf-loan-months"
                   />
                 )
               ) : cfView === "month1" ? (
@@ -1773,6 +1802,7 @@ export default function App() {
                     }
                     onRowDrill={drillMonth1Loan}
                     heightClass="grid-wrap-fill"
+                    exportName="cf-month1-loans"
                   />
                 )
               ) : !aggregates.length ? (
@@ -1786,6 +1816,7 @@ export default function App() {
                   getRowId={(p) => String(p.data.scenario_id)}
                   onRowDrill={drillAggScenario}
                   heightClass="grid-wrap-fill"
+                  exportName="cf-aggregates"
                 />
               )}
             </section>
