@@ -12,8 +12,6 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
 from app.repositories.cashflow_schema import (
     LOAN_CF_MONTH1_ADD_PANEL_COLS_SQL,
     LOAN_CF_MONTH1_ENRICHED_VIEW_SQL,

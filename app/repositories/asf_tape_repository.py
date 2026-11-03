@@ -10,7 +10,6 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
 import psycopg
 
 from app.repositories.asf_qc_checks import ALL_CHECKS, checks_as_rows
@@ -32,7 +31,15 @@ INSERT_COLS = ", ".join(ASF_TAPE_COLUMNS)
 INSERT_PLACEHOLDERS = ", ".join(f"%s" for _ in ASF_TAPE_COLUMNS)
 
 
+def _pd():
+    """Lazy pandas — keep Railway boot light (Neon paths don't need it)."""
+    import pandas as pd
+
+    return pd
+
+
 def _to_py(v: Any) -> Any:
+    pd = _pd()
     if v is None or (isinstance(v, float) and pd.isna(v)):
         return None
     if isinstance(v, pd.Timestamp):
@@ -93,7 +100,8 @@ class AsfTapeRepository:
                     conn.rollback()
         return "has_mi" in self.tape_columns()
 
-    def load_excel(self, path: Path | str | None = None) -> pd.DataFrame:
+    def load_excel(self, path: Path | str | None = None) -> Any:
+        pd = _pd()
         tape_path = Path(path) if path else DEFAULT_TAPE
         if not tape_path.exists():
             # Repo-bundled copy used when Agent Store path is unavailable.
@@ -124,7 +132,7 @@ class AsfTapeRepository:
         out["has_mi"] = bool(default_has_mi())
         return out
 
-    def replace_tape(self, df: pd.DataFrame) -> int:
+    def replace_tape(self, df: Any) -> int:
         rows: list[tuple[Any, ...]] = []
         for _, r in df.iterrows():
             rows.append(tuple(_to_py(r.get(c)) for c in ASF_TAPE_COLUMNS))
