@@ -16,11 +16,13 @@ import psycopg
 from app.repositories.asf_qc_checks import ALL_CHECKS, checks_as_rows
 from app.repositories.asf_tape_schema import (
     ASF_TAPE_COLUMNS,
+    ASF_TAPE_HAS_MI_ALTER_SQL,
     ASF_TAPE_TABLE_SQL,
     EXCEL_TO_ASF,
     QC_CHECKS_TABLE_SQL,
     QC_RESULTS_TABLE_SQL,
 )
+from app.services.assumptions import default_has_mi
 from app.repositories.env_load import load_dotenv, resolve_pg_url
 from app.repositories.tape_repository import DEFAULT_TAPE
 
@@ -59,6 +61,7 @@ class AsfTapeRepository:
         with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
                 cur.execute(ASF_TAPE_TABLE_SQL)
+                cur.execute(ASF_TAPE_HAS_MI_ALTER_SQL)
                 cur.execute(QC_CHECKS_TABLE_SQL)
                 cur.execute(QC_RESULTS_TABLE_SQL)
             conn.commit()
@@ -90,6 +93,8 @@ class AsfTapeRepository:
                 if isinstance(x, (int, float)) and float(x).is_integer()
                 else str(x).strip()
             )
+        # has_mi from data/assumptions.csv — never from monthly_insurance_cost.
+        out["has_mi"] = bool(default_has_mi())
         return out
 
     def replace_tape(self, df: pd.DataFrame) -> int:
@@ -99,6 +104,7 @@ class AsfTapeRepository:
         with psycopg.connect(self.require_url(), connect_timeout=120) as conn:
             with conn.cursor() as cur:
                 cur.execute(ASF_TAPE_TABLE_SQL)
+                cur.execute(ASF_TAPE_HAS_MI_ALTER_SQL)
                 cur.execute("TRUNCATE public.asf_tape")
                 with cur.copy(
                     f"COPY public.asf_tape ({INSERT_COLS}) FROM STDIN"
@@ -299,6 +305,7 @@ class AsfTapeRepository:
             "days_delinquent",
             "refinance_incentive",
             "cohort",
+            "has_mi",
         )
         col_sql = ", ".join(cols)
         with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
@@ -342,6 +349,7 @@ class AsfTapeRepository:
             "days_delinquent",
             "refinance_incentive",
             "cohort",
+            "has_mi",
         ]
         for c in keep:
             if c not in df.columns:

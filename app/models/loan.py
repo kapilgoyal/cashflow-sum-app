@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 
 from pydantic import BaseModel, Field
-from sqlalchemy import Float, Integer, String
+from sqlalchemy import Boolean, Float, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -38,6 +38,15 @@ class Loan(BaseModel):
         default=None,
         description="Optional tape cutoff; pairs with origination_date",
     )
+    original_fico: int | None = None
+    original_ltv: float | None = Field(
+        default=None,
+        description="Origination LTV as fraction (0–1) or percent; severity lookup normalizes",
+    )
+    has_mi: bool | None = Field(
+        default=None,
+        description="Mortgage insurance flag; None → assumptions.csv has_mi_all (True)",
+    )
 
 
 class LoanORM(Base):
@@ -52,3 +61,6 @@ class LoanORM(Base):
     remaining_io_months: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     state: Mapped[str | None] = mapped_column(String(8), nullable=True)
     cohort: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    original_fico: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    original_ltv: Mapped[float | None] = mapped_column(Float, nullable=True)
+    has_mi: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
