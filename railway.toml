@@ -1,7 +1,7 @@
-# Build builder is set on the Railway service instance (RAILPACK/NIXPACKS).
-# Do not set build.builder here — a stale DOCKERFILE mapping was blocking deploys.
+# startCommand must go through a shell so ${PORT} expands (Railway does not
+# expand $PORT when exec'ing the command array directly).
 [deploy]
-startCommand = "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+startCommand = "sh -c 'python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}'"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
