@@ -6,8 +6,8 @@
 #   2. GitHub → Settings → Secrets and variables → Actions → New secret
 #      Name (exact): RAILWAY_TOKEN
 #      Value: that kind-emotion project token (never commit it)
-#   3. Optional secret RAILWAY_SERVICE_ID if kind-emotion has multiple services
-#      (use the service that serves cashflow-sum-app-production.up.railway.app)
+#   3. Recommended secret RAILWAY_SERVICE_ID = service id/name that serves
+#      cashflow-sum-app-production.up.railway.app (Settings → service → ID)
 name: Railway API deploy
 
 on:
@@ -46,9 +46,34 @@ jobs:
           RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
         run: |
           set -euo pipefail
-          # Project token scopes railway up to kind-emotion only.
+          railway --version
+          # Safe diagnostics (never echo token)
+          railway whoami || true
+          railway status || true
+
+          deploy() {
+            local svc="$1"
+            if [ -n "$svc" ]; then
+              echo "Deploying with --service=${svc}"
+              railway up --ci --service "$svc"
+            else
+              echo "Deploying without --service (project default)"
+              railway up --ci
+            fi
+          }
+
           if [ -n "${RAILWAY_SERVICE_ID:-}" ]; then
-            railway up --ci --service "${RAILWAY_SERVICE_ID}"
+            deploy "${RAILWAY_SERVICE_ID}"
           else
-            railway up --ci
+            # Prefer explicit service when project has multiple; fall back.
+            set +e
+            deploy "cashflow-sum-app"
+            rc=$?
+            if [ "$rc" -ne 0 ]; then
+              echo "Retry: bare railway up --ci"
+              deploy ""
+              rc=$?
+            fi
+            set -e
+            exit "$rc"
           fi
