@@ -1,3 +1,16 @@
+# Auto-rebuild when API sources change (GitHub-connected Railway service).
+[build]
+watchPatterns = [
+  "app/**",
+  "requirements.txt",
+  "Dockerfile",
+  "railway.toml",
+  "Procfile",
+  "nixpacks.toml",
+  "api/**",
+  ".github/workflows/railway-deploy.yml",
+]
+
 # startCommand must go through a shell so ${PORT} expands (Railway does not
 # expand $PORT when exec'ing the command array directly).
 [deploy]

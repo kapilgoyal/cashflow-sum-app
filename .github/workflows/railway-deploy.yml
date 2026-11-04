@@ -1,0 +1,47 @@
+# Deploy FastAPI to Railway on every push to master.
+# One-time setup: GitHub → Settings → Secrets and variables → Actions →
+#   New repository secret → Name exactly: RAILWAY_TOKEN
+# Value: Railway Project Token (Project → Settings → Tokens).
+# Optional: RAILWAY_SERVICE_ID if the project has multiple services.
+name: Railway API deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: railway-api-master
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require RAILWAY_TOKEN secret
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "${RAILWAY_TOKEN}" ]; then
+            echo "::error::Missing GitHub Actions secret RAILWAY_TOKEN. Add a Railway Project Token under Settings → Secrets → Actions (name must be exactly RAILWAY_TOKEN)."
+            exit 1
+          fi
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy (railway up)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+        run: |
+          set -euo pipefail
+          if [ -n "${RAILWAY_SERVICE_ID:-}" ]; then
+            railway up --ci --service "${RAILWAY_SERVICE_ID}"
+          else
+            railway up --ci
+          fi

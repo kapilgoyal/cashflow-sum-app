@@ -46,12 +46,19 @@ Vercel no longer runs Python serverless (Mangum retired under `deploy/legacy-ver
 
 ### Railway (FastAPI)
 
-1. Create a Railway project from this repo (Nixpacks detects Python).
-2. Set env vars on the Railway service (never commit them):
+1. Create a Railway project from this repo (Dockerfile / Nixpacks; `railway.toml` watches `app/**`).
+2. Connect GitHub → branch **`master`** with auto-deploy enabled (Railway → Settings → Source).
+3. Set env vars on the Railway service (never commit them):
    - `DATABASE_URL` — Neon pooled Postgres URL
    - `DATABASE_URL_UNPOOLED` — optional Neon direct URL
-3. Public HTTPS URL looks like `https://<service>.up.railway.app`.
-4. Health: `GET /health`.
+4. **CI backup (recommended):** GitHub → Settings → Secrets and variables → Actions → New repository secret  
+   - Name (exact): **`RAILWAY_TOKEN`**  
+   - Value: Railway **Project Token** (Railway → Project → Settings → Tokens)  
+   - Optional secret **`RAILWAY_SERVICE_ID`** if the project has more than one service.  
+   Workflow [`.github/workflows/railway-deploy.yml`](.github/workflows/railway-deploy.yml) runs `railway up --ci` on every push to `master` (and `workflow_dispatch`).
+5. Public HTTPS URL looks like `https://<service>.up.railway.app`.
+6. Health: `GET /health`. Dockerfile / `railway.toml` start commands use shell form so `${PORT}` expands.
+
 
 ### Vercel (React)
 
