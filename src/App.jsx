@@ -38,7 +38,7 @@ import "./App.css";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const NAV = [
-  { id: "asf", label: "ASF Tape" },
+  { id: "asf", label: "Investor Tape" },
   { id: "qc", label: "Loan QC" },
   { id: "strat", label: "Stratification" },
   { id: "cohort", label: "Cohort" },
@@ -313,7 +313,7 @@ const LS_NAV_KEY = "cashflow.navPane";
 const LS_NAV_COLLAPSE_KEY = "cashflow.navCollapsed";
 
 const NAV_SHORT = {
-  asf: "ASF",
+  asf: "Tape",
   qc: "QC",
   strat: "Strat",
   cohort: "Cohort",
@@ -479,9 +479,9 @@ export default function App() {
 
   const [asfLoans, setAsfLoans] = useState([]);
   const [asfTotal, setAsfTotal] = useState(0);
-  const [asfSource, setAsfSource] = useState(null);
   const [asfLoading, setAsfLoading] = useState(false);
   const [asfError, setAsfError] = useState(null);
+  const [asfVisible, setAsfVisible] = useState(null);
 
   const [stratRows, setStratRows] = useState([]);
   const [stratMeta, setStratMeta] = useState(null);
@@ -576,7 +576,6 @@ export default function App() {
         if (cancelled) return;
         setAsfLoans(data.loans || []);
         setAsfTotal(data.total ?? (data.loans || []).length);
-        setAsfSource(data.source || null);
       } catch (err) {
         if (!cancelled) {
           setAsfError(err.message || String(err));
@@ -923,12 +922,19 @@ export default function App() {
 
   const asfColumnDefs = useMemo(
     () => [
-      { field: "loan_id", headerName: "Loan", width: 100, cellClass: "cf-id" },
+      {
+        field: "loan_id",
+        headerName: "Loan Id",
+        width: 100,
+        pinned: "left",
+        lockPinned: true,
+        cellClass: "cf-id",
+      },
       moneyCol("current_loan_amount", "UPB", 110),
       {
         field: "current_interest_rate",
-        headerName: "Rate",
-        width: 72,
+        headerName: "Interest Rate",
+        width: 96,
         valueFormatter: (p) => fmtPct(p.value, 2),
         cellClass: "cf-num",
       },
@@ -950,32 +956,72 @@ export default function App() {
       { field: "state", headerName: "State", width: 64 },
       {
         field: "documentation_type",
-        headerName: "Documentation",
+        headerName: "Documentation Type",
         flex: 1.2,
-        minWidth: 120,
+        minWidth: 140,
       },
-      { field: "property_type", headerName: "Property", width: 100 },
+      { field: "property_type", headerName: "Property Type", width: 110 },
       { field: "occupancy", headerName: "Occupancy", width: 100 },
-      { field: "loan_purpose", headerName: "Purpose", width: 100 },
-      intCol("remaining_term", "Rem term", 88),
+      { field: "loan_purpose", headerName: "Loan Purpose", width: 110 },
+      intCol("remaining_term", "Remaining Term", 120),
       {
         field: "refinance_incentive",
-        headerName: "Refi",
-        width: 72,
+        headerName: "Refinance Incentive",
+        width: 130,
         valueFormatter: (p) => fmtNum(p.value, 3),
         cellClass: "cf-num",
       },
       { field: "cohort", headerName: "Cohort", flex: 1.4, minWidth: 160 },
       {
         field: "has_mi",
-        headerName: "Has MI",
-        width: 80,
-        valueFormatter: (p) =>
-          p.value === true ? "true" : p.value === false ? "false" : "",
+        headerName: "Mortgage Insurance",
+        headerTooltip: "Mortgage Insurance (private MI on the loan)",
+        width: 140,
+        cellClass: "cf-num",
+        valueFormatter: (p) => {
+          if (p.value === true || p.value === "true" || p.value === 1) return "Yes";
+          if (p.value === false || p.value === "false" || p.value === 0) return "No";
+          return "";
+        },
+        filterValueGetter: (p) => {
+          const v = p.data?.has_mi;
+          if (v === true || v === "true" || v === 1) return "Yes";
+          if (v === false || v === "false" || v === 0) return "No";
+          return "";
+        },
       },
     ],
     []
   );
+
+  const asfToolbarStart = useMemo(() => {
+    const total = asfTotal || asfLoans.length || 0;
+    const shown =
+      asfVisible != null ? asfVisible : asfLoading ? null : asfLoans.length;
+    return (
+      <p className="asf-grid-summary" aria-live="polite">
+        <span className="asf-grid-summary-total">
+          {total.toLocaleString()} {total === 1 ? "Loan" : "Loans"}
+        </span>
+        {shown != null ? (
+          <span
+            className={
+              shown !== total
+                ? "asf-grid-summary-filter is-filtered"
+                : "asf-grid-summary-filter"
+            }
+          >
+            {" · "}
+            {shown.toLocaleString()} Shown
+          </span>
+        ) : null}
+      </p>
+    );
+  }, [asfTotal, asfLoans.length, asfVisible, asfLoading]);
+
+  const onAsfRowStats = useCallback((stats) => {
+    if (stats?.visible != null) setAsfVisible(stats.visible);
+  }, []);
 
   const assumptionColumnDefs = useMemo(
     () => [
@@ -1886,24 +1932,19 @@ export default function App() {
 
         <main className="main">
           {pane === "asf" && (
-            <section className="section section-fill">
-              <div className="section-head">
-                <p className="section-meta">
-                  {asfSource || "asf_tape"}
-                  {asfTotal ? ` · ${asfTotal} loans` : ""}
-                  {" · all loans"}
-                </p>
-              </div>
+            <section className="section section-fill section-asf">
               {asfLoading ? (
-                <p className="muted">Loading ASF tape…</p>
+                <p className="muted">Loading Investor Tape…</p>
               ) : asfError ? (
-                <StatusBanner tone="error">ASF: {asfError}</StatusBanner>
+                <StatusBanner tone="error">Investor Tape: {asfError}</StatusBanner>
               ) : (
                 <DataGrid
                   rowData={asfLoans}
                   columnDefs={asfColumnDefs}
                   getRowId={(p) => String(p.data.loan_id)}
                   onRowDrill={drillLoan}
+                  onRowStats={onAsfRowStats}
+                  toolbarStart={asfToolbarStart}
                   heightClass="grid-wrap-fill"
                   exportName="asf-tape"
                 />
