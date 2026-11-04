@@ -28,6 +28,14 @@ from app.repositories.asf_tape_schema import (
     QC_RESULTS_TABLE_SQL,
 )
 from app.services.assumptions import default_has_mi
+from app.services.cohort_labels import (
+    canonical_cohort_label,
+    cohort_match_values,
+    relabel_records,
+)
+from app.services.recovery import recovery_lag_months_for_state
+from app.services.scenario_grid import recovery_for_cohort
+from app.services.severity import resolve_loan_recovery_rate
 from app.repositories.env_load import load_dotenv, resolve_pg_url
 from app.repositories.tape_repository import DEFAULT_TAPE
 
@@ -408,7 +416,7 @@ class AsfTapeRepository:
                 cur.execute(data_sql, (limit,))
                 colnames = [d.name for d in cur.description]
                 loans = [dict(zip(colnames, tup)) for tup in cur.fetchall()]
-        return loans, total, meta
+        return relabel_records(loans), total, meta
 
     def list_loans(
         self, limit: int = 2000, offset: int = 0
@@ -465,7 +473,7 @@ class AsfTapeRepository:
                     elif row["has_mi"] is None:
                         row["has_mi"] = default_mi
                     rows.append(row)
-        return rows, total
+        return relabel_records(rows), total
 
     def list_loans_from_excel(
         self, path: Path | str | None = None, limit: int = 2000
@@ -501,7 +509,7 @@ class AsfTapeRepository:
         rows = []
         for _, r in slim.iterrows():
             rows.append({c: _to_py(r.get(c)) for c in keep})
-        return rows, total
+        return relabel_records(rows), total
 
     STRAT_DIMENSIONS = frozenset(
         {
@@ -527,7 +535,9 @@ class AsfTapeRepository:
         cohort_filter = (cohort or "").strip()
         if cohort_filter.lower() in ("", "all", "*"):
             return "", (), None
-        return " WHERE cohort = %s", (cohort_filter,), cohort_filter
+        aliases = cohort_match_values(cohort_filter)
+        display = canonical_cohort_label(cohort_filter)
+        return " WHERE cohort = ANY(%s)", (aliases,), display
 
     @classmethod
     def _strat_bucket_expr(cls, dimension: str) -> tuple[str, str | None, bool]:
@@ -868,7 +878,7 @@ class AsfTapeRepository:
                     od = loan.get("origination_date")
                     if isinstance(od, (date, datetime)):
                         loan["origination_date"] = od.isoformat()
-        return loans, total, meta
+        return relabel_records(loans), total, meta
 
     def cohort_stats(self) -> list[dict[str, Any]]:
         """Per K-prototype cohort pool stats for the Cohort tab grid."""
@@ -877,6 +887,10 @@ class AsfTapeRepository:
                 COALESCE(cohort, 'unlabeled') AS cohort,
                 COUNT(*)::int AS loan_count,
                 COALESCE(SUM(current_loan_amount), 0)::float AS upb,
+                (SUM(current_interest_rate * current_loan_amount)
+                    / NULLIF(SUM(current_loan_amount), 0))::float AS wac,
+                (SUM(remaining_term * current_loan_amount)
+                    / NULLIF(SUM(current_loan_amount), 0))::float AS wam,
                 AVG(original_ltv)::float AS avg_ltv,
                 AVG(original_cltv)::float AS avg_cltv,
                 AVG(original_fico)::float AS avg_fico,
@@ -892,4 +906,45 @@ class AsfTapeRepository:
             with conn.cursor() as cur:
                 cur.execute(sql)
                 cols = [d.name for d in cur.description]
-                return [dict(zip(cols, tup)) for tup in cur.fetchall()]
+                rows = [dict(zip(cols, tup)) for tup in cur.fetchall()]
+                cur.execute(
+                    """
+                    SELECT
+                        COALESCE(cohort, 'unlabeled') AS cohort,
+                        state,
+                        original_fico,
+                        original_ltv,
+                        current_loan_amount,
+                        has_mi
+                    FROM public.asf_tape
+                    """
+                )
+                loan_cols = [d.name for d in cur.description]
+                loan_rows = [dict(zip(loan_cols, tup)) for tup in cur.fetchall()]
+        weighted: dict[str, dict[str, float]] = {}
+        for ln in loan_rows:
+            key = canonical_cohort_label(ln.get("cohort"))
+            upb = float(ln.get("current_loan_amount") or 0.0)
+            try:
+                cohort_rate = recovery_for_cohort(key)[0]
+            except KeyError:
+                cohort_rate = 0.60
+            rate, _src = resolve_loan_recovery_rate(
+                has_mi=ln.get("has_mi"),
+                original_fico=ln.get("original_fico"),
+                original_ltv=ln.get("original_ltv"),
+                cohort_recovery_rate=cohort_rate,
+            )
+            lag = recovery_lag_months_for_state(ln.get("state"))
+            slot = weighted.setdefault(key, {"upb": 0.0, "rate": 0.0, "lag": 0.0})
+            slot["upb"] += upb
+            slot["rate"] += rate * upb
+            slot["lag"] += lag * upb
+        out = relabel_records(rows)
+        for row in out:
+            key = canonical_cohort_label(row.get("cohort"))
+            slot = weighted.get(key)
+            if slot and slot["upb"] > 0:
+                row["recovery"] = slot["rate"] / slot["upb"]
+                row["lag"] = slot["lag"] / slot["upb"]
+        return out

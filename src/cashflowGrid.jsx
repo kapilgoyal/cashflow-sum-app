@@ -432,7 +432,7 @@ export function DataGrid({
       onKeyDown={onKeyDown}
     >
       {showToolbar && (
-        <div className="cf-grid-toolbar" role="toolbar" aria-label="Grid actions">
+        <div className="cf-grid-toolbar" role="toolbar" aria-label="Grid Actions">
           {toolbarStart ? (
             <div className="cf-grid-toolbar-start">{toolbarStart}</div>
           ) : (
@@ -453,7 +453,7 @@ export function DataGrid({
               className="cf-grid-icon-btn"
               onClick={copyRows}
               title="Copy (Ctrl+C)"
-              aria-label="Copy rows to clipboard"
+              aria-label="Copy Rows To Clipboard"
             >
               <IconCopy />
             </button>
@@ -500,7 +500,7 @@ export function DataGrid({
 export function DrillTrail({ crumbs, onJump }) {
   if (!crumbs?.length) return null;
   return (
-    <nav className="drill-trail" aria-label="Analysis path">
+    <nav className="drill-trail" aria-label="Analysis Path">
       {crumbs.map((c, i) => {
         const last = i === crumbs.length - 1;
         return (

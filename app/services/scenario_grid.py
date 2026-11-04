@@ -5,24 +5,26 @@ Down/Base/Up (ChatGPT grid; PCA=PSA, STA=SDA):
   SDA (STA): Down=50, Base=100, Up=200
 Full cross: 3 cohorts × 3 PSA × 3 SDA = 27 rows.
 
-Cohorts (display names only; no "RI" substring in labels):
-- high LTV and strong refinance incentive  (cluster 1; expand from strong RI)
-- high LTV and weak refinance incentive    (cluster 2; expand from moderate RI)
-- low LTV and weak refinance incentive     (cluster 0; expand from weak RI)
+Display names (cluster ids 0/1/2 unchanged):
+- LLTV Weak RI   (cluster 0)
+- HLTV Strong RI (cluster 1)
+- HLTV Weak RI   (cluster 2)
 
 Per-cohort recovery (rate / period months; lag=0):
-- high LTV and strong refinance incentive → 60% / 12mo
-- high LTV and weak refinance incentive → 55% / 15mo
-- low LTV and weak refinance incentive → 75% / 9mo
+- HLTV Strong RI → 60% / 12mo
+- HLTV Weak RI → 55% / 15mo
+- LLTV Weak RI → 75% / 9mo
 """
 
 from __future__ import annotations
 
 from app.models.scenario import Scenario
-
-COHORT_LOW_LTV_WEAK = "low LTV and weak refinance incentive"
-COHORT_HIGH_LTV_STRONG = "high LTV and strong refinance incentive"
-COHORT_HIGH_LTV_WEAK = "high LTV and weak refinance incentive"
+from app.services.cohort_labels import (
+    COHORT_HIGH_LTV_STRONG,
+    COHORT_HIGH_LTV_WEAK,
+    COHORT_LOW_LTV_WEAK,
+    canonical_cohort_label,
+)
 
 # Order matches prior S01–S09 / S10–S18 / S19–S27 blocks (clusters 0 / 1 / 2).
 COHORTS = (
@@ -57,9 +59,10 @@ STATE_LAG_NOTE = (
 
 
 def recovery_for_cohort(cohort: str) -> tuple[float, int, int]:
-    if cohort not in COHORT_RECOVERY:
+    key = canonical_cohort_label(cohort)
+    if key not in COHORT_RECOVERY:
         raise KeyError(f"unknown cohort for recovery: {cohort}")
-    return COHORT_RECOVERY[cohort]
+    return COHORT_RECOVERY[key]
 
 
 def _cell_note(cohort: str, psa: int, sda: int) -> str:

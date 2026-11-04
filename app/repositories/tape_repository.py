@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from app.models.loan import Loan
+from app.services.cohort_labels import canonical_cohort_label
 from app.services.scenario_grid import (
     COHORT_HIGH_LTV_STRONG,
     COHORT_HIGH_LTV_WEAK,
@@ -25,11 +26,11 @@ DEFAULT_TAPE = Path(
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CLUSTER_TAPE = REPO_ROOT / "public" / "cluster-tape.json"
 
-# Display names (no "RI"); economics match k-proto cluster ids 0/1/2.
+# Display names; economics match k-proto cluster ids 0/1/2.
 CLUSTER_ID_TO_COHORT = {
-    0: COHORT_LOW_LTV_WEAK,  # former moderate RI short label
-    1: COHORT_HIGH_LTV_STRONG,  # former strong RI
-    2: COHORT_HIGH_LTV_WEAK,  # former weak RI short label
+    0: COHORT_LOW_LTV_WEAK,
+    1: COHORT_HIGH_LTV_STRONG,
+    2: COHORT_HIGH_LTV_WEAK,
 }
 
 
@@ -69,7 +70,7 @@ class TapeRepository:
             if not cohort and row.get("clusterId") is not None:
                 cohort = CLUSTER_ID_TO_COHORT.get(int(row["clusterId"]))
             if cohort:
-                out[lid] = str(cohort)
+                out[lid] = canonical_cohort_label(str(cohort))
         return out
 
     def _row_to_loan(self, row: Any, cohort: str | None) -> Loan:

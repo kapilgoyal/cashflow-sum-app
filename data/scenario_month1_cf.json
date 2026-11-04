@@ -22,17 +22,17 @@
       "Up": 200
     },
     "recovery_by_cohort": {
-      "high LTV and strong refinance incentive": {
+      "HLTV Strong RI": {
         "rate": 0.6,
         "period_months": 12,
         "lag_months": 0
       },
-      "high LTV and weak refinance incentive": {
+      "HLTV Weak RI": {
         "rate": 0.55,
         "period_months": 15,
         "lag_months": 0
       },
-      "low LTV and weak refinance incentive": {
+      "LLTV Weak RI": {
         "rate": 0.75,
         "period_months": 9,
         "lag_months": 0
@@ -55,7 +55,7 @@
   "aggregates": [
     {
       "scenario_id": "S01",
-      "cohort": "low LTV and weak refinance incentive",
+      "cohort": "LLTV Weak RI",
       "psa_multiple": 75,
       "sda_multiple": 50,
       "pca_level": "Down",
@@ -78,7 +78,7 @@
     },
     {
       "scenario_id": "S02",
-      "cohort": "low LTV and weak refinance incentive",
+      "cohort": "LLTV Weak RI",
       "psa_multiple": 75,
       "sda_multiple": 100,
       "pca_level": "Down",
@@ -101,7 +101,7 @@
     },
     {
       "scenario_id": "S03",
-      "cohort": "low LTV and weak refinance incentive",
+      "cohort": "LLTV Weak RI",
       "psa_multiple": 75,
       "sda_multiple": 200,
       "pca_level": "Down",
@@ -124,7 +124,7 @@
     },
     {
       "scenario_id": "S04",
-      "cohort": "low LTV and weak refinance incentive",
+      "cohort": "LLTV Weak RI",
       "psa_multiple": 100,
       "sda_multiple": 50,
       "pca_level": "Base",
@@ -147,7 +147,7 @@
     },
     {
       "scenario_id": "S05",
-      "cohort": "low LTV and weak refinance incentive",
+      "cohort": "LLTV Weak RI",
       "psa_multiple": 100,
       "sda_multiple": 100,
       "pca_level": "Base",
@@ -170,7 +170,7 @@
     },
     {
       "scenario_id": "S06",
-      "cohort": "low LTV and weak refinance incentive",
+      "cohort": "LLTV Weak RI",
       "psa_multiple": 100,
       "sda_multiple": 200,
       "pca_level": "Base",
@@ -193,7 +193,7 @@
     },
     {
       "scenario_id": "S07",
-      "cohort": "low LTV and weak refinance incentive",
+      "cohort": "LLTV Weak RI",
       "psa_multiple": 125,
       "sda_multiple": 50,
       "pca_level": "Up",
@@ -216,7 +216,7 @@
     },
     {
       "scenario_id": "S08",
-      "cohort": "low LTV and weak refinance incentive",
+      "cohort": "LLTV Weak RI",
       "psa_multiple": 125,
       "sda_multiple": 100,
       "pca_level": "Up",
@@ -239,7 +239,7 @@
     },
     {
       "scenario_id": "S09",
-      "cohort": "low LTV and weak refinance incentive",
+      "cohort": "LLTV Weak RI",
       "psa_multiple": 125,
       "sda_multiple": 200,
       "pca_level": "Up",
@@ -262,7 +262,7 @@
     },
     {
       "scenario_id": "S10",
-      "cohort": "high LTV and strong refinance incentive",
+      "cohort": "HLTV Strong RI",
       "psa_multiple": 75,
       "sda_multiple": 50,
       "pca_level": "Down",
@@ -285,7 +285,7 @@
     },
     {
       "scenario_id": "S11",
-      "cohort": "high LTV and strong refinance incentive",
+      "cohort": "HLTV Strong RI",
       "psa_multiple": 75,
       "sda_multiple": 100,
       "pca_level": "Down",
@@ -308,7 +308,7 @@
     },
     {
       "scenario_id": "S12",
-      "cohort": "high LTV and strong refinance incentive",
+      "cohort": "HLTV Strong RI",
       "psa_multiple": 75,
       "sda_multiple": 200,
       "pca_level": "Down",
@@ -331,7 +331,7 @@
     },
     {
       "scenario_id": "S13",
-      "cohort": "high LTV and strong refinance incentive",
+      "cohort": "HLTV Strong RI",
       "psa_multiple": 100,
       "sda_multiple": 50,
       "pca_level": "Base",
@@ -354,7 +354,7 @@
     },
     {
       "scenario_id": "S14",
-      "cohort": "high LTV and strong refinance incentive",
+      "cohort": "HLTV Strong RI",
       "psa_multiple": 100,
       "sda_multiple": 100,
       "pca_level": "Base",
@@ -377,7 +377,7 @@
     },
     {
       "scenario_id": "S15",
-      "cohort": "high LTV and strong refinance incentive",
+      "cohort": "HLTV Strong RI",
       "psa_multiple": 100,
       "sda_multiple": 200,
       "pca_level": "Base",
@@ -400,7 +400,7 @@
     },
     {
       "scenario_id": "S16",
-      "cohort": "high LTV and strong refinance incentive",
+      "cohort": "HLTV Strong RI",
       "psa_multiple": 125,
       "sda_multiple": 50,
       "pca_level": "Up",
@@ -423,7 +423,7 @@
     },
     {
       "scenario_id": "S17",
-      "cohort": "high LTV and strong refinance incentive",
+      "cohort": "HLTV Strong RI",
       "psa_multiple": 125,
       "sda_multiple": 100,
       "pca_level": "Up",
@@ -446,7 +446,7 @@
     },
     {
       "scenario_id": "S18",
-      "cohort": "high LTV and strong refinance incentive",
+      "cohort": "HLTV Strong RI",
       "psa_multiple": 125,
       "sda_multiple": 200,
       "pca_level": "Up",
@@ -469,7 +469,7 @@
     },
     {
       "scenario_id": "S19",
-      "cohort": "high LTV and weak refinance incentive",
+      "cohort": "HLTV Weak RI",
       "psa_multiple": 75,
       "sda_multiple": 50,
       "pca_level": "Down",
@@ -492,7 +492,7 @@
     },
     {
       "scenario_id": "S20",
-      "cohort": "high LTV and weak refinance incentive",
+      "cohort": "HLTV Weak RI",
       "psa_multiple": 75,
       "sda_multiple": 100,
       "pca_level": "Down",
@@ -515,7 +515,7 @@
     },
     {
       "scenario_id": "S21",
-      "cohort": "high LTV and weak refinance incentive",
+      "cohort": "HLTV Weak RI",
       "psa_multiple": 75,
       "sda_multiple": 200,
       "pca_level": "Down",
@@ -538,7 +538,7 @@
     },
     {
       "scenario_id": "S22",
-      "cohort": "high LTV and weak refinance incentive",
+      "cohort": "HLTV Weak RI",
       "psa_multiple": 100,
       "sda_multiple": 50,
       "pca_level": "Base",
@@ -561,7 +561,7 @@
     },
     {
       "scenario_id": "S23",
-      "cohort": "high LTV and weak refinance incentive",
+      "cohort": "HLTV Weak RI",
       "psa_multiple": 100,
       "sda_multiple": 100,
       "pca_level": "Base",
@@ -584,7 +584,7 @@
     },
     {
       "scenario_id": "S24",
-      "cohort": "high LTV and weak refinance incentive",
+      "cohort": "HLTV Weak RI",
       "psa_multiple": 100,
       "sda_multiple": 200,
       "pca_level": "Base",
@@ -607,7 +607,7 @@
     },
     {
       "scenario_id": "S25",
-      "cohort": "high LTV and weak refinance incentive",
+      "cohort": "HLTV Weak RI",
       "psa_multiple": 125,
       "sda_multiple": 50,
       "pca_level": "Up",
@@ -630,7 +630,7 @@
     },
     {
       "scenario_id": "S26",
-      "cohort": "high LTV and weak refinance incentive",
+      "cohort": "HLTV Weak RI",
       "psa_multiple": 125,
       "sda_multiple": 100,
       "pca_level": "Up",
@@ -653,7 +653,7 @@
     },
     {
       "scenario_id": "S27",
-      "cohort": "high LTV and weak refinance incentive",
+      "cohort": "HLTV Weak RI",
       "psa_multiple": 125,
       "sda_multiple": 200,
       "pca_level": "Up",

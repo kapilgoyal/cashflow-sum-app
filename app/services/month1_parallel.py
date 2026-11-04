@@ -17,6 +17,9 @@ from app.models.loan import Loan
 from app.models.scenario import Scenario
 from app.services.cashflow_engine import project_loan_cashflows
 from app.services.scenario_grid import (
+    COHORT_HIGH_LTV_STRONG,
+    COHORT_HIGH_LTV_WEAK,
+    COHORT_LOW_LTV_WEAK,
     PSA_LEVEL_NAME,
     SDA_LEVEL_NAME,
     build_scenario_grid,
@@ -227,17 +230,17 @@ def run_month1_parallel(
             "pca_levels": {"Down": 75, "Base": 100, "Up": 125},
             "sta_levels": {"Down": 50, "Base": 100, "Up": 200},
             "recovery_by_cohort": {
-                "high LTV and strong refinance incentive": {
+                COHORT_HIGH_LTV_STRONG: {
                     "rate": 0.60,
                     "period_months": 12,
                     "lag_months_fallback": 0,
                 },
-                "high LTV and weak refinance incentive": {
+                COHORT_HIGH_LTV_WEAK: {
                     "rate": 0.55,
                     "period_months": 15,
                     "lag_months_fallback": 0,
                 },
-                "low LTV and weak refinance incentive": {
+                COHORT_LOW_LTV_WEAK: {
                     "rate": 0.75,
                     "period_months": 9,
                     "lag_months_fallback": 0,

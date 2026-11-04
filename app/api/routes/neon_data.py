@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.repositories.env_load import load_dotenv
 from app.repositories.neon_cf_repository import NeonCfRepository
+from app.services.cohort_labels import relabel_payload
 
 router = APIRouter(prefix="/api/neon", tags=["neon"])
 
@@ -41,7 +42,9 @@ def neon_scenarios() -> dict:
         rows = repo.list_scenarios()
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    return {"n": len(rows), "source": "neon.securitization_scenarios", "scenarios": rows}
+    return relabel_payload(
+        {"n": len(rows), "source": "neon.securitization_scenarios", "scenarios": rows}
+    )
 
 
 @router.get("/cashflows/month1")
@@ -74,13 +77,15 @@ def neon_month1(
                 total = int(cur.fetchone()[0])
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    return {
-        "n": len(rows),
-        "total": total,
-        "scenario_id": scenario_id,
-        "source": "neon.loan_cashflows_month1_enriched",
-        "rows": rows,
-    }
+    return relabel_payload(
+        {
+            "n": len(rows),
+            "total": total,
+            "scenario_id": scenario_id,
+            "source": "neon.loan_cashflows_month1_enriched",
+            "rows": rows,
+        }
+    )
 
 
 @router.get("/cashflows/loan-month")
@@ -95,10 +100,12 @@ def neon_loan_month(
         )
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    return {
-        "n": len(rows),
-        "loan_id": loan_id,
-        "scenario_id": scenario_id,
-        "source": "neon.loan_month_cf_enriched",
-        "rows": rows,
-    }
+    return relabel_payload(
+        {
+            "n": len(rows),
+            "loan_id": loan_id,
+            "scenario_id": scenario_id,
+            "source": "neon.loan_month_cf_enriched",
+            "rows": rows,
+        }
+    )
