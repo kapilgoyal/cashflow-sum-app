@@ -664,13 +664,68 @@ body {
 
 .cf-grid-toolbar {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
+  flex: 0 0 auto;
+  padding: 0;
+  margin: 0 0 2px;
+  min-height: 28px;
+}
+
+.cf-grid-toolbar-start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.cf-grid-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 2px;
   flex: 0 0 auto;
-  padding: 0 0 4px;
-  min-height: 22px;
+  margin-left: auto;
+}
+
+.asf-grid-summary {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--cf-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.asf-grid-summary-total {
+  color: var(--cf-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.asf-grid-summary-filter {
+  font-variant-numeric: tabular-nums;
+}
+
+.asf-grid-summary-filter.is-filtered {
+  color: var(--cf-text);
+}
+
+.section-asf {
+  padding-top: 4px;
+}
+
+/* Pinned Loan Id stays readable while the tape scrolls horizontally. */
+.section-asf .ag-theme-cashflow .ag-pinned-left-header,
+.section-asf .ag-theme-cashflow .ag-pinned-left-cols-container {
+  background: var(--cf-panel);
+  box-shadow: 2px 0 0 var(--cf-hairline);
 }
 
 .cf-grid-icon-btn {
@@ -921,6 +976,10 @@ body {
 
   .cf-grid-toolbar {
     min-height: 44px;
+    gap: 6px 8px;
+  }
+
+  .cf-grid-toolbar-actions {
     gap: 6px;
   }
 }
@@ -1047,8 +1106,33 @@ body {
 
   .cf-grid-toolbar {
     min-height: 44px;
+    gap: 6px 8px;
+    padding: 0;
+    margin-bottom: 2px;
+  }
+
+  .cf-grid-toolbar-actions {
     gap: 6px;
-    padding: 2px 0 6px;
+  }
+
+  .asf-grid-summary {
+    white-space: normal;
+    font-size: 12px;
+  }
+
+  .section-asf {
+    padding: 6px 10px 8px;
+  }
+
+  .section-asf .cf-grid-host {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .section-asf .ag-theme-cashflow .ag-root-wrapper,
+  .section-asf .ag-theme-cashflow .ag-center-cols-viewport,
+  .section-asf .ag-theme-cashflow .ag-body-viewport {
+    min-width: 720px;
   }
 
   .strat-charts {

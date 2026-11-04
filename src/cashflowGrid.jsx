@@ -290,24 +290,61 @@ export function DataGrid({
   getRowId,
   onRowDrill,
   onGridReady,
+  onRowStats,
   scheduleSave,
   persistLayout = false,
   className = "grid-wrap grid-wrap-fill",
   heightClass,
   exportName = "cashflow",
   showToolbar = true,
+  toolbarStart = null,
   gridProps = {},
 }) {
   const defaultColDef = useMemo(() => ({ ...sharedDefaultColDef }), []);
   const apiRef = useRef(null);
   const wrapRef = useRef(null);
+  const onRowStatsRef = useRef(onRowStats);
+  onRowStatsRef.current = onRowStats;
+
+  const emitRowStats = useCallback((api) => {
+    const cb = onRowStatsRef.current;
+    if (!cb || !api) return;
+    const loaded = api.getDisplayedRowCount
+      ? (() => {
+          let n = 0;
+          api.forEachNode?.(() => {
+            n += 1;
+          });
+          return n;
+        })()
+      : Array.isArray(rowData)
+        ? rowData.length
+        : 0;
+    let visible = 0;
+    if (typeof api.getDisplayedRowCount === "function") {
+      visible = api.getDisplayedRowCount();
+    } else {
+      api.forEachNodeAfterFilterAndSort?.((n) => {
+        if (n?.data) visible += 1;
+      });
+    }
+    cb({ loaded, visible });
+  }, [rowData]);
 
   const handleGridReady = useCallback(
     (e) => {
       apiRef.current = e.api;
+      emitRowStats(e.api);
       onGridReady?.(e);
     },
-    [onGridReady]
+    [onGridReady, emitRowStats]
+  );
+
+  const handleFilterOrModel = useCallback(
+    (e) => {
+      emitRowStats(e?.api || apiRef.current);
+    },
+    [emitRowStats]
   );
 
   const onRowClicked = useCallback(
@@ -396,24 +433,31 @@ export function DataGrid({
     >
       {showToolbar && (
         <div className="cf-grid-toolbar" role="toolbar" aria-label="Grid actions">
-          <button
-            type="button"
-            className="cf-grid-icon-btn"
-            onClick={exportCsv}
-            title="Export CSV"
-            aria-label="Export CSV"
-          >
-            <IconExportCsv />
-          </button>
-          <button
-            type="button"
-            className="cf-grid-icon-btn"
-            onClick={copyRows}
-            title="Copy (Ctrl+C)"
-            aria-label="Copy rows to clipboard"
-          >
-            <IconCopy />
-          </button>
+          {toolbarStart ? (
+            <div className="cf-grid-toolbar-start">{toolbarStart}</div>
+          ) : (
+            <div className="cf-grid-toolbar-start" aria-hidden="true" />
+          )}
+          <div className="cf-grid-toolbar-actions">
+            <button
+              type="button"
+              className="cf-grid-icon-btn"
+              onClick={exportCsv}
+              title="Export CSV"
+              aria-label="Export CSV"
+            >
+              <IconExportCsv />
+            </button>
+            <button
+              type="button"
+              className="cf-grid-icon-btn"
+              onClick={copyRows}
+              title="Copy (Ctrl+C)"
+              aria-label="Copy rows to clipboard"
+            >
+              <IconCopy />
+            </button>
+          </div>
         </div>
       )}
       <div className="cf-grid-host ag-theme-cashflow">
@@ -428,6 +472,8 @@ export function DataGrid({
           rowSelection="single"
           enableCellTextSelection
           ensureDomOrder
+          enableBrowserTooltips
+          tooltipShowDelay={400}
           getRowId={getRowId}
           onGridReady={handleGridReady}
           onRowClicked={onRowClicked}
@@ -437,7 +483,12 @@ export function DataGrid({
           onColumnPinned={persistLayout ? scheduleSave : undefined}
           onColumnResized={persistLayout ? scheduleSave : undefined}
           onSortChanged={persistLayout ? scheduleSave : undefined}
-          onFilterChanged={persistLayout ? scheduleSave : undefined}
+          onFilterChanged={(e) => {
+            handleFilterOrModel(e);
+            if (persistLayout) scheduleSave?.(e);
+          }}
+          onModelUpdated={handleFilterOrModel}
+          onRowDataUpdated={handleFilterOrModel}
           {...gridProps}
         />
       </div>
