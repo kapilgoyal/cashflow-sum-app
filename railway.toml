@@ -1,8 +1,5 @@
-# Prefer Nixpacks Python-only (nixpacks.toml providers). DOCKERFILE builds have been
-# failing on Railway for this service while NIXPACKS/RAILPACK + uvicorn startCommand succeed.
-[build]
-builder = "NIXPACKS"
-
+# Build builder is set on the Railway service instance (RAILPACK/NIXPACKS).
+# Do not set build.builder here — a stale DOCKERFILE mapping was blocking deploys.
 [deploy]
 startCommand = "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT"
 healthcheckPath = "/health"
