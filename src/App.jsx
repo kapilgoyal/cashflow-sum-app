@@ -7,6 +7,7 @@ import {
   Cell,
   ComposedChart,
   Legend,
+  Line,
   Pie,
   PieChart,
   Polygon,
@@ -33,6 +34,7 @@ import {
   withScenarioRowSpans,
 } from "./cashflowGrid";
 import { apiUrl } from "./apiBase";
+import { StateChoropleth, Zip3Choropleth } from "./UsChoropleth";
 import "./App.css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -47,14 +49,15 @@ const NAV = [
   { id: "assumptions", label: "Assumptions" },
 ];
 
-/** Standard mortgage strat cuts. chart: bar | hbar | pie | histogram */
-const STRAT_DIMS = [
+/** Standard mortgage strat cuts. chart: bar | hbar | pie | histogram | line | map | zip */
+const STRAT_DIMS_BASE = [
   { id: "ltv_bucket", label: "LTV", chart: "histogram" },
   { id: "cltv_bucket", label: "CLTV", chart: "histogram" },
   { id: "fico_band", label: "FICO", chart: "histogram" },
   { id: "balance_band", label: "Balance", chart: "histogram" },
-  { id: "orig_year", label: "Origination Year", chart: "bar" },
-  { id: "state", label: "State", chart: "hbar" },
+  { id: "orig_year", label: "Origination Year", chart: "line" },
+  { id: "state", label: "State", chart: "map" },
+  { id: "zip3", label: "ZIP3", chart: "zip" },
   { id: "documentation_type", label: "Documentation Type", chart: "hbar" },
   { id: "occupancy", label: "Occupancy", chart: "pie" },
   { id: "loan_purpose", label: "Loan Purpose", chart: "pie" },
@@ -81,7 +84,7 @@ function fmtUpbShort(v) {
   return `$${n.toFixed(0)}`;
 }
 
-function StratDimChart({ dim, rows, metric }) {
+function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
   const data = rows || [];
   const valueKey = metric === "loans" ? "loan_count" : "upb";
   const tick = {
@@ -92,9 +95,132 @@ function StratDimChart({ dim, rows, metric }) {
   const tipFmt = (v) =>
     metric === "loans" ? Number(v).toLocaleString() : fmtUpbShort(v);
   const metricLabel = metric === "loans" ? "Loans" : "UPB";
+  const fireClick = (bucket) => {
+    if (bucket == null || !onBucketClick) return;
+    onBucketClick(String(bucket));
+  };
 
   if (!data.length) {
     return <p className="muted strat-chart-empty">No Buckets</p>;
+  }
+
+  if (dim.chart === "map") {
+    return (
+      <StateChoropleth
+        rows={data}
+        metric={metric}
+        selected={selectedBucket}
+        onSelect={(abbr) => fireClick(abbr)}
+        fmtTip={tipFmt}
+      />
+    );
+  }
+
+  if (dim.chart === "zip") {
+    return (
+      <Zip3Choropleth
+        rows={data}
+        metric={metric}
+        selected={selectedBucket}
+        onSelect={(z) => fireClick(z)}
+        fmtTip={tipFmt}
+      />
+    );
+  }
+
+  if (dim.chart === "line") {
+    const lineData = data.map((row) => ({
+      ...row,
+      wac_pct:
+        row.wac != null && !Number.isNaN(Number(row.wac))
+          ? Number(row.wac) * 100
+          : row.avg_rate != null && !Number.isNaN(Number(row.avg_rate))
+            ? Number(row.avg_rate) * 100
+            : null,
+    }));
+    return (
+      <ResponsiveContainer width="100%" height={220}>
+        <ComposedChart
+          data={lineData}
+          margin={{ top: 8, right: 12, left: 0, bottom: 28 }}
+        >
+          <CartesianGrid stroke="#D0D7E2" strokeDasharray="2 4" vertical={false} />
+          <XAxis
+            dataKey="bucket"
+            tick={tick}
+            interval={0}
+            angle={lineData.length > 6 ? -30 : 0}
+            textAnchor={lineData.length > 6 ? "end" : "middle"}
+            height={lineData.length > 6 ? 48 : 28}
+            axisLine={{ stroke: "#8A9BB0" }}
+            tickLine={{ stroke: "#8A9BB0" }}
+          />
+          <YAxis
+            yAxisId="upb"
+            tick={tick}
+            tickFormatter={tipFmt}
+            width={48}
+            axisLine={{ stroke: "#8A9BB0" }}
+            tickLine={{ stroke: "#8A9BB0" }}
+          />
+          <YAxis
+            yAxisId="wac"
+            orientation="right"
+            tick={tick}
+            tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
+            width={40}
+            axisLine={{ stroke: "#8A9BB0" }}
+            tickLine={{ stroke: "#8A9BB0" }}
+          />
+          <Tooltip
+            formatter={(v, name) => {
+              if (name === "WAC") return [`${Number(v).toFixed(2)}%`, "WAC"];
+              return [tipFmt(v), metricLabel];
+            }}
+            labelFormatter={(l) => String(l)}
+            contentStyle={{
+              fontSize: 11,
+              fontFamily: FONT,
+              border: "1px solid #D0D7E2",
+            }}
+          />
+          <Legend
+            wrapperStyle={{ fontSize: 10, fontFamily: FONT }}
+            iconSize={8}
+          />
+          <Bar
+            yAxisId="upb"
+            dataKey={valueKey}
+            fill="#8A9BB0"
+            name={metricLabel}
+            radius={[1, 1, 0, 0]}
+            cursor="pointer"
+            onClick={(pt) => fireClick(pt?.bucket)}
+          />
+          <Line
+            yAxisId="wac"
+            type="monotone"
+            dataKey="wac_pct"
+            name="WAC"
+            stroke="#FD9D24"
+            strokeWidth={2}
+            dot={{
+              r: 3,
+              fill: "#FD9D24",
+              cursor: "pointer",
+              onClick: (_e, payload) =>
+                fireClick(payload?.payload?.bucket ?? payload?.bucket),
+            }}
+            activeDot={{
+              r: 5,
+              cursor: "pointer",
+              onClick: (_e, payload) =>
+                fireClick(payload?.payload?.bucket ?? payload?.bucket),
+            }}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
+    );
   }
 
   if (dim.chart === "pie") {
@@ -110,11 +236,15 @@ function StratDimChart({ dim, rows, metric }) {
             innerRadius={42}
             outerRadius={72}
             paddingAngle={1}
+            cursor="pointer"
+            onClick={(_, idx) => fireClick(data[idx]?.bucket)}
           >
             {data.map((row, i) => (
               <Cell
                 key={row.bucket}
                 fill={STRAT_PIE_COLORS[i % STRAT_PIE_COLORS.length]}
+                stroke={selectedBucket === row.bucket ? "#FD9D24" : undefined}
+                strokeWidth={selectedBucket === row.bucket ? 2 : 0}
               />
             ))}
           </Pie>
@@ -178,7 +308,18 @@ function StratDimChart({ dim, rows, metric }) {
             fill={STRAT_BAR_COLOR}
             name={metricLabel}
             radius={[0, 1, 1, 0]}
-          />
+            cursor="pointer"
+            onClick={(pt) => fireClick(pt?.bucket)}
+          >
+            {data.map((row) => (
+              <Cell
+                key={row.bucket}
+                fill={
+                  selectedBucket === row.bucket ? "#FD9D24" : STRAT_BAR_COLOR
+                }
+              />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     );
@@ -224,7 +365,22 @@ function StratDimChart({ dim, rows, metric }) {
           fill={isHistogram ? "#0B4F9C" : STRAT_BAR_COLOR}
           name={metricLabel}
           radius={isHistogram ? [0, 0, 0, 0] : [1, 1, 0, 0]}
-        />
+          cursor="pointer"
+          onClick={(pt) => fireClick(pt?.bucket)}
+        >
+          {data.map((row) => (
+            <Cell
+              key={row.bucket}
+              fill={
+                selectedBucket === row.bucket
+                  ? "#FD9D24"
+                  : isHistogram
+                    ? "#0B4F9C"
+                    : STRAT_BAR_COLOR
+              }
+            />
+          ))}
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
@@ -492,6 +648,13 @@ export default function App() {
   const [stratError, setStratError] = useState(null);
   const [stratMetric, setStratMetric] = useState("upb");
   const [stratCohort, setStratCohort] = useState("all");
+  const [stratHasPostal, setStratHasPostal] = useState(false);
+  const [stratDrill, setStratDrill] = useState(null);
+  const [stratDrillLoans, setStratDrillLoans] = useState([]);
+  const [stratDrillTotal, setStratDrillTotal] = useState(0);
+  const [stratDrillVisible, setStratDrillVisible] = useState(null);
+  const [stratDrillLoading, setStratDrillLoading] = useState(false);
+  const [stratDrillError, setStratDrillError] = useState(null);
 
   const [cohortStats, setCohortStats] = useState([]);
   const [cohortStatsError, setCohortStatsError] = useState(null);
@@ -608,13 +771,36 @@ export default function App() {
     (async () => {
       setStratLoading(true);
       setStratError(null);
+      setStratDrill(null);
+      setStratDrillLoans([]);
+      setStratDrillTotal(0);
+      setStratDrillError(null);
       try {
         const cohortQs =
           stratCohort && stratCohort !== "all"
             ? `&cohort=${encodeURIComponent(stratCohort)}`
             : "";
-        const results = await Promise.all(
-          STRAT_DIMS.map(async (dim) => {
+        // Probe state first for KPIs + postal flag, then fetch remaining dims.
+        const probeRes = await fetch(
+          apiUrl(
+            `/api/asf/stratification?by=${encodeURIComponent("state")}${cohortQs}`
+          )
+        );
+        if (!probeRes.ok) {
+          const detail = await probeRes.text();
+          throw new Error(`State: HTTP ${probeRes.status}: ${detail}`);
+        }
+        const probe = await probeRes.json();
+        const hasPostal = Boolean(probe.has_postal_code);
+        if (cancelled) return;
+        setStratHasPostal(hasPostal);
+
+        const dims = STRAT_DIMS_BASE.filter(
+          (d) => d.id !== "zip3" || hasPostal
+        );
+        const rest = dims.filter((d) => d.id !== "state");
+        const restResults = await Promise.all(
+          rest.map(async (dim) => {
             const res = await fetch(
               apiUrl(
                 `/api/asf/stratification?by=${encodeURIComponent(dim.id)}${cohortQs}`
@@ -629,13 +815,18 @@ export default function App() {
           })
         );
         if (cancelled) return;
+        const results = [
+          { dim: dims.find((d) => d.id === "state"), data: probe },
+          ...restResults,
+        ];
         const combined = [];
-        let tape_row_count = null;
-        let tape_upb = null;
-        let wac = null;
-        let wam = null;
-        let seasoned_wac = null;
+        let tape_row_count = probe.tape_row_count ?? null;
+        let tape_upb = probe.tape_upb ?? null;
+        let wac = probe.wac ?? null;
+        let wam = probe.wam ?? null;
+        let seasoned_wac = probe.seasoned_wac ?? null;
         for (const { dim, data } of results) {
+          if (!dim) continue;
           if (tape_row_count == null && data.tape_row_count != null) {
             tape_row_count = data.tape_row_count;
           }
@@ -647,6 +838,7 @@ export default function App() {
           if (seasoned_wac == null && data.seasoned_wac != null) {
             seasoned_wac = data.seasoned_wac;
           }
+          if (data.has_postal_code) setStratHasPostal(true);
           for (const row of data.rows || []) {
             combined.push({
               ...row,
@@ -658,13 +850,14 @@ export default function App() {
         }
         setStratRows(combined);
         setStratMeta({
-          n_dimensions: STRAT_DIMS.length,
+          n_dimensions: dims.length,
           n_buckets: combined.length,
           tape_row_count,
           tape_upb,
           wac,
           wam,
           seasoned_wac,
+          has_postal_code: hasPostal,
           cohort: stratCohort,
         });
       } catch (err) {
@@ -672,6 +865,7 @@ export default function App() {
           setStratError(err.message || String(err));
           setStratRows([]);
           setStratMeta(null);
+          setStratHasPostal(false);
         }
       } finally {
         if (!cancelled) setStratLoading(false);
@@ -1233,6 +1427,7 @@ export default function App() {
         cellClass: "cf-num",
       },
       { field: "state", headerName: "State", width: 64 },
+      { field: "postal_code", headerName: "Postal Code", width: 96 },
       {
         field: "documentation_type",
         headerName: "Documentation Type",
@@ -1331,15 +1526,136 @@ export default function App() {
     qcDrillLoading,
   ]);
 
+  const stratDims = useMemo(
+    () =>
+      STRAT_DIMS_BASE.filter(
+        (d) => d.id !== "zip3" || stratHasPostal || stratMeta?.has_postal_code
+      ),
+    [stratHasPostal, stratMeta?.has_postal_code]
+  );
+
   const stratByDim = useMemo(() => {
     const map = {};
-    for (const dim of STRAT_DIMS) map[dim.id] = [];
+    for (const dim of stratDims) map[dim.id] = [];
     for (const row of stratRows) {
       if (!map[row.dimension_id]) map[row.dimension_id] = [];
       map[row.dimension_id].push(row);
     }
     return map;
-  }, [stratRows]);
+  }, [stratRows, stratDims]);
+
+  const loadStratDrillLoans = useCallback(
+    async (dimId, bucket) => {
+      const dim = STRAT_DIMS_BASE.find((d) => d.id === dimId);
+      if (!dimId || bucket == null || bucket === "") {
+        setStratDrill(null);
+        setStratDrillLoans([]);
+        setStratDrillTotal(0);
+        setStratDrillError(null);
+        return;
+      }
+      setStratDrill({
+        dimension: dimId,
+        label: dim?.label || dimId,
+        bucket: String(bucket),
+      });
+      setStratDrillLoading(true);
+      setStratDrillError(null);
+      setStratDrillVisible(null);
+      try {
+        const qs = new URLSearchParams({
+          by: dimId,
+          bucket: String(bucket),
+          limit: "2000",
+        });
+        if (stratCohort && stratCohort !== "all") {
+          qs.set("cohort", stratCohort);
+        }
+        const res = await fetch(
+          apiUrl(`/api/asf/stratification/loans?${qs.toString()}`)
+        );
+        if (!res.ok) {
+          const detail = await res.text();
+          throw new Error(`HTTP ${res.status}: ${detail}`);
+        }
+        const data = await res.json();
+        setStratDrillLoans(Array.isArray(data.loans) ? data.loans : []);
+        setStratDrillTotal(data.total ?? (data.loans || []).length);
+      } catch (err) {
+        setStratDrillError(err.message || String(err));
+        setStratDrillLoans([]);
+        setStratDrillTotal(0);
+      } finally {
+        setStratDrillLoading(false);
+      }
+    },
+    [stratCohort]
+  );
+
+  const onStratBucketClick = useCallback(
+    (dimId, bucket) => {
+      loadStratDrillLoans(dimId, bucket);
+    },
+    [loadStratDrillLoans]
+  );
+
+  const onStratDrillRowStats = useCallback((stats) => {
+    if (stats?.visible != null) setStratDrillVisible(stats.visible);
+  }, []);
+
+  const clearStratDrill = useCallback(() => {
+    setStratDrill(null);
+    setStratDrillLoans([]);
+    setStratDrillTotal(0);
+    setStratDrillError(null);
+    setStratDrillVisible(null);
+  }, []);
+
+  const stratDrillToolbarStart = useMemo(() => {
+    if (!stratDrill) return null;
+    const total = stratDrillTotal || stratDrillLoans.length || 0;
+    const shown =
+      stratDrillVisible != null
+        ? stratDrillVisible
+        : stratDrillLoading
+          ? null
+          : stratDrillLoans.length;
+    return (
+      <p className="asf-grid-summary" aria-live="polite">
+        <span className="asf-grid-summary-total">
+          {stratDrill.label}: {stratDrill.bucket}
+          {" · "}
+          {total.toLocaleString()} {total === 1 ? "Loan" : "Loans"}
+        </span>
+        {shown != null ? (
+          <span
+            className={
+              shown !== total
+                ? "asf-grid-summary-filter is-filtered"
+                : "asf-grid-summary-filter"
+            }
+          >
+            {" · "}
+            {shown.toLocaleString()} Shown
+          </span>
+        ) : null}
+        <button
+          type="button"
+          className="linkish strat-drill-clear"
+          onClick={clearStratDrill}
+        >
+          Clear Drill
+        </button>
+      </p>
+    );
+  }, [
+    stratDrill,
+    stratDrillTotal,
+    stratDrillLoans.length,
+    stratDrillVisible,
+    stratDrillLoading,
+    clearStratDrill,
+  ]);
 
   const exportStratCsv = useCallback(() => {
     const headers = [
@@ -1351,6 +1667,7 @@ export default function App() {
       "avg_cltv",
       "avg_fico",
       "avg_rate",
+      "wac",
       "avg_refi_incentive",
     ];
     const lines = [headers.join(",")];
@@ -1387,6 +1704,7 @@ export default function App() {
       "avg_cltv",
       "avg_fico",
       "avg_rate",
+      "wac",
       "avg_refi_incentive",
     ];
     const lines = [headers.join("\t")];
@@ -1436,7 +1754,7 @@ export default function App() {
       },
       {
         field: "avg_rate",
-        headerName: "Avg rate",
+        headerName: "Avg Rate",
         width: 88,
         valueFormatter: (p) => fmtPct(p.value, 2),
         cellClass: "cf-num",
@@ -2391,30 +2709,80 @@ export default function App() {
               ) : stratError ? (
                 <StatusBanner tone="error">Stratification: {stratError}</StatusBanner>
               ) : (
-                <div className="strat-charts">
-                  {STRAT_DIMS.map((dim) => (
-                    <div key={dim.id} className="strat-chart-panel">
-                      <div className="strat-chart-head">
-                        <h3 className="strat-chart-title">{dim.label}</h3>
-                        <span className="strat-chart-meta">
-                          {(stratByDim[dim.id] || []).length} Buckets ·{" "}
-                          {dim.chart === "histogram"
-                            ? "Histogram"
-                            : dim.chart === "hbar"
-                              ? "Bar"
-                              : dim.chart === "pie"
-                                ? "Pie"
-                                : "Bar"}
-                        </span>
-                      </div>
-                      <StratDimChart
-                        dim={dim}
-                        rows={stratByDim[dim.id] || []}
-                        metric={stratMetric}
-                      />
+                <>
+                  <div className="strat-charts">
+                    {stratDims.map((dim) => {
+                      const chartLabel =
+                        dim.chart === "histogram"
+                          ? "Histogram"
+                          : dim.chart === "hbar"
+                            ? "Bar"
+                            : dim.chart === "pie"
+                              ? "Pie"
+                              : dim.chart === "line"
+                                ? "WAC Trend"
+                                : dim.chart === "map"
+                                  ? "Map"
+                                  : dim.chart === "zip"
+                                    ? "Choropleth"
+                                    : "Bar";
+                      const wide =
+                        dim.chart === "map" ||
+                        dim.chart === "zip" ||
+                        dim.chart === "line";
+                      return (
+                        <div
+                          key={dim.id}
+                          className={`strat-chart-panel${
+                            wide ? " strat-chart-panel-wide" : ""
+                          }`}
+                        >
+                          <div className="strat-chart-head">
+                            <h3 className="strat-chart-title">{dim.label}</h3>
+                            <span className="strat-chart-meta">
+                              {(stratByDim[dim.id] || []).length} Buckets ·{" "}
+                              {chartLabel}
+                            </span>
+                          </div>
+                          <StratDimChart
+                            dim={dim}
+                            rows={stratByDim[dim.id] || []}
+                            metric={stratMetric}
+                            selectedBucket={
+                              stratDrill?.dimension === dim.id
+                                ? stratDrill.bucket
+                                : null
+                            }
+                            onBucketClick={(bucket) =>
+                              onStratBucketClick(dim.id, bucket)
+                            }
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {stratDrill && (
+                    <div className="strat-drill qc-drill">
+                      {stratDrillLoading ? (
+                        <p className="muted">Loading Loans…</p>
+                      ) : stratDrillError ? (
+                        <StatusBanner tone="error">
+                          Stratification Drill: {stratDrillError}
+                        </StatusBanner>
+                      ) : (
+                        <DataGrid
+                          rowData={stratDrillLoans}
+                          columnDefs={qcDrillColumnDefs}
+                          getRowId={(p) => String(p.data.loan_id)}
+                          onRowDrill={drillLoan}
+                          onRowStats={onStratDrillRowStats}
+                          toolbarStart={stratDrillToolbarStart}
+                          heightClass="grid-wrap-qc-drill"
+                        />
+                      )}
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </section>
           )}

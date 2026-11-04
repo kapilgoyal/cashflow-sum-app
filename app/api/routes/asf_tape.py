@@ -67,6 +67,38 @@ def asf_stratification(
     return payload
 
 
+@router.get("/stratification/loans")
+def asf_stratification_loans(
+    by: str = Query(..., alias="by"),
+    bucket: str = Query(...),
+    cohort: str | None = Query(default=None),
+    limit: int = Query(default=2000, ge=1, le=5000),
+) -> dict:
+    """Loans for a stratification bucket (map / bar / pie / line drill-down)."""
+    repo = _repo()
+    if not repo.url:
+        raise HTTPException(
+            status_code=503,
+            detail="DATABASE_URL not set — load asf_tape to Neon for stratification",
+        )
+    try:
+        loans, total, meta = repo.list_strat_loans(
+            by, bucket, cohort=cohort, limit=limit
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {
+        "ok": True,
+        "n": len(loans),
+        "total": total,
+        "source": "neon.asf_tape",
+        "loans": loans,
+        **meta,
+    }
+
+
 @router.get("/cohort-stats")
 def asf_cohort_stats() -> dict:
     repo = _repo()

@@ -503,13 +503,8 @@ class AsfTapeRepository:
             rows.append({c: _to_py(r.get(c)) for c in keep})
         return rows, total
 
-    def stratification(
-        self,
-        dimension: str = "documentation_type",
-        cohort: str | None = None,
-    ) -> dict[str, Any]:
-        """Bucket asf_tape by a categorical / derived dimension (not K-prototype)."""
-        allowed = {
+    STRAT_DIMENSIONS = frozenset(
+        {
             "documentation_type",
             "state",
             "property_type",
@@ -521,24 +516,28 @@ class AsfTapeRepository:
             "fico_band",
             "orig_year",
             "balance_band",
+            "zip3",
         }
-        if dimension not in allowed:
-            raise ValueError(f"unsupported dimension: {dimension}")
+    )
 
+    @staticmethod
+    def _strat_cohort_clause(
+        cohort: str | None,
+    ) -> tuple[str, tuple[Any, ...], str | None]:
         cohort_filter = (cohort or "").strip()
         if cohort_filter.lower() in ("", "all", "*"):
-            cohort_filter = None
-        where_sql = ""
-        where_params: tuple[Any, ...] = ()
-        if cohort_filter:
-            where_sql = " WHERE cohort = %s"
-            where_params = (cohort_filter,)
+            return "", (), None
+        return " WHERE cohort = %s", (cohort_filter,), cohort_filter
 
-        # Ordered band dimensions: natural sort via sort_key, not UPB.
-        ordered = False
+    @classmethod
+    def _strat_bucket_expr(cls, dimension: str) -> tuple[str, str | None, bool]:
+        """Return (bucket_sql, sort_sql|None, ordered)."""
+        if dimension not in cls.STRAT_DIMENSIONS:
+            raise ValueError(f"unsupported dimension: {dimension}")
+
         if dimension == "ltv_bucket":
-            ordered = True
-            bucket_expr = """
+            return (
+                """
                 CASE
                   WHEN original_ltv IS NULL THEN 'missing'
                   WHEN original_ltv < 0.60 THEN '<60'
@@ -547,8 +546,8 @@ class AsfTapeRepository:
                   WHEN original_ltv < 0.90 THEN '80-90'
                   ELSE '90+'
                 END
-            """
-            sort_expr = """
+                """,
+                """
                 CASE
                   WHEN original_ltv IS NULL THEN 99
                   WHEN original_ltv < 0.60 THEN 1
@@ -557,10 +556,12 @@ class AsfTapeRepository:
                   WHEN original_ltv < 0.90 THEN 4
                   ELSE 5
                 END
-            """
-        elif dimension == "cltv_bucket":
-            ordered = True
-            bucket_expr = """
+                """,
+                True,
+            )
+        if dimension == "cltv_bucket":
+            return (
+                """
                 CASE
                   WHEN original_cltv IS NULL THEN 'missing'
                   WHEN original_cltv < 0.60 THEN '<60'
@@ -569,8 +570,8 @@ class AsfTapeRepository:
                   WHEN original_cltv < 0.90 THEN '80-90'
                   ELSE '90+'
                 END
-            """
-            sort_expr = """
+                """,
+                """
                 CASE
                   WHEN original_cltv IS NULL THEN 99
                   WHEN original_cltv < 0.60 THEN 1
@@ -579,10 +580,12 @@ class AsfTapeRepository:
                   WHEN original_cltv < 0.90 THEN 4
                   ELSE 5
                 END
-            """
-        elif dimension == "fico_band":
-            ordered = True
-            bucket_expr = """
+                """,
+                True,
+            )
+        if dimension == "fico_band":
+            return (
+                """
                 CASE
                   WHEN original_fico IS NULL THEN 'missing'
                   WHEN original_fico < 660 THEN '<660'
@@ -591,8 +594,8 @@ class AsfTapeRepository:
                   WHEN original_fico < 780 THEN '740-779'
                   ELSE '780+'
                 END
-            """
-            sort_expr = """
+                """,
+                """
                 CASE
                   WHEN original_fico IS NULL THEN 99
                   WHEN original_fico < 660 THEN 1
@@ -601,10 +604,12 @@ class AsfTapeRepository:
                   WHEN original_fico < 780 THEN 4
                   ELSE 5
                 END
-            """
-        elif dimension == "balance_band":
-            ordered = True
-            bucket_expr = """
+                """,
+                True,
+            )
+        if dimension == "balance_band":
+            return (
+                """
                 CASE
                   WHEN current_loan_amount IS NULL THEN 'missing'
                   WHEN current_loan_amount < 100000 THEN '<100k'
@@ -615,8 +620,8 @@ class AsfTapeRepository:
                   WHEN current_loan_amount < 750000 THEN '500-750k'
                   ELSE '750k+'
                 END
-            """
-            sort_expr = """
+                """,
+                """
                 CASE
                   WHEN current_loan_amount IS NULL THEN 99
                   WHEN current_loan_amount < 100000 THEN 1
@@ -627,24 +632,64 @@ class AsfTapeRepository:
                   WHEN current_loan_amount < 750000 THEN 6
                   ELSE 7
                 END
-            """
-        elif dimension == "orig_year":
-            ordered = True
-            bucket_expr = """
+                """,
+                True,
+            )
+        if dimension == "orig_year":
+            return (
+                """
                 CASE
                   WHEN origination_date IS NULL THEN 'missing'
                   ELSE EXTRACT(YEAR FROM origination_date)::int::text
                 END
-            """
-            sort_expr = """
+                """,
+                """
                 CASE
                   WHEN origination_date IS NULL THEN 9999
                   ELSE EXTRACT(YEAR FROM origination_date)::int
                 END
-            """
-        else:
-            bucket_expr = f"COALESCE({dimension}::text, 'missing')"
-            sort_expr = None
+                """,
+                True,
+            )
+        if dimension == "zip3":
+            # First 3 digits of postal_code (preserve leading zeros as text).
+            return (
+                """
+                CASE
+                  WHEN postal_code IS NULL
+                    OR length(
+                      regexp_replace(trim(postal_code), '[^0-9]', '', 'g')
+                    ) < 3
+                  THEN 'missing'
+                  ELSE left(
+                    regexp_replace(trim(postal_code), '[^0-9]', '', 'g'),
+                    3
+                  )
+                END
+                """,
+                None,
+                False,
+            )
+        # Direct column dimensions (state, documentation_type, …).
+        return f"COALESCE({dimension}::text, 'missing')", None, False
+
+    def stratification(
+        self,
+        dimension: str = "documentation_type",
+        cohort: str | None = None,
+    ) -> dict[str, Any]:
+        """Bucket asf_tape by a categorical / derived dimension (not K-prototype)."""
+        bucket_expr, sort_expr, ordered = self._strat_bucket_expr(dimension)
+        where_sql, where_params, cohort_filter = self._strat_cohort_clause(cohort)
+
+        wac_expr = """
+            CASE
+              WHEN COALESCE(SUM(current_loan_amount), 0) > 0
+              THEN SUM(current_interest_rate * current_loan_amount)
+                   / SUM(current_loan_amount)
+              ELSE NULL
+            END::float
+        """
 
         if ordered:
             sql = f"""
@@ -656,6 +701,7 @@ class AsfTapeRepository:
                     AVG(original_cltv)::float AS avg_cltv,
                     AVG(original_fico)::float AS avg_fico,
                     AVG(current_interest_rate)::float AS avg_rate,
+                    {wac_expr} AS wac,
                     AVG(refinance_incentive)::float AS avg_refi_incentive,
                     MIN({sort_expr}) AS sort_key
                 FROM public.asf_tape
@@ -673,6 +719,7 @@ class AsfTapeRepository:
                     AVG(original_cltv)::float AS avg_cltv,
                     AVG(original_fico)::float AS avg_fico,
                     AVG(current_interest_rate)::float AS avg_rate,
+                    {wac_expr} AS wac,
                     AVG(refinance_incentive)::float AS avg_refi_incentive
                 FROM public.asf_tape
                 {where_sql}
@@ -720,7 +767,13 @@ class AsfTapeRepository:
                     END
                   )
                   ELSE NULL
-                END::float AS seasoned_wac
+                END::float AS seasoned_wac,
+                BOOL_OR(
+                  postal_code IS NOT NULL
+                  AND length(
+                    regexp_replace(trim(postal_code), '[^0-9]', '', 'g')
+                  ) >= 3
+                ) AS has_postal_code
             FROM public.asf_tape
             {where_sql}
         """
@@ -743,8 +796,79 @@ class AsfTapeRepository:
             "wac": kpi.get("wac"),
             "wam": kpi.get("wam"),
             "seasoned_wac": kpi.get("seasoned_wac"),
+            "has_postal_code": bool(kpi.get("has_postal_code")),
             "rows": rows,
         }
+
+    def list_strat_loans(
+        self,
+        dimension: str,
+        bucket: str,
+        *,
+        cohort: str | None = None,
+        limit: int = 2000,
+    ) -> tuple[list[dict[str, Any]], int, dict[str, Any]]:
+        """Loans matching a stratification bucket (Investor Tape–style drill)."""
+        bucket_expr, _, _ = self._strat_bucket_expr(dimension)
+        where_sql, where_params, cohort_filter = self._strat_cohort_clause(cohort)
+        bucket_value = (bucket or "").strip()
+        if not bucket_value:
+            raise ValueError("bucket is required")
+
+        cols = (
+            "loan_id",
+            "current_loan_amount",
+            "current_interest_rate",
+            "original_fico",
+            "original_ltv",
+            "original_cltv",
+            "state",
+            "postal_code",
+            "documentation_type",
+            "property_type",
+            "occupancy",
+            "loan_purpose",
+            "remaining_term",
+            "refinance_incentive",
+            "cohort",
+            "has_mi",
+            "origination_date",
+        )
+        present = self.tape_columns()
+        select_cols = tuple(c for c in cols if c in present or c == "loan_id")
+        if "loan_id" not in select_cols:
+            select_cols = ("loan_id",) + select_cols
+        col_sql = ", ".join(select_cols)
+
+        if where_sql:
+            filter_sql = f"{where_sql} AND ({bucket_expr}) = %s"
+            params: tuple[Any, ...] = where_params + (bucket_value,)
+        else:
+            filter_sql = f" WHERE ({bucket_expr}) = %s"
+            params = (bucket_value,)
+
+        count_sql = f"SELECT COUNT(*) FROM public.asf_tape{filter_sql}"
+        data_sql = (
+            f"SELECT {col_sql} FROM public.asf_tape"
+            f"{filter_sql} ORDER BY loan_id LIMIT %s"
+        )
+        meta = {
+            "dimension": dimension,
+            "bucket": bucket_value,
+            "cohort": cohort_filter or "all",
+        }
+        with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
+            with conn.cursor() as cur:
+                cur.execute(count_sql, params)
+                total = int(cur.fetchone()[0])
+                cur.execute(data_sql, params + (limit,))
+                colnames = [d.name for d in cur.description]
+                loans = [dict(zip(colnames, tup)) for tup in cur.fetchall()]
+                for loan in loans:
+                    od = loan.get("origination_date")
+                    if isinstance(od, (date, datetime)):
+                        loan["origination_date"] = od.isoformat()
+        return loans, total, meta
 
     def cohort_stats(self) -> list[dict[str, Any]]:
         """Per K-prototype cohort pool stats for the Cohort tab grid."""
