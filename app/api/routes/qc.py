@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from app.repositories.asf_tape_repository import AsfTapeRepository
 from app.repositories.env_load import load_dotenv
@@ -34,6 +34,31 @@ def qc_results() -> dict:
         "n": len(rows),
         "source": "neon.qc_checks + neon.qc_results",
         "results": rows,
+    }
+
+
+@router.get("/results/{check_id}/loans")
+def qc_check_loans(
+    check_id: str,
+    failing_only: bool = Query(True),
+    limit: int = Query(2000, ge=1, le=5000),
+) -> dict:
+    """Loans for a QC rule (default: failing rows for drill-down)."""
+    repo = _repo()
+    try:
+        loans, total, meta = repo.list_check_loans(
+            check_id, failing_only=failing_only, limit=limit
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {
+        "ok": True,
+        "n": len(loans),
+        "total": total,
+        "loans": loans,
+        **meta,
     }
 
 

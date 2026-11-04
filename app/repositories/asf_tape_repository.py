@@ -12,7 +12,11 @@ from typing import Any
 
 import psycopg
 
-from app.repositories.asf_qc_checks import ALL_CHECKS, checks_as_rows
+from app.repositories.asf_qc_checks import (
+    ALL_CHECKS,
+    CHECKS_BY_ID,
+    checks_as_rows,
+)
 from app.repositories.asf_tape_schema import (
     ASF_TAPE_COLUMNS,
     ASF_TAPE_HAS_MI_ALTER_SQL,
@@ -174,6 +178,7 @@ class AsfTapeRepository:
 
     def upsert_check_defs(self) -> int:
         rows = checks_as_rows()
+        keep_ids = tuple(r["check_id"] for r in rows)
         sql = """
             INSERT INTO public.qc_checks (
                 check_id, source, edit_number, nl_description, sql_predicate,
@@ -198,6 +203,18 @@ class AsfTapeRepository:
                 cur.execute(QC_CHECKS_TABLE_SQL)
                 for row in rows:
                     cur.execute(sql, row)
+                # Drop retired demo / obsolete check defs + their results.
+                if keep_ids:
+                    cur.execute(
+                        "DELETE FROM public.qc_results "
+                        "WHERE check_id <> ALL(%s)",
+                        (list(keep_ids),),
+                    )
+                    cur.execute(
+                        "DELETE FROM public.qc_checks "
+                        "WHERE check_id <> ALL(%s)",
+                        (list(keep_ids),),
+                    )
             conn.commit()
         return len(rows)
 
@@ -274,7 +291,7 @@ class AsfTapeRepository:
         return {"run_id": run_id, "tape_row_count": tape_n, "results": results}
 
     def latest_results(self) -> list[dict[str, Any]]:
-        """Latest run results joined with check definitions, demo first then edits."""
+        """Latest run results joined with check definitions (foundation then NQM edits)."""
         sql = """
             WITH latest AS (
                 SELECT run_id
@@ -303,8 +320,9 @@ class AsfTapeRepository:
             LEFT JOIN public.qc_results r
               ON r.check_id = c.check_id
              AND r.run_id = (SELECT run_id FROM latest)
+            WHERE c.source <> 'demo'
             ORDER BY
-                CASE c.source WHEN 'demo' THEN 0 ELSE 1 END,
+                CASE c.source WHEN 'foundation' THEN 0 ELSE 1 END,
                 c.edit_number NULLS FIRST,
                 c.check_id
         """
@@ -319,8 +337,78 @@ class AsfTapeRepository:
                         row["ran_at"] = row["ran_at"].isoformat()
                     if row.get("required_columns") is not None:
                         row["required_columns"] = list(row["required_columns"])
+                    cdef = CHECKS_BY_ID.get(row["check_id"])
+                    row["rule_name"] = (
+                        cdef.rule_name
+                        if cdef
+                        else (
+                            f"NQM-{row['edit_number']}"
+                            if row.get("edit_number") is not None
+                            else row["check_id"]
+                        )
+                    )
                     out.append(row)
                 return out
+
+    def list_check_loans(
+        self,
+        check_id: str,
+        *,
+        failing_only: bool = True,
+        limit: int = 2000,
+    ) -> tuple[list[dict[str, Any]], int, dict[str, Any]]:
+        """Loans matching a QC check predicate (default: failing rows)."""
+        check = CHECKS_BY_ID.get(check_id)
+        if check is None:
+            raise KeyError(f"unknown check_id: {check_id}")
+        meta = {
+            "check_id": check.check_id,
+            "rule_name": check.rule_name,
+            "nl_description": check.nl_description,
+            "failing_only": failing_only,
+        }
+        if not check.sql_predicate:
+            return [], 0, {**meta, "skipped": True, "skip_reason": check.skip_reason}
+
+        cols = (
+            "loan_id",
+            "current_loan_amount",
+            "current_interest_rate",
+            "original_fico",
+            "original_ltv",
+            "original_cltv",
+            "state",
+            "documentation_type",
+            "property_type",
+            "occupancy",
+            "loan_purpose",
+            "remaining_term",
+            "refinance_incentive",
+            "cohort",
+            "has_mi",
+        )
+        present = self.tape_columns()
+        select_cols = tuple(c for c in cols if c in present or c == "loan_id")
+        # loan_id always required
+        if "loan_id" not in select_cols:
+            select_cols = ("loan_id",) + select_cols
+        col_sql = ", ".join(select_cols)
+        where = check.sql_predicate if failing_only else f"NOT ({check.sql_predicate})"
+        # When failing_only=False and we want "passing", NOT (fail predicate).
+        # For "all loans for rule context" callers can pass failing_only=True only.
+        count_sql = f"SELECT COUNT(*) FROM public.asf_tape WHERE {where}"
+        data_sql = (
+            f"SELECT {col_sql} FROM public.asf_tape "
+            f"WHERE {where} ORDER BY loan_id LIMIT %s"
+        )
+        with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
+            with conn.cursor() as cur:
+                cur.execute(count_sql)
+                total = int(cur.fetchone()[0])
+                cur.execute(data_sql, (limit,))
+                colnames = [d.name for d in cur.description]
+                loans = [dict(zip(colnames, tup)) for tup in cur.fetchall()]
+        return loans, total, meta
 
     def list_loans(
         self, limit: int = 2000, offset: int = 0
