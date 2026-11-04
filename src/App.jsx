@@ -47,18 +47,18 @@ const NAV = [
   { id: "assumptions", label: "Assumptions" },
 ];
 
-/** Standard mortgage strat cuts. chart: bar | hbar | pie */
+/** Standard mortgage strat cuts. chart: bar | hbar | pie | histogram */
 const STRAT_DIMS = [
-  { id: "ltv_bucket", label: "LTV", chart: "bar" },
-  { id: "cltv_bucket", label: "CLTV", chart: "bar" },
-  { id: "fico_band", label: "FICO", chart: "bar" },
-  { id: "balance_band", label: "Balance", chart: "bar" },
-  { id: "orig_year", label: "Orig year", chart: "bar" },
+  { id: "ltv_bucket", label: "LTV", chart: "histogram" },
+  { id: "cltv_bucket", label: "CLTV", chart: "histogram" },
+  { id: "fico_band", label: "FICO", chart: "histogram" },
+  { id: "balance_band", label: "Balance", chart: "histogram" },
+  { id: "orig_year", label: "Origination Year", chart: "bar" },
   { id: "state", label: "State", chart: "hbar" },
-  { id: "documentation_type", label: "Documentation", chart: "hbar" },
+  { id: "documentation_type", label: "Documentation Type", chart: "hbar" },
   { id: "occupancy", label: "Occupancy", chart: "pie" },
-  { id: "loan_purpose", label: "Purpose", chart: "pie" },
-  { id: "property_type", label: "Property type", chart: "hbar" },
+  { id: "loan_purpose", label: "Loan Purpose", chart: "pie" },
+  { id: "property_type", label: "Property Type", chart: "hbar" },
 ];
 
 const STRAT_BAR_COLOR = "#001A41";
@@ -91,9 +91,10 @@ function StratDimChart({ dim, rows, metric }) {
   };
   const tipFmt = (v) =>
     metric === "loans" ? Number(v).toLocaleString() : fmtUpbShort(v);
+  const metricLabel = metric === "loans" ? "Loans" : "UPB";
 
   if (!data.length) {
-    return <p className="muted strat-chart-empty">No buckets</p>;
+    return <p className="muted strat-chart-empty">No Buckets</p>;
   }
 
   if (dim.chart === "pie") {
@@ -175,7 +176,7 @@ function StratDimChart({ dim, rows, metric }) {
           <Bar
             dataKey={valueKey}
             fill={STRAT_BAR_COLOR}
-            name={metric === "loans" ? "Loans" : "UPB"}
+            name={metricLabel}
             radius={[0, 1, 1, 0]}
           />
         </BarChart>
@@ -183,11 +184,13 @@ function StratDimChart({ dim, rows, metric }) {
     );
   }
 
+  const isHistogram = dim.chart === "histogram";
   return (
     <ResponsiveContainer width="100%" height={200}>
       <BarChart
         data={data}
         margin={{ top: 8, right: 8, left: 0, bottom: 28 }}
+        barCategoryGap={isHistogram ? "8%" : "20%"}
       >
         <CartesianGrid stroke="#D0D7E2" strokeDasharray="2 4" vertical={false} />
         <XAxis
@@ -218,9 +221,9 @@ function StratDimChart({ dim, rows, metric }) {
         />
         <Bar
           dataKey={valueKey}
-          fill={STRAT_BAR_COLOR}
-          name={metric === "loans" ? "Loans" : "UPB"}
-          radius={[1, 1, 0, 0]}
+          fill={isHistogram ? "#0B4F9C" : STRAT_BAR_COLOR}
+          name={metricLabel}
+          radius={isHistogram ? [0, 0, 0, 0] : [1, 1, 0, 0]}
         />
       </BarChart>
     </ResponsiveContainer>
@@ -488,6 +491,7 @@ export default function App() {
   const [stratLoading, setStratLoading] = useState(false);
   const [stratError, setStratError] = useState(null);
   const [stratMetric, setStratMetric] = useState("upb");
+  const [stratCohort, setStratCohort] = useState("all");
 
   const [cohortStats, setCohortStats] = useState([]);
   const [cohortStatsError, setCohortStatsError] = useState(null);
@@ -605,10 +609,16 @@ export default function App() {
       setStratLoading(true);
       setStratError(null);
       try {
+        const cohortQs =
+          stratCohort && stratCohort !== "all"
+            ? `&cohort=${encodeURIComponent(stratCohort)}`
+            : "";
         const results = await Promise.all(
           STRAT_DIMS.map(async (dim) => {
             const res = await fetch(
-              apiUrl(`/api/asf/stratification?by=${encodeURIComponent(dim.id)}`)
+              apiUrl(
+                `/api/asf/stratification?by=${encodeURIComponent(dim.id)}${cohortQs}`
+              )
             );
             if (!res.ok) {
               const detail = await res.text();
@@ -622,12 +632,20 @@ export default function App() {
         const combined = [];
         let tape_row_count = null;
         let tape_upb = null;
+        let wac = null;
+        let wam = null;
+        let seasoned_wac = null;
         for (const { dim, data } of results) {
           if (tape_row_count == null && data.tape_row_count != null) {
             tape_row_count = data.tape_row_count;
           }
           if (tape_upb == null && data.tape_upb != null) {
             tape_upb = data.tape_upb;
+          }
+          if (wac == null && data.wac != null) wac = data.wac;
+          if (wam == null && data.wam != null) wam = data.wam;
+          if (seasoned_wac == null && data.seasoned_wac != null) {
+            seasoned_wac = data.seasoned_wac;
           }
           for (const row of data.rows || []) {
             combined.push({
@@ -644,6 +662,10 @@ export default function App() {
           n_buckets: combined.length,
           tape_row_count,
           tape_upb,
+          wac,
+          wam,
+          seasoned_wac,
+          cohort: stratCohort,
         });
       } catch (err) {
         if (!cancelled) {
@@ -658,7 +680,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [stratCohort]);
 
   // Cohort pool stats from Neon asf_tape.
   useEffect(() => {
@@ -1980,7 +2002,7 @@ export default function App() {
   };
 
   const filterLabel =
-    clusterFilter === "all" ? "All cohorts" : clusterFilter;
+    clusterFilter === "all" ? "All Cohorts" : clusterFilter;
 
   const scenarioOptions = useMemo(() => {
     const ids = (
@@ -2017,8 +2039,8 @@ export default function App() {
             type="button"
             className="nav-toggle"
             onClick={toggleNav}
-            title={navCollapsed ? "Open menu" : "Close menu"}
-            aria-label={navCollapsed ? "Open menu" : "Close menu"}
+            title={navCollapsed ? "Open Menu" : "Close Menu"}
+            aria-label={navCollapsed ? "Open Menu" : "Close Menu"}
             aria-expanded={!navCollapsed}
             aria-controls="primary-nav"
           >
@@ -2071,6 +2093,9 @@ export default function App() {
             />
             <span className="topbar-name">CashFlow</span>
             <span className="topbar-version">v0.3.0</span>
+            <span className="topbar-page" aria-live="polite">
+              {NAV.find((n) => n.id === pane)?.label || ""}
+            </span>
           </div>
         </div>
       </header>
@@ -2080,7 +2105,7 @@ export default function App() {
           <button
             type="button"
             className="nav-backdrop"
-            aria-label="Close navigation"
+            aria-label="Close Navigation"
             onClick={() => {
               setNavCollapsed(true);
               try {
@@ -2094,7 +2119,7 @@ export default function App() {
         <nav
           id="primary-nav"
           className={`sidenav${navCollapsed ? " is-collapsed" : ""}`}
-          aria-label="Primary"
+          aria-label="Primary Navigation"
         >
           {NAV.map((item) => (
             <button
@@ -2256,70 +2281,115 @@ export default function App() {
           )}
 
           {pane === "strat" && (
-            <section className="section section-fill">
-              <div className="section-head">
-                <p className="section-meta">
-                  Standard mortgage cuts
-                  {stratMeta?.n_dimensions != null
-                    ? ` · ${stratMeta.n_dimensions} dimensions`
-                    : ""}
-                  {stratMeta?.n_buckets != null
-                    ? ` · ${stratMeta.n_buckets} buckets`
-                    : ""}
-                  {stratMeta?.tape_row_count != null
-                    ? ` · ${stratMeta.tape_row_count} loans`
-                    : ""}
-                  {stratMeta?.tape_upb != null
-                    ? ` · UPB ${Number(stratMeta.tape_upb).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
-                    : ""}
-                </p>
-                <div className="section-actions">
-                  <div
-                    className="cf-grid-toolbar strat-toolbar"
-                    role="toolbar"
-                    aria-label="Stratification actions"
-                  >
-                    <button
-                      type="button"
-                      className={`linkish${stratMetric === "upb" ? " is-active" : ""}`}
-                      onClick={() => setStratMetric("upb")}
-                    >
-                      UPB
-                    </button>
-                    <button
-                      type="button"
-                      className={`linkish${stratMetric === "loans" ? " is-active" : ""}`}
-                      onClick={() => setStratMetric("loans")}
-                    >
-                      Loans
-                    </button>
-                    <button
-                      type="button"
-                      className="cf-grid-icon-btn"
-                      onClick={exportStratCsv}
-                      title="Export CSV"
-                      aria-label="Export CSV"
-                      disabled={!stratRows.length}
-                    >
-                      <IconExportCsvMini />
-                    </button>
-                    <button
-                      type="button"
-                      className="cf-grid-icon-btn"
-                      onClick={copyStratRows}
-                      title="Copy"
-                      aria-label="Copy rows to clipboard"
-                      disabled={!stratRows.length}
-                    >
-                      <IconCopyMini />
-                    </button>
+            <section className="section section-fill section-strat">
+              <div className="qc-toolbar strat-topbar">
+                <div className="qc-kpi-strip" role="toolbar" aria-label="Stratification KPIs">
+                  <div className="qc-kpi is-active" aria-label="Total Loans">
+                    <span className="qc-kpi-label">Total Loans</span>
+                    <span className="qc-kpi-value">
+                      {stratMeta?.tape_row_count != null
+                        ? Number(stratMeta.tape_row_count).toLocaleString()
+                        : "—"}
+                    </span>
                   </div>
+                  <div className="qc-kpi" aria-label="UPB">
+                    <span className="qc-kpi-label">UPB</span>
+                    <span className="qc-kpi-value">
+                      {stratMeta?.tape_upb != null
+                        ? fmtUpbShort(stratMeta.tape_upb)
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="qc-kpi" aria-label="WAC" title="Weighted Average Coupon">
+                    <span className="qc-kpi-label">WAC</span>
+                    <span className="qc-kpi-value">
+                      {stratMeta?.wac != null
+                        ? `${(Number(stratMeta.wac) * 100).toFixed(2)}%`
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="qc-kpi" aria-label="WAM" title="Weighted Average Maturity (Months)">
+                    <span className="qc-kpi-label">WAM</span>
+                    <span className="qc-kpi-value">
+                      {stratMeta?.wam != null
+                        ? `${Number(stratMeta.wam).toFixed(0)} Mo`
+                        : "—"}
+                    </span>
+                  </div>
+                  <div
+                    className="qc-kpi"
+                    aria-label="Seasoned WAC"
+                    title="UPB-Weighted Rate For Loans Aged 12+ Months (Seasoned Proxy; Dying WAC Not On Tape)"
+                  >
+                    <span className="qc-kpi-label">Seasoned WAC</span>
+                    <span className="qc-kpi-value">
+                      {stratMeta?.seasoned_wac != null
+                        ? `${(Number(stratMeta.seasoned_wac) * 100).toFixed(2)}%`
+                        : "—"}
+                    </span>
+                  </div>
+                </div>
+                <div
+                  className="cf-grid-toolbar-actions strat-toolbar"
+                  role="toolbar"
+                  aria-label="Stratification Actions"
+                >
+                  <label className="field-inline strat-cohort-filter">
+                    <span>Cohort</span>
+                    <select
+                      className="select"
+                      value={stratCohort}
+                      onChange={(e) => setStratCohort(e.target.value)}
+                      aria-label="Cohort Filter"
+                    >
+                      <option value="all">All</option>
+                      {(cohortStats || []).map((c) => (
+                        <option key={c.cohort} value={c.cohort}>
+                          {c.cohort}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className={`linkish${stratMetric === "upb" ? " is-active" : ""}`}
+                    onClick={() => setStratMetric("upb")}
+                  >
+                    UPB
+                  </button>
+                  <button
+                    type="button"
+                    className={`linkish${stratMetric === "loans" ? " is-active" : ""}`}
+                    onClick={() => setStratMetric("loans")}
+                  >
+                    Loans
+                  </button>
+                  <button
+                    type="button"
+                    className="cf-grid-icon-btn"
+                    onClick={exportStratCsv}
+                    title="Export CSV"
+                    aria-label="Export CSV"
+                    disabled={!stratRows.length}
+                  >
+                    <IconExportCsvMini />
+                  </button>
+                  <button
+                    type="button"
+                    className="cf-grid-icon-btn"
+                    onClick={copyStratRows}
+                    title="Copy"
+                    aria-label="Copy Rows To Clipboard"
+                    disabled={!stratRows.length}
+                  >
+                    <IconCopyMini />
+                  </button>
                 </div>
               </div>
               {stratLoading ? (
-                <p className="muted">Loading stratification…</p>
+                <p className="muted">Loading Stratification…</p>
               ) : stratError ? (
-                <StatusBanner tone="error">Strat: {stratError}</StatusBanner>
+                <StatusBanner tone="error">Stratification: {stratError}</StatusBanner>
               ) : (
                 <div className="strat-charts">
                   {STRAT_DIMS.map((dim) => (
@@ -2327,7 +2397,14 @@ export default function App() {
                       <div className="strat-chart-head">
                         <h3 className="strat-chart-title">{dim.label}</h3>
                         <span className="strat-chart-meta">
-                          {(stratByDim[dim.id] || []).length} buckets
+                          {(stratByDim[dim.id] || []).length} Buckets ·{" "}
+                          {dim.chart === "histogram"
+                            ? "Histogram"
+                            : dim.chart === "hbar"
+                              ? "Bar"
+                              : dim.chart === "pie"
+                                ? "Pie"
+                                : "Bar"}
                         </span>
                       </div>
                       <StratDimChart
@@ -2357,7 +2434,7 @@ export default function App() {
                 </div>
                 <div className="chart-wrap chart-wrap-scatter">
                   {tapeLoading ? (
-                    <p className="muted">Loading tape…</p>
+                    <p className="muted">Loading Tape…</p>
                   ) : tapeError ? (
                     <StatusBanner tone="error">Tape: {tapeError}</StatusBanner>
                   ) : (
@@ -2587,7 +2664,7 @@ export default function App() {
                     onClick={handleRunMonth1}
                     disabled={running}
                   >
-                    {running ? "Running…" : "Run month 1"}
+                    {running ? "Running…" : "Run Month 1"}
                   </button>
                 </div>
               </div>
@@ -2769,7 +2846,7 @@ export default function App() {
                 </p>
               </div>
               {assumptionLoading ? (
-                <p className="muted">Loading assumptions…</p>
+                <p className="muted">Loading Assumptions…</p>
               ) : assumptionError ? (
                 <StatusBanner tone="error">
                   Assumptions: {assumptionError}
