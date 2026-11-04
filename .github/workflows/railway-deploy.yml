@@ -1,13 +1,12 @@
-# Deploy FastAPI to Railway project kind-emotion only (ignore crashed
-# beautiful-tranquility / patient-illumination — disconnect those from GitHub).
+# Deploy FastAPI to Railway project kind-emotion only.
 #
 # One-time setup:
-#   1. Railway → open project kind-emotion → Settings → Tokens → Project Token
-#   2. GitHub → Settings → Secrets and variables → Actions → New secret
-#      Name (exact): RAILWAY_TOKEN
-#      Value: that kind-emotion project token (never commit it)
-#   3. Recommended secret RAILWAY_SERVICE_ID = service id/name that serves
-#      cashflow-sum-app-production.up.railway.app (Settings → service → ID)
+#   1. Railway → open project **kind-emotion** (the 1/1 online one) → Settings → Tokens
+#      → create a **Project Token** (must be from kind-emotion, not comfortable-contentment /
+#      beautiful-tranquility / patient-illumination)
+#   2. GitHub → Settings → Secrets → Actions → Name exactly: RAILWAY_TOKEN
+#   3. Recommended: secret RAILWAY_SERVICE_ID = service name/id that serves
+#      cashflow-sum-app-production.up.railway.app
 name: Railway API deploy
 
 on:
@@ -33,7 +32,7 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           if [ -z "${RAILWAY_TOKEN}" ]; then
-            echo "::error::Missing GitHub secret RAILWAY_TOKEN. Create a Project Token in Railway project kind-emotion (Settings → Tokens) and add it as Actions secret RAILWAY_TOKEN. Do not use beautiful-tranquility or patient-illumination."
+            echo "::error::Missing GitHub secret RAILWAY_TOKEN. Create a Project Token in Railway project kind-emotion and add it as Actions secret RAILWAY_TOKEN."
             exit 1
           fi
 
@@ -49,31 +48,29 @@ jobs:
           railway --version
           # Safe diagnostics (never echo token)
           railway whoami || true
-          railway status || true
+          STATUS_OUT="$(railway status 2>&1 || true)"
+          echo "$STATUS_OUT"
 
-          deploy() {
-            local svc="$1"
-            if [ -n "$svc" ]; then
-              echo "Deploying with --service=${svc}"
-              railway up --ci --service "$svc"
-            else
-              echo "Deploying without --service (project default)"
-              railway up --ci
-            fi
-          }
+          # Fail fast if token is scoped to the wrong project.
+          if echo "$STATUS_OUT" | grep -qi 'comfortable-contentment\|beautiful-tranquility\|patient-illumination'; then
+            echo "::error::RAILWAY_TOKEN is scoped to the wrong Railway project (see status above). Replace the GitHub secret with a Project Token from kind-emotion only."
+            exit 1
+          fi
+          if ! echo "$STATUS_OUT" | grep -qi 'kind-emotion'; then
+            echo "::warning::Could not confirm project name kind-emotion in railway status. Continuing; set RAILWAY_SERVICE_ID if deploy fails."
+          fi
 
           if [ -n "${RAILWAY_SERVICE_ID:-}" ]; then
-            deploy "${RAILWAY_SERVICE_ID}"
+            echo "Deploying with --service=${RAILWAY_SERVICE_ID}"
+            railway up --ci --service "${RAILWAY_SERVICE_ID}"
           else
-            # Prefer explicit service when project has multiple; fall back.
+            # Prefer common service names for this API host.
             set +e
-            deploy "cashflow-sum-app"
-            rc=$?
-            if [ "$rc" -ne 0 ]; then
-              echo "Retry: bare railway up --ci"
-              deploy ""
-              rc=$?
-            fi
-            set -e
-            exit "$rc"
+            for svc in cashflow-sum-app cashflow-api api web; do
+              echo "Trying --service=${svc}"
+              railway up --ci --service "$svc" && exit 0
+            done
+            echo "Retry: bare railway up --ci"
+            railway up --ci
+            exit $?
           fi
