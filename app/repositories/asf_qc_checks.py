@@ -1,6 +1,6 @@
 """Natural-language QC checks → SQL predicates against public.asf_tape.
 
-Demo presence/range checks plus Non-QM ASF Absolute Basis edits 1–26.
+Foundation NQM field checks plus Non-QM ASF Absolute Basis edits 1–26.
 Checks whose required columns are absent from asf_tape are stored as skipped.
 SQL predicates identify FAILING rows (recomputed from Neon asf_tape).
 """
@@ -17,8 +17,9 @@ LTV_ABS_TOL = 0.005
 @dataclass(frozen=True)
 class QcCheckDef:
     check_id: str
-    source: str  # demo | absolute_basis
+    source: str  # foundation | absolute_basis
     edit_number: int | None
+    rule_name: str
     nl_description: str
     sql_predicate: str | None
     required_columns: tuple[str, ...]
@@ -30,6 +31,7 @@ def _skip(edit: int, nl: str, missing: str) -> QcCheckDef:
         check_id=f"abs_{edit:02d}",
         source="absolute_basis",
         edit_number=edit,
+        rule_name=f"NQM-{edit}",
         nl_description=nl,
         sql_predicate=None,
         required_columns=(),
@@ -37,37 +39,14 @@ def _skip(edit: int, nl: str, missing: str) -> QcCheckDef:
     )
 
 
-# Demo QC: pass when condition holds; sql_predicate = failing rows.
-DEMO_CHECKS: tuple[QcCheckDef, ...] = (
+# Foundational investor-tape integrity checks (valid against asf_tape columns).
+FOUNDATION_CHECKS: tuple[QcCheckDef, ...] = (
     QcCheckDef(
-        check_id="demo_dti_present_gt_5pct",
-        source="demo",
+        check_id="nqm_fico",
+        source="foundation",
         edit_number=None,
-        nl_description="DTI not missing and >5%",
-        # Tape stores DTI as decimal ratio (0.05 = 5%).
-        sql_predicate=(
-            "originator_dti IS NULL OR originator_dti <= 0.05"
-        ),
-        required_columns=("originator_dti",),
-    ),
-    QcCheckDef(
-        check_id="demo_income_present",
-        source="demo",
-        edit_number=None,
-        nl_description="Income present",
-        # Minimum Case tape has no borrower/wage income column.
-        sql_predicate=None,
-        required_columns=(),
-        skip_reason=(
-            "asf_tape lacks required field(s): borrower_income / "
-            "monthly_qualifying_income"
-        ),
-    ),
-    QcCheckDef(
-        check_id="demo_fico_present_range",
-        source="demo",
-        edit_number=None,
-        nl_description="FICO in 300–850 (not zero/missing)",
+        rule_name="NQM-FICO",
+        nl_description="FICO In 300–850 (Not Zero Or Missing)",
         sql_predicate=(
             "original_fico IS NULL OR original_fico = 0 "
             "OR original_fico < 300 OR original_fico > 850"
@@ -75,41 +54,33 @@ DEMO_CHECKS: tuple[QcCheckDef, ...] = (
         required_columns=("original_fico",),
     ),
     QcCheckDef(
-        check_id="demo_zip_five_digit",
-        source="demo",
+        check_id="nqm_ltv",
+        source="foundation",
         edit_number=None,
-        nl_description="Five-digit zip",
-        sql_predicate=(
-            "postal_code IS NULL OR length(regexp_replace("
-            "trim(postal_code), '[^0-9]', '', 'g')) <> 5"
-        ),
-        required_columns=("postal_code",),
-    ),
-    QcCheckDef(
-        check_id="demo_orig_balance_gt_0",
-        source="demo",
-        edit_number=None,
-        nl_description="Original balance > 0",
-        sql_predicate=(
-            "original_loan_amount IS NULL OR original_loan_amount <= 0"
-        ),
-        required_columns=("original_loan_amount",),
-    ),
-    QcCheckDef(
-        check_id="demo_ltv_present",
-        source="demo",
-        edit_number=None,
-        nl_description="LTV present",
+        rule_name="NQM-LTV",
+        nl_description="LTV Present",
         sql_predicate="original_ltv IS NULL",
         required_columns=("original_ltv",),
     ),
     QcCheckDef(
-        check_id="demo_cltv_present",
-        source="demo",
+        check_id="nqm_cltv",
+        source="foundation",
         edit_number=None,
-        nl_description="CLTV present",
+        rule_name="NQM-CLTV",
+        nl_description="CLTV Present",
         sql_predicate="original_cltv IS NULL",
         required_columns=("original_cltv",),
+    ),
+    QcCheckDef(
+        check_id="nqm_bal",
+        source="foundation",
+        edit_number=None,
+        rule_name="NQM-BAL",
+        nl_description="Original Balance Greater Than Zero",
+        sql_predicate=(
+            "original_loan_amount IS NULL OR original_loan_amount <= 0"
+        ),
+        required_columns=("original_loan_amount",),
     ),
 )
 
@@ -119,8 +90,9 @@ ABSOLUTE_BASIS_CHECKS: tuple[QcCheckDef, ...] = (
         check_id="abs_01",
         source="absolute_basis",
         edit_number=1,
+        rule_name="NQM-1",
         nl_description=(
-            "Confirm senior loan amount consistent with lien position"
+            "Confirm Senior Loan Amount Consistent With Lien Position"
         ),
         sql_predicate=(
             "("
@@ -137,80 +109,81 @@ ABSOLUTE_BASIS_CHECKS: tuple[QcCheckDef, ...] = (
         check_id="abs_02",
         source="absolute_basis",
         edit_number=2,
-        nl_description="DTI > 50%",
+        rule_name="NQM-2",
+        nl_description="DTI Greater Than 50%",
         sql_predicate="originator_dti IS NOT NULL AND originator_dti > 0.50",
         required_columns=("originator_dti",),
     ),
     _skip(
         3,
-        "Self Employed Borrower with Full documentation type",
+        "Self Employed Borrower With Full Documentation Type",
         "self_employed_flag (or equivalent)",
     ),
     _skip(4, "Paystring Check", "paystring"),
     _skip(
         5,
-        "Wage Income <= 0 and Self Employed Flag is 0",
+        "Wage Income <= 0 And Self Employed Flag Is 0",
         "wage_income, self_employed_flag",
     ),
     _skip(
         6,
-        "Number of borrowers > 1 and missing co-borrower information",
+        "Number Of Borrowers > 1 And Missing Co-Borrower Information",
         "number_of_borrowers, co_borrower fields",
     ),
     _skip(
         7,
-        "Length of employment is blank or 0",
+        "Length Of Employment Is Blank Or 0",
         "length_of_employment",
     ),
     _skip(
         8,
-        "Original Valuation is not a full appraisal",
+        "Original Valuation Is Not A Full Appraisal",
         "original_valuation_type / appraisal_type",
     ),
     _skip(
         9,
-        "Updated credit score date > 360 Days (date --> cut-off)",
+        "Updated Credit Score Date > 360 Days (Date → Cut-Off)",
         "updated_credit_score_date",
     ),
     _skip(
         10,
-        "Updated BPO Date > 24 months from Cut Off",
+        "Updated BPO Date > 24 Months From Cut Off",
         "updated_bpo_date",
     ),
-    _skip(11, "max trade line < 1500", "max_trade_line"),
+    _skip(11, "Max Trade Line < 1500", "max_trade_line"),
     _skip(12, "Months BK > 0", "months_bk"),
     _skip(
         13,
-        "Borrower Income Verification Level < 4 or blank AND "
-        "Co Borrower Income Verification Level < 4 or blank",
+        "Borrower Income Verification Level < 4 Or Blank And "
+        "Co Borrower Income Verification Level < 4 Or Blank",
         "borrower_income_verification_level, "
         "co_borrower_income_verification_level",
     ),
     _skip(
         14,
-        "Borrower Employment Verification Level < 3 or blank, "
-        "Co Borrower Employment Verification Level < 3 or blank",
+        "Borrower Employment Verification Level < 3 Or Blank, "
+        "Co Borrower Employment Verification Level < 3 Or Blank",
         "borrower_employment_verification_level, "
         "co_borrower_employment_verification_level",
     ),
     _skip(
         15,
-        "Asset Verification greater than 1 but Reserves eq 0",
+        "Asset Verification Greater Than 1 But Reserves Eq 0",
         "asset_verification_level (reserves=liquid_cash_reserves present)",
     ),
     _skip(
         16,
-        "Original Appraisal value Date is later than the Origination Date",
+        "Original Appraisal Value Date Is Later Than The Origination Date",
         "original_appraisal_date",
     ),
     _skip(
         17,
-        "Non-Cashout Loan with Cashout > 2K",
+        "Non-Cashout Loan With Cashout > 2K",
         "cashout_amount",
     ),
     _skip(
         18,
-        "First Time Home Buyer with multiple mortgaged properties",
+        "First Time Home Buyer With Multiple Mortgaged Properties",
         "first_time_home_buyer, mortgaged_property_count",
     ),
     _skip(
@@ -222,7 +195,8 @@ ABSOLUTE_BASIS_CHECKS: tuple[QcCheckDef, ...] = (
         check_id="abs_20",
         source="absolute_basis",
         edit_number=20,
-        nl_description="Zip Code is not 5 digits",
+        rule_name="NQM-20",
+        nl_description="Zip Code Is Not 5 Digits",
         sql_predicate=(
             "postal_code IS NULL OR length(regexp_replace("
             "trim(postal_code), '[^0-9]', '', 'g')) <> 5"
@@ -231,25 +205,26 @@ ABSOLUTE_BASIS_CHECKS: tuple[QcCheckDef, ...] = (
     ),
     _skip(
         21,
-        "Original FICO Date is after Origination Date",
+        "Original FICO Date Is After Origination Date",
         "original_fico_date",
     ),
     _skip(
         22,
-        "Total Origination and Discount Points < 0 for non-exempt loans",
+        "Total Origination And Discount Points < 0 For Non-Exempt Loans",
         "origination_discount_points, exemption flag",
     ),
     _skip(
         23,
-        "Fixed Rate - if DSCR is null or 0 and Amortization Type = 1 and "
-        "Qualification Method should be either 1 or 4, flag if other",
+        "Fixed Rate — If DSCR Is Null Or 0 And Amortization Type = 1 And "
+        "Qualification Method Should Be Either 1 Or 4, Flag If Other",
         "qualification_method (dscr + amortization_type present)",
     ),
     QcCheckDef(
         check_id="abs_24",
         source="absolute_basis",
         edit_number=24,
-        nl_description="Origination Date after Actual Cut-off date",
+        rule_name="NQM-24",
+        nl_description="Origination Date After Actual Cut-Off Date",
         sql_predicate=(
             "origination_date IS NOT NULL AND cutoff_date IS NOT NULL "
             "AND origination_date > cutoff_date"
@@ -260,7 +235,8 @@ ABSOLUTE_BASIS_CHECKS: tuple[QcCheckDef, ...] = (
         check_id="abs_25",
         source="absolute_basis",
         edit_number=25,
-        nl_description="Reported LTV is inconsistent with calculated LTV",
+        rule_name="NQM-25",
+        nl_description="Reported LTV Is Inconsistent With Calculated LTV",
         sql_predicate=(
             "original_appraised_property_value IS NOT NULL "
             "AND original_appraised_property_value > 0 "
@@ -281,8 +257,9 @@ ABSOLUTE_BASIS_CHECKS: tuple[QcCheckDef, ...] = (
         check_id="abs_26",
         source="absolute_basis",
         edit_number=26,
+        rule_name="NQM-26",
         nl_description=(
-            "Reported Combined LTV is inconsistent with calculated Combined LTV"
+            "Reported Combined LTV Is Inconsistent With Calculated Combined LTV"
         ),
         sql_predicate=(
             "original_appraised_property_value IS NOT NULL "
@@ -310,7 +287,8 @@ ABSOLUTE_BASIS_CHECKS: tuple[QcCheckDef, ...] = (
     ),
 )
 
-ALL_CHECKS: tuple[QcCheckDef, ...] = DEMO_CHECKS + ABSOLUTE_BASIS_CHECKS
+ALL_CHECKS: tuple[QcCheckDef, ...] = FOUNDATION_CHECKS + ABSOLUTE_BASIS_CHECKS
+CHECKS_BY_ID: dict[str, QcCheckDef] = {c.check_id: c for c in ALL_CHECKS}
 
 
 def checks_as_rows() -> list[dict[str, Any]]:

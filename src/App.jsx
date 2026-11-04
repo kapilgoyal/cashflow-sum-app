@@ -515,6 +515,14 @@ export default function App() {
   const [qcMeta, setQcMeta] = useState(null);
   const [qcLoading, setQcLoading] = useState(false);
   const [qcError, setQcError] = useState(null);
+  const [qcStatusFilter, setQcStatusFilter] = useState("all"); // all | pass | fail
+  const [qcView, setQcView] = useState("grid"); // grid | chart
+  const [qcSelectedRule, setQcSelectedRule] = useState(null);
+  const [qcDrillLoans, setQcDrillLoans] = useState([]);
+  const [qcDrillTotal, setQcDrillTotal] = useState(0);
+  const [qcDrillVisible, setQcDrillVisible] = useState(null);
+  const [qcDrillLoading, setQcDrillLoading] = useState(false);
+  const [qcDrillError, setQcDrillError] = useState(null);
 
   const [assumptionRows, setAssumptionRows] = useState([]);
   const [assumptionMeta, setAssumptionMeta] = useState(null);
@@ -911,14 +919,45 @@ export default function App() {
     };
   }, []);
 
-  const qcSummary = useMemo(() => {
-    const pass = qcRows.filter((r) => r.outcome === "pass").length;
-    const fail = qcRows.filter((r) => r.outcome === "fail").length;
-    const skipped = qcRows.filter((r) => r.outcome === "skipped").length;
-    const scored = pass + fail;
-    const pct = scored ? (100 * pass) / scored : null;
-    return { pass, fail, skipped, scored, pct };
+  const qcActiveRows = useMemo(() => {
+    return (qcRows || [])
+      .filter((r) => r && r.source !== "demo")
+      .filter((r) => r.outcome === "pass" || r.outcome === "fail")
+      .map((r) => ({
+        ...r,
+        rule_name:
+          r.rule_name ||
+          (r.edit_number != null ? `NQM-${r.edit_number}` : r.check_id),
+        status_label:
+          r.outcome === "pass" ? "Pass" : r.outcome === "fail" ? "Fail" : "",
+      }));
   }, [qcRows]);
+
+  const qcSummary = useMemo(() => {
+    const pass = qcActiveRows.filter((r) => r.outcome === "pass").length;
+    const fail = qcActiveRows.filter((r) => r.outcome === "fail").length;
+    const total = pass + fail;
+    const pct = total ? (100 * pass) / total : null;
+    return { pass, fail, total, pct };
+  }, [qcActiveRows]);
+
+  const qcFilteredRows = useMemo(() => {
+    if (qcStatusFilter === "pass") {
+      return qcActiveRows.filter((r) => r.outcome === "pass");
+    }
+    if (qcStatusFilter === "fail") {
+      return qcActiveRows.filter((r) => r.outcome === "fail");
+    }
+    return qcActiveRows;
+  }, [qcActiveRows, qcStatusFilter]);
+
+  const qcChartData = useMemo(
+    () => [
+      { name: "Pass", value: qcSummary.pass, fill: "#1F8A44" },
+      { name: "Fail", value: qcSummary.fail, fill: "#C62828" },
+    ],
+    [qcSummary.pass, qcSummary.fail]
+  );
 
   const asfColumnDefs = useMemo(
     () => [
@@ -1094,37 +1133,181 @@ export default function App() {
 
   const qcColumnDefs = useMemo(
     () => [
-      { field: "check_id", headerName: "Check", width: 160, cellClass: "cf-id" },
-      { field: "source", headerName: "Source", width: 110 },
-      intCol("edit_number", "Edit", 64),
+      {
+        field: "rule_name",
+        headerName: "Rule Name",
+        width: 110,
+        pinned: "left",
+        lockPinned: true,
+        cellClass: "cf-id",
+      },
       {
         field: "nl_description",
         headerName: "Description",
         flex: 2,
-        minWidth: 200,
+        minWidth: 220,
       },
       {
-        field: "outcome",
-        headerName: "Outcome",
-        width: 88,
+        field: "status_label",
+        headerName: "Status",
+        width: 80,
         cellClass: (p) => {
-          if (p.value === "pass") return "qc-outcome-pass";
-          if (p.value === "fail") return "qc-outcome-fail";
-          if (p.value === "skipped") return "qc-outcome-skip";
+          if (p.value === "Pass") return "qc-outcome-pass";
+          if (p.value === "Fail") return "qc-outcome-fail";
           return "";
         },
       },
-      intCol("fail_count", "Fails", 72),
-      intCol("pass_count", "Passes", 80),
       {
-        field: "detail",
-        headerName: "Detail",
-        flex: 1.2,
-        minWidth: 140,
+        field: "pass_count",
+        headerName: "Passed Loans",
+        width: 110,
+        type: "numericColumn",
+        filter: "agNumberColumnFilter",
+        cellClass: "cf-num",
+      },
+      {
+        field: "fail_count",
+        headerName: "Failed Loans",
+        width: 110,
+        type: "numericColumn",
+        filter: "agNumberColumnFilter",
+        cellClass: "cf-num",
       },
     ],
     []
   );
+
+  const qcDrillColumnDefs = useMemo(
+    () => [
+      {
+        field: "loan_id",
+        headerName: "Loan Id",
+        width: 100,
+        pinned: "left",
+        lockPinned: true,
+        cellClass: "cf-id",
+      },
+      moneyCol("current_loan_amount", "UPB", 110),
+      {
+        field: "current_interest_rate",
+        headerName: "Interest Rate",
+        width: 96,
+        valueFormatter: (p) => fmtPct(p.value, 2),
+        cellClass: "cf-num",
+      },
+      intCol("original_fico", "FICO", 72),
+      {
+        field: "original_ltv",
+        headerName: "LTV",
+        width: 72,
+        valueFormatter: (p) => fmtPct(p.value, 1),
+        cellClass: "cf-num",
+      },
+      {
+        field: "original_cltv",
+        headerName: "CLTV",
+        width: 72,
+        valueFormatter: (p) => fmtPct(p.value, 1),
+        cellClass: "cf-num",
+      },
+      { field: "state", headerName: "State", width: 64 },
+      {
+        field: "documentation_type",
+        headerName: "Documentation Type",
+        flex: 1.2,
+        minWidth: 140,
+      },
+      { field: "property_type", headerName: "Property Type", width: 110 },
+      { field: "occupancy", headerName: "Occupancy", width: 100 },
+      { field: "loan_purpose", headerName: "Loan Purpose", width: 110 },
+      { field: "cohort", headerName: "Cohort", flex: 1.2, minWidth: 140 },
+    ],
+    []
+  );
+
+  const loadQcDrillLoans = useCallback(async (rule) => {
+    if (!rule?.check_id) {
+      setQcSelectedRule(null);
+      setQcDrillLoans([]);
+      setQcDrillTotal(0);
+      setQcDrillError(null);
+      return;
+    }
+    setQcSelectedRule(rule);
+    setQcDrillLoading(true);
+    setQcDrillError(null);
+    setQcDrillVisible(null);
+    try {
+      const res = await fetch(
+        apiUrl(
+          `/api/qc/results/${encodeURIComponent(rule.check_id)}/loans?failing_only=true&limit=2000`
+        )
+      );
+      if (!res.ok) {
+        const detail = await res.text();
+        throw new Error(`HTTP ${res.status}: ${detail}`);
+      }
+      const data = await res.json();
+      setQcDrillLoans(Array.isArray(data.loans) ? data.loans : []);
+      setQcDrillTotal(data.total ?? (data.loans || []).length);
+    } catch (err) {
+      setQcDrillError(err.message || String(err));
+      setQcDrillLoans([]);
+      setQcDrillTotal(0);
+    } finally {
+      setQcDrillLoading(false);
+    }
+  }, []);
+
+  const onQcRuleDrill = useCallback(
+    (row) => {
+      if (!row?.check_id) return;
+      loadQcDrillLoans(row);
+    },
+    [loadQcDrillLoans]
+  );
+
+  const onQcDrillRowStats = useCallback((stats) => {
+    if (stats?.visible != null) setQcDrillVisible(stats.visible);
+  }, []);
+
+  const qcDrillToolbarStart = useMemo(() => {
+    if (!qcSelectedRule) return null;
+    const total = qcDrillTotal || qcDrillLoans.length || 0;
+    const shown =
+      qcDrillVisible != null
+        ? qcDrillVisible
+        : qcDrillLoading
+          ? null
+          : qcDrillLoans.length;
+    return (
+      <p className="asf-grid-summary" aria-live="polite">
+        <span className="asf-grid-summary-total">
+          {qcSelectedRule.rule_name}
+          {" · "}
+          {total.toLocaleString()} {total === 1 ? "Loan" : "Loans"}
+        </span>
+        {shown != null ? (
+          <span
+            className={
+              shown !== total
+                ? "asf-grid-summary-filter is-filtered"
+                : "asf-grid-summary-filter"
+            }
+          >
+            {" · "}
+            {shown.toLocaleString()} Shown
+          </span>
+        ) : null}
+      </p>
+    );
+  }, [
+    qcSelectedRule,
+    qcDrillTotal,
+    qcDrillLoans.length,
+    qcDrillVisible,
+    qcDrillLoading,
+  ]);
 
   const stratByDim = useMemo(() => {
     const map = {};
@@ -1953,50 +2136,121 @@ export default function App() {
           )}
 
           {pane === "qc" && (
-            <section className="section section-fill">
-              <div className="section-head">
-                <p className="section-meta">
-                  Neon asf_tape
-                  {qcMeta?.tape_row_count != null
-                    ? ` · ${qcMeta.tape_row_count} loans`
-                    : ""}
-                  {qcMeta?.run_id ? ` · run ${qcMeta.run_id}` : ""}
-                  {qcMeta?.n != null ? ` · ${qcMeta.n} checks` : ""}
-                </p>
-              </div>
-              {!qcLoading && !qcError && qcRows.length > 0 && (
-                <div className="qc-summary">
-                  <span className="qc-stat qc-stat-pass">
-                    Pass {qcSummary.pass}
-                  </span>
-                  <span className="qc-stat qc-stat-fail">
-                    Fail {qcSummary.fail}
-                  </span>
-                  <span className="qc-stat">Skip {qcSummary.skipped}</span>
-                  <span className="qc-stat">
-                    % pass{" "}
-                    {qcSummary.pct == null
-                      ? "—"
-                      : `${qcSummary.pct.toFixed(1)}%`}
-                  </span>
+            <section className="section section-fill section-qc">
+              <div className="qc-toolbar">
+                <div className="qc-kpi-strip" role="toolbar" aria-label="QC Filters">
+                  <button
+                    type="button"
+                    className={`qc-kpi${qcStatusFilter === "all" ? " is-active" : ""}`}
+                    onClick={() => setQcStatusFilter("all")}
+                  >
+                    <span className="qc-kpi-label">Total Rules</span>
+                    <span className="qc-kpi-value">{qcSummary.total}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`qc-kpi qc-kpi-pass${qcStatusFilter === "pass" ? " is-active" : ""}`}
+                    onClick={() => setQcStatusFilter("pass")}
+                  >
+                    <span className="qc-kpi-label">Passed</span>
+                    <span className="qc-kpi-value">{qcSummary.pass}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`qc-kpi qc-kpi-fail${qcStatusFilter === "fail" ? " is-active" : ""}`}
+                    onClick={() => setQcStatusFilter("fail")}
+                  >
+                    <span className="qc-kpi-label">Failed</span>
+                    <span className="qc-kpi-value">{qcSummary.fail}</span>
+                  </button>
                 </div>
-              )}
+                <div
+                  className="cf-grid-toolbar-actions qc-view-toggle"
+                  role="toolbar"
+                  aria-label="QC View"
+                >
+                  <button
+                    type="button"
+                    className={`linkish${qcView === "grid" ? " is-active" : ""}`}
+                    onClick={() => setQcView("grid")}
+                  >
+                    Grid
+                  </button>
+                  <button
+                    type="button"
+                    className={`linkish${qcView === "chart" ? " is-active" : ""}`}
+                    onClick={() => setQcView("chart")}
+                  >
+                    Chart
+                  </button>
+                </div>
+              </div>
+
               {qcLoading ? (
-                <p className="muted">Loading QC results…</p>
+                <p className="muted">Loading Loan QC…</p>
               ) : qcError ? (
-                <StatusBanner tone="error">QC: {qcError}</StatusBanner>
-              ) : !qcRows.length ? (
+                <StatusBanner tone="error">Loan QC: {qcError}</StatusBanner>
+              ) : !qcActiveRows.length ? (
                 <p className="muted">
-                  No QC results yet. Load asf_tape and run QC against Neon.
+                  No QC results yet. Load Investor Tape and run QC against Neon.
                 </p>
+              ) : qcView === "chart" ? (
+                <div className="qc-chart-wrap">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={qcChartData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={48}
+                        outerRadius={80}
+                        paddingAngle={2}
+                      >
+                        {qcChartData.map((entry) => (
+                          <Cell key={entry.name} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend verticalAlign="bottom" height={28} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               ) : (
                 <DataGrid
-                  rowData={qcRows}
+                  rowData={qcFilteredRows}
                   columnDefs={qcColumnDefs}
                   getRowId={(p) => String(p.data.check_id)}
-                  heightClass="grid-wrap-fill"
+                  onRowDrill={onQcRuleDrill}
+                  heightClass={
+                    qcSelectedRule ? "grid-wrap-qc-rules" : "grid-wrap-fill"
+                  }
                   exportName="loan-qc"
                 />
+              )}
+
+              {qcSelectedRule && qcView === "grid" && (
+                <div className="qc-drill">
+                  {qcDrillLoading ? (
+                    <p className="muted">Loading Failed Loans…</p>
+                  ) : qcDrillError ? (
+                    <StatusBanner tone="error">
+                      Failed Loans: {qcDrillError}
+                    </StatusBanner>
+                  ) : (
+                    <DataGrid
+                      rowData={qcDrillLoans}
+                      columnDefs={qcDrillColumnDefs}
+                      getRowId={(p) => String(p.data.loan_id)}
+                      onRowDrill={drillLoan}
+                      onRowStats={onQcDrillRowStats}
+                      toolbarStart={qcDrillToolbarStart}
+                      heightClass="grid-wrap-qc-drill"
+                      exportName={`qc-${qcSelectedRule.check_id}-loans`}
+                    />
+                  )}
+                </div>
               )}
             </section>
           )}
