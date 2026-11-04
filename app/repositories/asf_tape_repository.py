@@ -503,7 +503,11 @@ class AsfTapeRepository:
             rows.append({c: _to_py(r.get(c)) for c in keep})
         return rows, total
 
-    def stratification(self, dimension: str = "documentation_type") -> dict[str, Any]:
+    def stratification(
+        self,
+        dimension: str = "documentation_type",
+        cohort: str | None = None,
+    ) -> dict[str, Any]:
         """Bucket asf_tape by a categorical / derived dimension (not K-prototype)."""
         allowed = {
             "documentation_type",
@@ -520,6 +524,15 @@ class AsfTapeRepository:
         }
         if dimension not in allowed:
             raise ValueError(f"unsupported dimension: {dimension}")
+
+        cohort_filter = (cohort or "").strip()
+        if cohort_filter.lower() in ("", "all", "*"):
+            cohort_filter = None
+        where_sql = ""
+        where_params: tuple[Any, ...] = ()
+        if cohort_filter:
+            where_sql = " WHERE cohort = %s"
+            where_params = (cohort_filter,)
 
         # Ordered band dimensions: natural sort via sort_key, not UPB.
         ordered = False
@@ -646,6 +659,7 @@ class AsfTapeRepository:
                     AVG(refinance_incentive)::float AS avg_refi_incentive,
                     MIN({sort_expr}) AS sort_key
                 FROM public.asf_tape
+                {where_sql}
                 GROUP BY 1
                 ORDER BY sort_key ASC NULLS LAST, bucket ASC
             """
@@ -661,26 +675,74 @@ class AsfTapeRepository:
                     AVG(current_interest_rate)::float AS avg_rate,
                     AVG(refinance_incentive)::float AS avg_refi_incentive
                 FROM public.asf_tape
+                {where_sql}
                 GROUP BY 1
                 ORDER BY upb DESC NULLS LAST, loan_count DESC
             """
+        kpi_sql = f"""
+            SELECT
+                COUNT(*)::int AS tape_row_count,
+                COALESCE(SUM(current_loan_amount), 0)::float AS tape_upb,
+                CASE
+                  WHEN COALESCE(SUM(current_loan_amount), 0) > 0
+                  THEN SUM(current_interest_rate * current_loan_amount)
+                       / SUM(current_loan_amount)
+                  ELSE NULL
+                END::float AS wac,
+                CASE
+                  WHEN COALESCE(SUM(current_loan_amount), 0) > 0
+                  THEN SUM(remaining_term * current_loan_amount)
+                       / SUM(current_loan_amount)
+                  ELSE NULL
+                END::float AS wam,
+                CASE
+                  WHEN COALESCE(
+                    SUM(
+                      CASE
+                        WHEN loan_age_months IS NOT NULL AND loan_age_months >= 12
+                        THEN current_loan_amount
+                        ELSE 0
+                      END
+                    ),
+                    0
+                  ) > 0
+                  THEN SUM(
+                    CASE
+                      WHEN loan_age_months IS NOT NULL AND loan_age_months >= 12
+                      THEN current_interest_rate * current_loan_amount
+                      ELSE 0
+                    END
+                  ) / SUM(
+                    CASE
+                      WHEN loan_age_months IS NOT NULL AND loan_age_months >= 12
+                      THEN current_loan_amount
+                      ELSE 0
+                    END
+                  )
+                  ELSE NULL
+                END::float AS seasoned_wac
+            FROM public.asf_tape
+            {where_sql}
+        """
         with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
-                cur.execute(sql)
+                cur.execute(sql, where_params)
                 cols = [d.name for d in cur.description]
                 rows = [dict(zip(cols, tup)) for tup in cur.fetchall()]
                 for row in rows:
                     row.pop("sort_key", None)
-                cur.execute(
-                    "SELECT COUNT(*)::int, COALESCE(SUM(current_loan_amount),0)::float "
-                    "FROM public.asf_tape"
-                )
-                n, upb = cur.fetchone()
+                cur.execute(kpi_sql, where_params)
+                kpi_cols = [d.name for d in cur.description]
+                kpi = dict(zip(kpi_cols, cur.fetchone()))
         return {
             "dimension": dimension,
+            "cohort": cohort_filter or "all",
             "n_buckets": len(rows),
-            "tape_row_count": int(n),
-            "tape_upb": float(upb),
+            "tape_row_count": int(kpi["tape_row_count"] or 0),
+            "tape_upb": float(kpi["tape_upb"] or 0),
+            "wac": kpi.get("wac"),
+            "wam": kpi.get("wam"),
+            "seasoned_wac": kpi.get("seasoned_wac"),
             "rows": rows,
         }
 

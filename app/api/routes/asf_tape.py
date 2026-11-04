@@ -49,6 +49,7 @@ def asf_tape(
 @router.get("/stratification")
 def asf_stratification(
     by: str = Query(default="documentation_type", alias="by"),
+    cohort: str | None = Query(default=None),
 ) -> dict:
     repo = _repo()
     if not repo.url:
@@ -57,7 +58,7 @@ def asf_stratification(
             detail="DATABASE_URL not set — load asf_tape to Neon for stratification",
         )
     try:
-        payload = repo.stratification(by)
+        payload = repo.stratification(by, cohort=cohort)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001

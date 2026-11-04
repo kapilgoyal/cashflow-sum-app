@@ -212,6 +212,23 @@ body {
   margin-left: 2px;
 }
 
+/* Current page title — shown in hamburger/mobile header only. */
+.topbar-page {
+  display: none;
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.28);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(52vw, 220px);
+}
+
 .main {
   flex: 1;
   padding: 8px 10px 10px;
@@ -592,9 +609,34 @@ body {
   color: var(--cf-down);
 }
 
-.section-qc {
+.section-qc,
+.section-strat {
   padding-top: 4px;
   gap: 4px;
+}
+
+.strat-topbar {
+  margin-bottom: 4px;
+}
+
+.strat-cohort-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 4px;
+}
+
+.strat-cohort-filter .select {
+  min-width: 140px;
+  max-width: 220px;
+  height: 28px;
+  padding: 2px 8px;
+  border: 1px solid var(--cf-hairline);
+  border-radius: 2px;
+  background: var(--cf-panel);
+  color: var(--cf-text);
+  font-size: 11px;
+  font-family: inherit;
 }
 
 .qc-toolbar {
@@ -1316,6 +1358,25 @@ body {
 
   .topbar-name {
     font-size: 12px;
+  }
+
+  .topbar-page {
+    display: inline-block;
+  }
+
+  .strat-topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .strat-cohort-filter {
+    width: 100%;
+  }
+
+  .strat-cohort-filter .select {
+    max-width: none;
+    flex: 1 1 auto;
+    min-height: 44px;
   }
 
   .chart-wrap,
