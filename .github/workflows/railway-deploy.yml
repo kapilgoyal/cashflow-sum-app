@@ -1,8 +1,13 @@
-# Deploy FastAPI to Railway on every push to master.
-# One-time setup: GitHub → Settings → Secrets and variables → Actions →
-#   New repository secret → Name exactly: RAILWAY_TOKEN
-# Value: Railway Project Token (Project → Settings → Tokens).
-# Optional: RAILWAY_SERVICE_ID if the project has multiple services.
+# Deploy FastAPI to Railway project kind-emotion only (ignore crashed
+# beautiful-tranquility / patient-illumination — disconnect those from GitHub).
+#
+# One-time setup:
+#   1. Railway → open project kind-emotion → Settings → Tokens → Project Token
+#   2. GitHub → Settings → Secrets and variables → Actions → New secret
+#      Name (exact): RAILWAY_TOKEN
+#      Value: that kind-emotion project token (never commit it)
+#   3. Optional secret RAILWAY_SERVICE_ID if kind-emotion has multiple services
+#      (use the service that serves cashflow-sum-app-production.up.railway.app)
 name: Railway API deploy
 
 on:
@@ -11,35 +16,37 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: railway-api-master
+  group: railway-api-kind-emotion
   cancel-in-progress: true
 
 jobs:
   deploy:
+    name: deploy-kind-emotion
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Require RAILWAY_TOKEN secret
+      - name: Require RAILWAY_TOKEN (kind-emotion project token)
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           if [ -z "${RAILWAY_TOKEN}" ]; then
-            echo "::error::Missing GitHub Actions secret RAILWAY_TOKEN. Add a Railway Project Token under Settings → Secrets → Actions (name must be exactly RAILWAY_TOKEN)."
+            echo "::error::Missing GitHub secret RAILWAY_TOKEN. Create a Project Token in Railway project kind-emotion (Settings → Tokens) and add it as Actions secret RAILWAY_TOKEN. Do not use beautiful-tranquility or patient-illumination."
             exit 1
           fi
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Deploy (railway up)
+      - name: Deploy to kind-emotion (railway up)
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
         run: |
           set -euo pipefail
+          # Project token scopes railway up to kind-emotion only.
           if [ -n "${RAILWAY_SERVICE_ID:-}" ]; then
             railway up --ci --service "${RAILWAY_SERVICE_ID}"
           else
