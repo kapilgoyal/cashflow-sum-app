@@ -1,12 +1,13 @@
-# Deploy FastAPI to Railway project kind-emotion only.
+# Deploy FastAPI ONLY to Railway project kind-emotion.
 #
-# One-time setup:
-#   1. Railway → open project **kind-emotion** (the 1/1 online one) → Settings → Tokens
-#      → create a **Project Token** (must be from kind-emotion, not comfortable-contentment /
-#      beautiful-tranquility / patient-illumination)
-#   2. GitHub → Settings → Secrets → Actions → Name exactly: RAILWAY_TOKEN
-#   3. Recommended: secret RAILWAY_SERVICE_ID = service name/id that serves
-#      cashflow-sum-app-production.up.railway.app
+# Required GitHub Actions secrets:
+#   RAILWAY_TOKEN       — Project Token from kind-emotion (Settings → Tokens)
+#   RAILWAY_SERVICE_ID  — service name or UUID that serves
+#                         cashflow-sum-app-production.up.railway.app
+#
+# Do NOT omit RAILWAY_SERVICE_ID: a bare/fallback `railway up --service=web`
+# previously uploaded to the wrong project (comfortable-contentment) while
+# Action showed green and live cashflow-sum-app-production stayed stale.
 name: Railway API deploy
 
 on:
@@ -27,50 +28,46 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Require RAILWAY_TOKEN (kind-emotion project token)
+      - name: Require secrets
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
         run: |
           if [ -z "${RAILWAY_TOKEN}" ]; then
-            echo "::error::Missing GitHub secret RAILWAY_TOKEN. Create a Project Token in Railway project kind-emotion and add it as Actions secret RAILWAY_TOKEN."
+            echo "::error::Missing secret RAILWAY_TOKEN (kind-emotion Project Token)."
+            exit 1
+          fi
+          if [ -z "${RAILWAY_SERVICE_ID}" ]; then
+            echo "::error::Missing secret RAILWAY_SERVICE_ID. In Railway → kind-emotion → open the service with domain cashflow-sum-app-production.up.railway.app → copy service name or ID into GitHub secret RAILWAY_SERVICE_ID. Do not rely on a 'web' fallback."
             exit 1
           fi
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      - name: Deploy to kind-emotion (railway up)
+      - name: Deploy to kind-emotion service only
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
         run: |
           set -euo pipefail
           railway --version
-          # Safe diagnostics (never echo token)
           railway whoami || true
           STATUS_OUT="$(railway status 2>&1 || true)"
           echo "$STATUS_OUT"
 
-          # Fail fast if token is scoped to the wrong project.
+          if echo "$STATUS_OUT" | grep -qi 'Project is deleted'; then
+            echo "::error::railway status says project is deleted / not linked. Recreate RAILWAY_TOKEN as a Project Token from kind-emotion (not a deleted project)."
+            exit 1
+          fi
           if echo "$STATUS_OUT" | grep -qi 'comfortable-contentment\|beautiful-tranquility\|patient-illumination'; then
-            echo "::error::RAILWAY_TOKEN is scoped to the wrong Railway project (see status above). Replace the GitHub secret with a Project Token from kind-emotion only."
+            echo "::error::RAILWAY_TOKEN is scoped to a deleted/wrong project. Use a Project Token from kind-emotion only."
             exit 1
           fi
           if ! echo "$STATUS_OUT" | grep -qi 'kind-emotion'; then
-            echo "::warning::Could not confirm project name kind-emotion in railway status. Continuing; set RAILWAY_SERVICE_ID if deploy fails."
+            echo "::error::railway status did not show project kind-emotion. Fix RAILWAY_TOKEN (kind-emotion Project Token) before deploying."
+            exit 1
           fi
 
-          if [ -n "${RAILWAY_SERVICE_ID:-}" ]; then
-            echo "Deploying with --service=${RAILWAY_SERVICE_ID}"
-            railway up --ci --service "${RAILWAY_SERVICE_ID}"
-          else
-            # Prefer common service names for this API host.
-            set +e
-            for svc in cashflow-sum-app cashflow-api api web; do
-              echo "Trying --service=${svc}"
-              railway up --ci --service "$svc" && exit 0
-            done
-            echo "Retry: bare railway up --ci"
-            railway up --ci
-            exit $?
-          fi
+          echo "Deploying with --service=${RAILWAY_SERVICE_ID}"
+          railway up --ci --service "${RAILWAY_SERVICE_ID}"
