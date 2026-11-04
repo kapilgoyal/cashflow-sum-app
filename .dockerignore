@@ -1,10 +1,10 @@
 node_modules
 dist
 .git
+.github
 .vercel
 docs
 scripts
-public
 *.md
 !api/README.md
 .env
