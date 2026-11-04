@@ -51,12 +51,12 @@ Vercel no longer runs Python serverless (Mangum retired under `deploy/legacy-ver
 3. Set env vars on the Railway service (never commit them):
    - `DATABASE_URL` — Neon pooled Postgres URL
    - `DATABASE_URL_UNPOOLED` — optional Neon direct URL
-4. **CI backup (recommended):** GitHub → Settings → Secrets and variables → Actions → New repository secret  
-   - Name (exact): **`RAILWAY_TOKEN`**  
-   - Value: Railway **Project Token** (Railway → Project → Settings → Tokens)  
-   - Optional secret **`RAILWAY_SERVICE_ID`** if the project has more than one service.  
-   Workflow [`.github/workflows/railway-deploy.yml`](.github/workflows/railway-deploy.yml) runs `railway up --ci` on every push to `master` (and `workflow_dispatch`).
-5. Public HTTPS URL looks like `https://<service>.up.railway.app`.
+4. **CI (kind-emotion only):** ignore crashed Railway projects `beautiful-tranquility` / `patient-illumination` (disconnect them from this GitHub repo).  
+   - Railway → project **`kind-emotion`** → Settings → Tokens → Project Token  
+   - GitHub → Settings → Secrets → Actions → Name (exact): **`RAILWAY_TOKEN`**  
+   - Optional: **`RAILWAY_SERVICE_ID`** for the service behind `cashflow-sum-app-production.up.railway.app`  
+   - Workflow [`.github/workflows/railway-deploy.yml`](.github/workflows/railway-deploy.yml) runs `railway up --ci` on every push to `master`.
+5. Public API: `https://cashflow-sum-app-production.up.railway.app` (service in **kind-emotion**).
 6. Health: `GET /health`. Dockerfile / `railway.toml` start commands use shell form so `${PORT}` expands.
 
 
