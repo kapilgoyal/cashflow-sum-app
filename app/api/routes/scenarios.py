@@ -1,7 +1,7 @@
 """Scenario-grid read surface (preserved for parallel CF-41 work).
 
-Sample CF projection endpoint retained for offline scripts; the public
-run-loan stub under ``/api/run-loan`` does not call the engine.
+``GET /cashflows/sample`` is an offline helper. Prefer ``POST /api/run-loan``
+(or ``POST /api/cashflows/run-loan``) to project a tape loan × scenario cell.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ def sample_cashflow(
     loan_id: str | None = Query(default=None),
     months: int = Query(default=360, ge=1, le=480),
 ) -> dict:
-    """Optional offline sample; prefer POST /api/run-loan stub for API clients."""
+    """Optional offline sample; prefer POST /api/run-loan for API clients."""
     try:
         loan = TapeRepository().get_loan(loan_id)
     except (FileNotFoundError, KeyError) as exc:

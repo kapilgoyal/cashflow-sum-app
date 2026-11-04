@@ -25,6 +25,19 @@ DEFAULT_TAPE = Path(
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CLUSTER_TAPE = REPO_ROOT / "public" / "cluster-tape.json"
 
+
+def resolve_default_tape_path() -> Path:
+    """Repo-bundled Minimum Case tape, then the Windows Agent Store copy."""
+    candidates = (
+        REPO_ROOT / "docs" / "data" / "Minimum_Case.xlsx",
+        REPO_ROOT / "data" / "Minimum_Case.xlsx",
+        DEFAULT_TAPE,
+    )
+    for path in candidates:
+        if path.exists():
+            return path
+    return candidates[0]
+
 # Display names (no "RI"); economics match k-proto cluster ids 0/1/2.
 CLUSTER_ID_TO_COHORT = {
     0: COHORT_LOW_LTV_WEAK,  # former moderate RI short label
@@ -39,7 +52,7 @@ class TapeRepository:
         path: Path | str | None = None,
         cluster_tape_path: Path | str | None = None,
     ) -> None:
-        self.path = Path(path) if path else DEFAULT_TAPE
+        self.path = Path(path) if path else resolve_default_tape_path()
         self.cluster_tape_path = (
             Path(cluster_tape_path) if cluster_tape_path else DEFAULT_CLUSTER_TAPE
         )
