@@ -14,6 +14,7 @@ COPY app ./app
 COPY data ./data
 COPY api/README.md ./api/README.md
 
-# Railway injects PORT
+# Railway injects PORT. Shell-form CMD so ${PORT} expands (exec-form JSON
+# with a bare $PORT does not).
 EXPOSE 8000
-CMD ["sh", "-c", "python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD sh -c 'python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}'
