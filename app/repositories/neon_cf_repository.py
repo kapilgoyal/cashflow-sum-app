@@ -7,11 +7,13 @@ from typing import Any
 from app.repositories.cashflow_schema import (
     LOAN_CF_MONTH1_ADD_PANEL_COLS_SQL,
     LOAN_CF_MONTH1_ENRICHED_VIEW_SQL,
+    LOAN_CF_MONTH1_TABLE_SQL,
     LOAN_MONTH_CF_ADD_PANEL_COLS_SQL,
     LOAN_MONTH_CF_ENRICHED_VIEW_SQL,
     LOAN_MONTH_CF_TABLE_SQL,
     MONTH1_FACT_COLS,
 )
+from app.repositories.connect import connect
 from app.repositories.env_load import load_dotenv, resolve_pg_url
 from app.repositories.scenario_repository import CREATE_SQL as SCENARIO_SQL
 
@@ -48,14 +50,13 @@ class NeonCfRepository:
         return self.url
 
     def _connect(self):
-        import psycopg
-
-        return psycopg.connect(self.require_url(), connect_timeout=30)
+        return connect(self.require_url(), connect_timeout=30)
 
     def ensure_schema(self) -> None:
         with self._connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(SCENARIO_SQL)
+                cur.execute(LOAN_CF_MONTH1_TABLE_SQL)
                 cur.execute(LOAN_MONTH_CF_TABLE_SQL)
                 _exec_multi(cur, LOAN_MONTH_CF_ADD_PANEL_COLS_SQL)
                 cur.execute(LOAN_MONTH_CF_ENRICHED_VIEW_SQL)

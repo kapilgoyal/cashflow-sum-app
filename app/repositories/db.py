@@ -1,4 +1,4 @@
-"""Postgres / Neon repository wiring stubs via DATABASE_URL."""
+"""Database wiring via DATABASE_URL (sqlite default; Postgres/Neon when URL is postgres)."""
 
 from __future__ import annotations
 

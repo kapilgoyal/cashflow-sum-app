@@ -31,10 +31,12 @@ def load_dotenv(overwrite: bool = False) -> list[str]:
 
 
 def resolve_pg_url() -> str | None:
-    """Prefer UNPOOLED for bulk writes; fall back to pooled DATABASE_URL."""
-    return (
-        os.environ.get("DATABASE_URL_UNPOOLED")
-        or os.environ.get("POSTGRES_URL_NON_POOLING")
-        or os.environ.get("DATABASE_URL")
-        or os.environ.get("NEON_DATABASE_URL")
-    )
+    """DATABASE_URL (any dialect). Defaults to the prototype sqlite file.
+
+    Prefer UNPOOLED / non-pooling env when set (Neon bulk writes). Postgres
+    URLs are unchanged; when nothing is set, sqlite is used so the container
+    can boot without Neon.
+    """
+    from app.repositories.connect import resolve_database_url
+
+    return resolve_database_url()
