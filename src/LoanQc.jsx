@@ -528,9 +528,9 @@ export default function LoanQc({ onDrillLoan }) {
 
       <div className="qc-composer">
         <div className="qc-composer-head">
-          <span className="qc-composer-title">
+          <h2 className="qc-composer-title">
             {editCheckId ? "Edit Custom Rule" : "New Custom Rule"}
-          </span>
+          </h2>
           {groqConfigured === false ? (
             <span className="qc-composer-badge">Mock Translate</span>
           ) : groqConfigured === true ? (

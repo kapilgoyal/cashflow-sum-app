@@ -738,7 +738,7 @@ body {
   margin: 0 0 6px;
   padding: 8px 10px;
   border: 1px solid var(--cf-hairline);
-  background: var(--cf-row-alt, #f7f9fc);
+  background: var(--cf-panel);
 }
 
 .qc-composer-head {
@@ -748,18 +748,19 @@ body {
   gap: 8px;
 }
 
+/* Match Scenarios .section-title / .scenario-speed-title */
 .qc-composer-title {
-  font-size: var(--cf-font-md);
-  font-weight: 600;
+  margin: 0;
+  font-size: var(--cf-font-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--cf-text);
-  letter-spacing: 0.01em;
 }
 
 .qc-composer-badge {
-  font-size: var(--cf-font-sm, 10px);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: var(--cf-font-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--cf-muted);
   border: 1px solid var(--cf-hairline);
   padding: 2px 6px;
@@ -771,11 +772,12 @@ body {
   border-color: var(--cf-accent, #fd9d24);
 }
 
+/* Match .field label */
 .qc-composer-label {
-  font-size: var(--cf-font-sm, 10px);
+  font-size: var(--cf-font-sm);
   font-weight: 600;
   color: var(--cf-muted);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 
 .qc-composer-input {
@@ -783,12 +785,13 @@ body {
   resize: vertical;
   min-height: 44px;
   padding: 6px 8px;
-  border: 1px solid var(--cf-chrome, #8a9bb0);
+  border: 1px solid var(--cf-hairline);
   border-radius: 0;
-  background: var(--cf-panel, #fff);
+  background: var(--cf-panel);
   color: var(--cf-text);
-  font-family: inherit;
+  font: inherit;
   font-size: var(--cf-font-body);
+  font-feature-settings: "tnum" 1;
   line-height: 1.35;
 }
 
@@ -797,9 +800,10 @@ body {
   outline-offset: 0;
 }
 
+/* Same IBM Plex Mono stack as Scenarios (no alternate mono) */
 .qc-composer-predicate {
-  font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
-  font-size: var(--cf-font-md);
+  font-family: inherit;
+  font-size: var(--cf-font-body);
 }
 
 .qc-composer-actions {
@@ -818,9 +822,10 @@ body {
   border-radius: 0;
   background: var(--cf-accent, #fd9d24);
   color: var(--cf-on-accent, #001a41);
-  font-family: inherit;
-  font-size: var(--cf-font-md);
-  font-weight: 600;
+  font: inherit;
+  font-size: var(--cf-font-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
   cursor: pointer;
 }
 
@@ -839,9 +844,12 @@ body {
   border-color: var(--cf-chrome, #8a9bb0);
 }
 
+/* Match .section-meta */
 .qc-composer-note {
   margin: 2px 0 0;
-  font-size: var(--cf-font-md);
+  font-size: var(--cf-font-sm);
+  color: var(--cf-muted);
+  letter-spacing: 0.01em;
 }
 
 .qc-toolbar {
