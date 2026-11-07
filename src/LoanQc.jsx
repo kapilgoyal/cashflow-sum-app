@@ -19,6 +19,39 @@ import {
 import { apiUrl } from "./apiBase";
 import { cohortLabel } from "./cohortLabels";
 
+function qcStatusTone(outcomeOrLabel) {
+  const v = String(outcomeOrLabel || "").toLowerCase();
+  if (v === "pass") return "pass";
+  if (v === "fail") return "fail";
+  if (v === "warn" || v === "warning" || v === "skipped" || v === "skip") {
+    return "warn";
+  }
+  return "";
+}
+
+function qcStatusLabel(outcome) {
+  const tone = qcStatusTone(outcome);
+  if (tone === "pass") return "Pass";
+  if (tone === "fail") return "Fail";
+  if (tone === "warn") return "Warn";
+  return "";
+}
+
+/** Green / red / orange circle + Pass/Fail/Warn label. */
+function QcStatusCell({ value, data }) {
+  const tone = qcStatusTone(data?.outcome || value);
+  const label = value || qcStatusLabel(data?.outcome) || "—";
+  if (!tone) {
+    return <span className="qc-status-cell">{label}</span>;
+  }
+  return (
+    <span className={`qc-status-cell qc-status-${tone}`}>
+      <span className="qc-status-dot" aria-hidden="true" />
+      <span className="qc-status-text">{label}</span>
+    </span>
+  );
+}
+
 /**
  * Loan QC pane: NQM results + English custom rules (Groq → SQL → SQLite).
  */
@@ -77,12 +110,14 @@ export default function LoanQc({ onDrillLoan }) {
   const qcActiveRows = useMemo(() => {
     const rows = (qcRows || [])
       .filter((r) => r && r.source !== "demo")
-      .filter((r) => r.outcome === "pass" || r.outcome === "fail")
+      .filter((r) => {
+        const o = String(r.outcome || "").toLowerCase();
+        return o === "pass" || o === "fail" || o === "skipped" || o === "warn";
+      })
       .map((r) => ({
         ...r,
         scope: r.scope || (r.source === "custom" ? "Custom" : "Global"),
-        status_label:
-          r.outcome === "pass" ? "Pass" : r.outcome === "fail" ? "Fail" : "",
+        status_label: qcStatusLabel(r.outcome),
       }));
     // Custom rules first, then Global
     return [...rows].sort((a, b) => {
@@ -133,11 +168,8 @@ export default function LoanQc({ onDrillLoan }) {
         headerName: "Status",
         width: 110,
         suppressSizeToFit: true,
-        cellClass: (p) => {
-          if (p.value === "Pass") return "qc-outcome-pass";
-          if (p.value === "Fail") return "qc-outcome-fail";
-          return "";
-        },
+        cellRenderer: QcStatusCell,
+        cellClass: "qc-status-col",
       },
       {
         field: "pass_count",
