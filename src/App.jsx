@@ -958,7 +958,7 @@ export default function App() {
       },
       {
         field: "recovery",
-        headerName: "Recovery Rate",
+        headerName: "Wtd Recovery Rate",
         flex: 1.1,
         minWidth: 96,
         sortable: false,
@@ -971,9 +971,9 @@ export default function App() {
       },
       {
         field: "lag",
-        headerName: "FNMA Lag (Month)",
-        flex: 1.1,
-        minWidth: 96,
+        headerName: "Wtd FNMA Lag (Month)",
+        flex: 1.2,
+        minWidth: 110,
         sortable: false,
         filter: false,
         spanHeaderHeight: true,
@@ -982,7 +982,7 @@ export default function App() {
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
             ? ""
-            : `${Number(p.value).toFixed(0)}`,
+            : Number(p.value).toFixed(1),
         cellClass: "cf-num",
       },
     ];
@@ -1023,7 +1023,17 @@ export default function App() {
       moneyCol("realized_loss", "Realized Loss", 100),
       moneyCol("total_cash", "Total Cash", 100),
       moneyCol("ending_balance", "End UPB", 110),
-      intCol("avg_used_recovery_lag_months", "Avg Used Lag", 100),
+      {
+        field: "avg_used_recovery_lag_months",
+        headerName: "Wtd FNMA Lag",
+        width: 100,
+        type: "numericColumn",
+        valueFormatter: (p) =>
+          p.value == null || Number.isNaN(Number(p.value))
+            ? ""
+            : Number(p.value).toFixed(1),
+        cellClass: "cf-num",
+      },
     ],
     []
   );

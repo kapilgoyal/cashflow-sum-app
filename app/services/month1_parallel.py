@@ -45,6 +45,30 @@ SUM_FIELDS = (
 )
 
 
+def _upb_weighted_mean(
+    rows: list[dict[str, Any]],
+    value_key: str,
+    *,
+    weight_key: str = "beginning_balance",
+) -> float | None:
+    """UPB-weighted mean; skips non-positive weights. Never loan-count average."""
+    num = 0.0
+    den = 0.0
+    for r in rows:
+        try:
+            w = float(r.get(weight_key) or 0.0)
+            v = float(r.get(value_key) or 0.0)
+        except (TypeError, ValueError):
+            continue
+        if w <= 0:
+            continue
+        num += v * w
+        den += w
+    if den <= 0:
+        return None
+    return round(num / den, 3)
+
+
 def _worker(payload: dict[str, Any]) -> dict[str, Any]:
     """Picklable worker: one scenario × all loans in its cohort → month-1 rows."""
     t0 = time.perf_counter()
@@ -93,17 +117,11 @@ def _worker(payload: dict[str, Any]) -> dict[str, Any]:
                 "month": HORIZON_MONTHS,
                 "n_loans": len(loans),
                 **{k: round(v, 8) for k, v in totals.items()},
-                "avg_used_recovery_lag_months": (
-                    round(
-                        sum(
-                            float(r.get("used_recovery_lag_months") or 0)
-                            for r in loan_rows
-                        )
-                        / len(loan_rows),
-                        3,
-                    )
-                    if loan_rows
-                    else None
+                # UPB-weighted FNMA lag (never loan-count simple average).
+                "avg_used_recovery_lag_months": _upb_weighted_mean(
+                    loan_rows,
+                    "used_recovery_lag_months",
+                    weight_key="beginning_balance",
                 ),
             },
             "loan_rows": loan_rows,
