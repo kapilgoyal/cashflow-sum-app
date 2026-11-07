@@ -65,7 +65,6 @@ export const gridTheme = themeQuartz.withParams({
   backgroundColor: "#000000",
   foregroundColor: "#FCFCFC",
   headerBackgroundColor: "#0C0C0C",
-  headerTextColor: "#808080",
   oddRowBackgroundColor: "#121212",
   rowHoverColor: "#1A1A1A",
   selectedRowBackgroundColor: "#2A2418",
@@ -80,7 +79,7 @@ export const gridTheme = themeQuartz.withParams({
   headerFontSize: 9,
   headerFontWeight: 300,
   headerTextColor: "#FD9D24",
-  /* Dense rows; GRID_SCALE stays ~11–12px on large desktops. */
+  /* Scenarios baseline: thin mono, amber headers, matched header/cell size. */
   spacing: 2,
   headerHeight: 20,
   rowHeight: 18,

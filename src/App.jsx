@@ -1442,9 +1442,10 @@ export default function App() {
   }
 
   const axisTick = {
-    fill: "#4A5F7A",
-    fontSize: 10,
+    fill: "#808080",
+    fontSize: 9,
     fontFamily: FONT,
+    fontWeight: 300,
   };
 
   const scenarioDisplayName = useCallback(
