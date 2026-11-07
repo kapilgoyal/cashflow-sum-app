@@ -1,13 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
-import {
   DataGrid,
   StatusBanner,
   fmtInt,
@@ -59,7 +51,6 @@ export default function LoanQc({ onDrillLoan }) {
   const [qcRows, setQcRows] = useState([]);
   const [qcLoading, setQcLoading] = useState(false);
   const [qcError, setQcError] = useState(null);
-  const [qcView, setQcView] = useState("grid");
   const [qcSelectedRule, setQcSelectedRule] = useState(null);
   const [qcDrillLoans, setQcDrillLoans] = useState([]);
   const [qcDrillTotal, setQcDrillTotal] = useState(0);
@@ -155,14 +146,6 @@ export default function LoanQc({ onDrillLoan }) {
   }, [qcActiveRows]);
 
   const qcFilteredRows = qcActiveRows;
-
-  const qcChartData = useMemo(
-    () => [
-      { name: "Pass", value: qcSummary.pass, fill: "#1F8A44" },
-      { name: "Fail", value: qcSummary.fail, fill: "#C62828" },
-    ],
-    [qcSummary.pass, qcSummary.fail]
-  );
 
   const qcColumnDefs = useMemo(
     () => [
@@ -537,26 +520,6 @@ export default function LoanQc({ onDrillLoan }) {
   return (
     <section className="section section-fill section-qc">
       <div className="qc-toolbar">
-        <div
-          className="cf-grid-toolbar-actions qc-view-toggle"
-          role="toolbar"
-          aria-label="QC View"
-        >
-          <button
-            type="button"
-            className={`linkish${qcView === "grid" ? " is-active" : ""}`}
-            onClick={() => setQcView("grid")}
-          >
-            Grid
-          </button>
-          <button
-            type="button"
-            className={`linkish${qcView === "chart" ? " is-active" : ""}`}
-            onClick={() => setQcView("chart")}
-          >
-            Chart
-          </button>
-        </div>
         <div className="qc-kpi-strip" role="status" aria-label="QC Summary">
           <div className="qc-kpi qc-kpi-checks">
             <span className="qc-kpi-label">QC Checks</span>
@@ -683,29 +646,6 @@ export default function LoanQc({ onDrillLoan }) {
           No QC Results Yet. Save A Custom Rule Or Run Analysis Against The
           Tape.
         </p>
-      ) : qcView === "chart" ? (
-        <div className="qc-chart-wrap">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={qcChartData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius={48}
-                outerRadius={80}
-                paddingAngle={2}
-              >
-                {qcChartData.map((entry) => (
-                  <Cell key={entry.name} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend verticalAlign="bottom" height={28} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
       ) : (
         <DataGrid
           rowData={qcFilteredRows}
@@ -719,7 +659,7 @@ export default function LoanQc({ onDrillLoan }) {
         />
       )}
 
-      {qcSelectedRule && qcView === "grid" && (
+      {qcSelectedRule && (
         <div className="qc-drill">
           {qcDrillLoading ? (
             <p className="muted">Loading Failed Loans…</p>

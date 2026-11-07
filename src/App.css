@@ -960,7 +960,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 6px 10px;
   margin: 0 0 2px;
   min-height: var(--cf-control-h);
