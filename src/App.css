@@ -1300,6 +1300,20 @@ body {
   color: var(--cf-text);
 }
 
+/* AG Grid 36 cell-span wrappers (Cohort / PSA / Recovery / Fnma Lag) */
+.ag-theme-cashflow .ag-spanned-cell-wrapper,
+.ag-theme-cashflow .ag-spanned-cell {
+  background-color: var(--cf-grid);
+}
+
+.ag-theme-cashflow .ag-spanned-cell.cf-row-span {
+  align-items: flex-start;
+  padding-top: 4px;
+  font-weight: 600;
+  color: var(--cf-text);
+  border-bottom: 1px solid var(--cf-hairline);
+}
+
 .chart-wrap {
   height: 248px;
   width: 100%;

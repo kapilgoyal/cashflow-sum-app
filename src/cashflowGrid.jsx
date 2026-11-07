@@ -175,27 +175,11 @@ export function scenarioAxisKey(row) {
 }
 
 /**
- * Stamp contiguous rowSpans for a key field.
- * First cell of a run gets span N; followers get 0 (blank + no rowspan).
- */
-function stampRowSpans(rows, keyFn, spanField) {
-  let i = 0;
-  while (i < rows.length) {
-    const key = keyFn(rows[i]);
-    let j = i + 1;
-    while (j < rows.length && keyFn(rows[j]) === key) j += 1;
-    rows[i][spanField] = j - i;
-    for (let k = i + 1; k < j; k += 1) rows[k][spanField] = 0;
-    i = j;
-  }
-}
-
-/**
- * Sort Cohort → PSA → SDA and stamp `_cohortSpan` / `_psaSpan` for
- * Bloomberg-style merged cells (no redundant Scenario axis column).
+ * Sort Cohort → PSA → SDA so AG Grid `spanRows: true` can merge contiguous
+ * equal Cohort Name and PSA cells (enableCellSpan on the Scenarios grid).
  */
 export function withCohortPsaRowSpans(rows) {
-  const sorted = [...(rows || [])].sort((a, b) => {
+  return [...(rows || [])].sort((a, b) => {
     const ca = String(a.cohort || "");
     const cb = String(b.cohort || "");
     if (ca !== cb) return ca.localeCompare(cb);
@@ -204,18 +188,6 @@ export function withCohortPsaRowSpans(rows) {
     if (pa !== pb) return pa - pb;
     return (Number(a.sda_multiple) || 0) - (Number(b.sda_multiple) || 0);
   });
-  const out = sorted.map((r) => ({
-    ...r,
-    _cohortSpan: 1,
-    _psaSpan: 1,
-  }));
-  stampRowSpans(out, (r) => String(r.cohort || ""), "_cohortSpan");
-  stampRowSpans(
-    out,
-    (r) => `${r.cohort || ""}|${r.psa_multiple ?? ""}`,
-    "_psaSpan"
-  );
-  return out;
 }
 
 /** @deprecated Prefer withCohortPsaRowSpans (cohort-first grid). */

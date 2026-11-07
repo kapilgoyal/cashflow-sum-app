@@ -909,8 +909,13 @@ export default function App() {
     };
   }, [cohortStats, clusterFilter]);
 
-  const scenarioColumnDefs = useMemo(
-    () => [
+  const scenarioColumnDefs = useMemo(() => {
+    /** Merge only within the same cohort (PSA / Recovery / Fnma Lag). */
+    const sameCohortSpan = ({ valueA, valueB, nodeA, nodeB }) =>
+      valueA === valueB &&
+      (nodeA?.data?.cohort ?? "") === (nodeB?.data?.cohort ?? "");
+
+    return [
       {
         field: "cohort",
         headerName: "Cohort Name",
@@ -918,14 +923,10 @@ export default function App() {
         minWidth: 132,
         sortable: false,
         filter: false,
-        rowSpan: (p) => Math.max(1, p.data?._cohortSpan || 1),
-        cellClassRules: {
-          "cf-row-span": (p) => (p.data?._cohortSpan || 0) > 1,
-        },
-        valueGetter: (p) =>
-          p.data?._cohortSpan === 0
-            ? ""
-            : cohortLabel(p.data?.cohort) || "",
+        /* AG Grid 36+: enableCellSpan + spanRows (legacy rowSpan blanks only). */
+        spanRows: true,
+        cellClass: "cf-row-span",
+        valueFormatter: (p) => cohortLabel(p.value) || "",
       },
       {
         field: "psa_multiple",
@@ -934,14 +935,8 @@ export default function App() {
         sortable: false,
         filter: false,
         type: "numericColumn",
-        cellClass: "cf-num",
-        rowSpan: (p) => Math.max(1, p.data?._psaSpan || 1),
-        cellClassRules: {
-          "cf-row-span": (p) => (p.data?._psaSpan || 0) > 1,
-          "cf-num": () => true,
-        },
-        valueGetter: (p) =>
-          p.data?._psaSpan === 0 ? "" : p.data?.psa_multiple,
+        cellClass: "cf-num cf-row-span",
+        spanRows: sameCohortSpan,
         valueFormatter: (p) =>
           p.value === "" || p.value == null ? "" : fmtInt(p.value),
       },
@@ -950,23 +945,28 @@ export default function App() {
         field: "recovery",
         headerName: "Recovery Rate",
         width: 104,
+        sortable: false,
+        filter: false,
+        spanRows: sameCohortSpan,
         valueFormatter: (p) => fmtPct(p.value, 1),
-        cellClass: "cf-num",
+        cellClass: "cf-num cf-row-span",
       },
       {
         field: "lag",
         headerName: "Fnma Lag",
         width: 84,
+        sortable: false,
+        filter: false,
+        spanRows: sameCohortSpan,
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
             ? ""
             : `${Number(p.value).toFixed(0)} Mo`,
-        cellClass: "cf-num",
+        cellClass: "cf-num cf-row-span",
       },
       { field: "scenario_id", headerName: "ID", hide: true },
-    ],
-    []
-  );
+    ];
+  }, []);
 
   const aggColumnDefs = useMemo(
     () => [
@@ -1851,7 +1851,9 @@ export default function App() {
           {pane === "scenarios" && (
             <section className="section section-fill">
               <div className="section-head">
-                <p className="section-meta">27 Cells</p>
+                <p className="section-meta">
+                  {scenarioRows.length} Scenarios
+                </p>
               </div>
               <div className="scenario-layout">
                 <DataGrid
@@ -1861,7 +1863,7 @@ export default function App() {
                   heightClass="grid-wrap-fill scenario-grid"
                   exportName="scenarios"
                   showToolbar={false}
-                  gridProps={{ suppressRowTransform: true }}
+                  gridProps={{ enableCellSpan: true }}
                 />
                 <ScenarioSpeedCharts />
               </div>
