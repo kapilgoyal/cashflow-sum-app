@@ -38,7 +38,10 @@ Rules:
 
 
 def groq_api_key() -> str | None:
-    load_dotenv()
+    # Always merge .env / .env.local so a blank process env cannot hide the key.
+    load_dotenv(overwrite=False)
+    if not (os.environ.get("GROQ_API_KEY") or "").strip():
+        load_dotenv(overwrite=True)
     key = (os.environ.get("GROQ_API_KEY") or "").strip()
     return key or None
 

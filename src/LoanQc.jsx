@@ -144,20 +144,22 @@ export default function LoanQc({ onDrillLoan }) {
       {
         field: "scope",
         headerName: "Scope",
-        width: 88,
+        flex: 0.7,
+        minWidth: 100,
         cellClass: (p) =>
           p.value === "Custom" ? "qc-scope-custom" : "qc-scope-global",
       },
       {
         field: "nl_description",
         headerName: "Description",
-        flex: 4,
-        minWidth: 360,
+        flex: 3,
+        minWidth: 280,
       },
       {
         field: "status_label",
         headerName: "Status",
-        width: 80,
+        flex: 0.8,
+        minWidth: 110,
         cellClass: (p) => {
           if (p.value === "Pass") return "qc-outcome-pass";
           if (p.value === "Fail") return "qc-outcome-fail";
@@ -167,7 +169,8 @@ export default function LoanQc({ onDrillLoan }) {
       {
         field: "pass_count",
         headerName: "Passed Loans",
-        width: 110,
+        flex: 1.1,
+        minWidth: 140,
         type: "numericColumn",
         filter: "agNumberColumnFilter",
         cellClass: "cf-num",
@@ -175,7 +178,8 @@ export default function LoanQc({ onDrillLoan }) {
       {
         field: "fail_count",
         headerName: "Failed Loans",
-        width: 110,
+        flex: 1.1,
+        minWidth: 140,
         type: "numericColumn",
         filter: "agNumberColumnFilter",
         cellClass: "cf-num",
