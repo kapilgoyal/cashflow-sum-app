@@ -2046,15 +2046,15 @@ button.collat-kpi {
 }
 
 .collat-kpi-label {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 300;
   letter-spacing: 0.04em;
   color: var(--cf-muted);
 }
 
 .collat-kpi-value {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--cf-text);
   font-variant-numeric: tabular-nums;
   line-height: 1.15;
@@ -2093,8 +2093,8 @@ button.collat-kpi {
   background: var(--cf-panel);
   color: var(--cf-text);
   font: inherit;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 300;
   cursor: pointer;
 }
 
@@ -2128,7 +2128,7 @@ button.collat-kpi {
   color: var(--cf-accent);
   font: inherit;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 300;
   cursor: pointer;
 }
 
