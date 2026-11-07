@@ -4,7 +4,7 @@
  */
 import { US_MAP_VIEWBOX, US_STATE_PATHS } from "./usStatePaths";
 
-function scaleColor(t, { low = "#E8EEF5", high = "#001A41" } = {}) {
+function scaleColor(t, { low = "#1A1A1A", high = "#FD9D24" } = {}) {
   const x = Math.max(0, Math.min(1, t));
   const parse = (hex) => [
     parseInt(hex.slice(1, 3), 16),
@@ -56,7 +56,7 @@ export function StateChoropleth({
         {Object.entries(US_STATE_PATHS).map(([abbr, d]) => {
           const row = byState.get(abbr);
           const v = row ? Number(row[valueKey]) || 0 : 0;
-          const fill = row ? scaleColor(v / max) : "#F3F5F8";
+          const fill = row ? scaleColor(v / max) : "#0C0C0C";
           const isSel = selected === abbr;
           const tip = row
             ? `${abbr}: ${fmtTip ? fmtTip(v) : v}`
@@ -66,7 +66,7 @@ export function StateChoropleth({
               key={abbr}
               d={d}
               fill={fill}
-              stroke={isSel ? "#FD9D24" : "#FFFFFF"}
+              stroke={isSel ? "#FD9D24" : "#000000"}
               strokeWidth={isSel ? 2.2 : 0.6}
               className={`choropleth-state-path${row ? " is-clickable" : ""}${
                 isSel ? " is-selected" : ""
@@ -93,7 +93,7 @@ export function StateChoropleth({
         <span
           className="choropleth-swatch"
           style={{
-            background: `linear-gradient(90deg, #E8EEF5, #001A41)`,
+            background: `linear-gradient(90deg, #1A1A1A, #FD9D24)`,
           }}
         />
         <span>High</span>
@@ -150,7 +150,7 @@ export function Zip3Choropleth({
         <span
           className="choropleth-swatch"
           style={{
-            background: `linear-gradient(90deg, #E8EEF5, #001A41)`,
+            background: `linear-gradient(90deg, #1A1A1A, #FD9D24)`,
           }}
         />
         <span>High</span>

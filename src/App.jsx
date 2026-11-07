@@ -68,15 +68,87 @@ const LS_GRID_KEY = "cashflow.agGridState";
 const LS_NAV_KEY = "cashflow.navPane";
 const LS_NAV_COLLAPSE_KEY = "cashflow.navCollapsed";
 
-const NAV_SHORT = {
-  asf: "Tape",
-  qc: "QC",
-  collateral: "Collat",
-  cohort: "Cohort",
-  scenarios: "Scen",
-  cashflow: "CF",
-  assumptions: "Asm",
-};
+/** Compact stroke icons for sidenav (collapsed = icon only). */
+function NavIcon({ id }) {
+  const common = {
+    width: 16,
+    height: 16,
+    viewBox: "0 0 16 16",
+    fill: "none",
+    "aria-hidden": "true",
+    focusable: "false",
+  };
+  const stroke = {
+    stroke: "currentColor",
+    strokeWidth: 1.5,
+    strokeLinecap: "square",
+    strokeLinejoin: "miter",
+  };
+  switch (id) {
+    case "asf":
+      return (
+        <svg {...common}>
+          <path d="M2.5 3.5h11v9h-11z" {...stroke} />
+          <path d="M2.5 6.5h11M5.5 3.5v9M8.5 6.5v6" {...stroke} />
+        </svg>
+      );
+    case "qc":
+      return (
+        <svg {...common}>
+          <path d="M3 8.2 6.2 11.5 13 4.5" {...stroke} />
+        </svg>
+      );
+    case "strat":
+      return (
+        <svg {...common}>
+          <path d="M3 12.5V7.5M7 12.5V3.5M11 12.5V5.5" {...stroke} />
+          <path d="M2 12.5h12" {...stroke} />
+        </svg>
+      );
+    case "collateral":
+      return (
+        <svg {...common}>
+          <path d="M2.5 11.5 8 3.5l5.5 8H2.5z" {...stroke} />
+          <path d="M5 11.5h6" {...stroke} />
+        </svg>
+      );
+    case "cohort":
+      return (
+        <svg {...common}>
+          <circle cx="5" cy="6" r="1.4" stroke="currentColor" strokeWidth="1.4" />
+          <circle cx="11" cy="5" r="1.4" stroke="currentColor" strokeWidth="1.4" />
+          <circle cx="8" cy="11" r="1.4" stroke="currentColor" strokeWidth="1.4" />
+          <path d="M6.2 6.8 7.2 9.6M9.8 6.2 8.8 9.5" {...stroke} />
+        </svg>
+      );
+    case "scenarios":
+      return (
+        <svg {...common}>
+          <path d="M3 3.5h3.5V7H3zM9.5 3.5H13V7H9.5zM3 9h3.5v3.5H3zM9.5 9H13v3.5H9.5z" {...stroke} />
+        </svg>
+      );
+    case "cashflow":
+      return (
+        <svg {...common}>
+          <path d="M2.5 11.5 6 6.5l2.5 3 4.5-6" {...stroke} />
+          <path d="M11 3.5h2.5V6" {...stroke} />
+        </svg>
+      );
+    case "assumptions":
+      return (
+        <svg {...common}>
+          <path d="M3.5 2.5h9v11h-9z" {...stroke} />
+          <path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" {...stroke} />
+        </svg>
+      );
+    default:
+      return (
+        <svg {...common}>
+          <path d="M3 8h10" {...stroke} />
+        </svg>
+      );
+  }
+}
 
 function readClusterFilter() {
   // Always start with every cohort selected (not a single restored filter).
@@ -1744,7 +1816,7 @@ export default function App() {
             >
               <span className="sidenav-label-full">{item.label}</span>
               <span className="sidenav-label-short" aria-hidden="true">
-                {NAV_SHORT[item.id] || item.label.slice(0, 3)}
+                <NavIcon id={item.id} />
               </span>
             </button>
           ))}
