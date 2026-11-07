@@ -11,30 +11,30 @@ export const FONT =
   '"IBM Plex Mono", "Roboto Mono", ui-monospace, Menlo, monospace';
 
 const GRID_SCALE = {
-  /* Scenarios look app-wide: header + cell same size, thin weight. */
+  /* Scenarios look app-wide: ~11–12px mono, dense rows, matched header/cell. */
   base: {
-    fontSize: 9,
-    headerFontSize: 9,
-    headerHeight: 20,
-    rowHeight: 18,
+    fontSize: 11,
+    headerFontSize: 11,
+    headerHeight: 22,
+    rowHeight: 20,
     spacing: 2,
-    iconSize: 11,
+    iconSize: 12,
   },
   lg: {
-    fontSize: 10,
-    headerFontSize: 10,
+    fontSize: 11,
+    headerFontSize: 11,
     headerHeight: 22,
     rowHeight: 20,
     spacing: 2,
     iconSize: 12,
   },
   xl: {
-    fontSize: 11,
-    headerFontSize: 11,
+    fontSize: 12,
+    headerFontSize: 12,
     headerHeight: 24,
     rowHeight: 22,
     spacing: 2,
-    iconSize: 12,
+    iconSize: 13,
   },
 };
 
@@ -75,14 +75,14 @@ export const gridTheme = themeQuartz.withParams({
   columnBorder: { style: "solid", width: 1, color: "#2A2A2A" },
   headerColumnBorder: false,
   fontFamily: FONT,
-  fontSize: 9,
-  headerFontSize: 9,
+  fontSize: 11,
+  headerFontSize: 11,
   headerFontWeight: 300,
   headerTextColor: "#FD9D24",
-  /* Scenarios baseline: thin mono, amber headers, matched header/cell size. */
+  /* Scenarios baseline: amber headers + amber nums; label cols off-white. */
   spacing: 2,
-  headerHeight: 20,
-  rowHeight: 18,
+  headerHeight: 22,
+  rowHeight: 20,
   borderRadius: 0,
   wrapperBorderRadius: 0,
   rangeSelectionBorderColor: "#FD9D24",

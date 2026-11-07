@@ -21,14 +21,15 @@
   --cf-nav-hover: #1a1a1a;
   --cf-nav-width: 152px;
   --cf-nav-width-collapsed: 48px;
-  /* Scenarios look app-wide: thin mono; grid header/cell same size; KPIs stay larger. */
-  --cf-font-body: 9px;
-  --cf-font-sm: 9px;
-  --cf-font-md: 9px;
-  --cf-font-lg: 10px;
-  --cf-font-kpi-label: 9px;
-  --cf-font-kpi-value: 17px;
-  --cf-font-chart: 9px;
+  /* Scenarios look app-wide: ~11–12px mono; KPIs stay larger. */
+  --cf-font-body: 11px;
+  --cf-font-sm: 11px;
+  --cf-font-md: 11px;
+  --cf-font-lg: 12px;
+  --cf-font-kpi-label: 11px;
+  --cf-font-kpi-value: 18px;
+  --cf-font-chart: 11px;
+  --cf-grid-label: #c8c8c8;
   --cf-control-h: 26px;
   --cf-icon: 26px;
   --cf-topbar-h: 32px;
@@ -312,7 +313,7 @@ body {
   min-height: 0;
 }
 
-/* App-wide grid type (Scenarios look): thin weight, amber headers, matched sizes */
+/* App-wide grid type (Scenarios look): amber headers + amber nums; labels grey */
 .ag-theme-cashflow {
   --ag-header-font-weight: 300;
   --ag-header-foreground-color: var(--cf-accent);
@@ -322,11 +323,22 @@ body {
 .ag-theme-cashflow .ag-cell,
 .ag-theme-cashflow .ag-cell-value,
 .ag-theme-cashflow .ag-spanned-cell,
-.ag-theme-cashflow .cf-row-span,
-.ag-theme-cashflow .cf-num {
+.ag-theme-cashflow .cf-row-span {
   font-weight: 300 !important;
-  color: var(--cf-text);
+  color: var(--cf-grid-label);
   font-size: var(--ag-header-font-size, var(--ag-font-size)) !important;
+}
+
+.ag-theme-cashflow .cf-num,
+.ag-theme-cashflow .ag-cell.ag-right-aligned-cell,
+.ag-theme-cashflow .ag-cell.ag-right-aligned-cell .ag-cell-value {
+  font-weight: 300 !important;
+  color: var(--cf-accent) !important;
+  font-size: var(--ag-header-font-size, var(--ag-font-size)) !important;
+}
+
+.ag-theme-cashflow .cf-id {
+  color: var(--cf-grid-label) !important;
 }
 
 .ag-theme-cashflow .ag-header-cell,
