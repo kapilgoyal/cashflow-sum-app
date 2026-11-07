@@ -11,9 +11,9 @@ export const FONT =
   '"IBM Plex Mono", "Roboto Mono", ui-monospace, Menlo, monospace';
 
 const GRID_SCALE = {
-  /* Slick Terminal density — ~11–12px cells; no display-scale blow-up. */
+  /* Scenarios look app-wide: header + cell same size, thin weight. */
   base: {
-    fontSize: 11,
+    fontSize: 9,
     headerFontSize: 9,
     headerHeight: 20,
     rowHeight: 18,
@@ -21,7 +21,7 @@ const GRID_SCALE = {
     iconSize: 11,
   },
   lg: {
-    fontSize: 11,
+    fontSize: 10,
     headerFontSize: 10,
     headerHeight: 22,
     rowHeight: 20,
@@ -29,7 +29,7 @@ const GRID_SCALE = {
     iconSize: 12,
   },
   xl: {
-    fontSize: 12,
+    fontSize: 11,
     headerFontSize: 11,
     headerHeight: 24,
     rowHeight: 22,
@@ -65,7 +65,6 @@ export const gridTheme = themeQuartz.withParams({
   backgroundColor: "#000000",
   foregroundColor: "#FCFCFC",
   headerBackgroundColor: "#0C0C0C",
-  headerTextColor: "#808080",
   oddRowBackgroundColor: "#121212",
   rowHoverColor: "#1A1A1A",
   selectedRowBackgroundColor: "#2A2418",
@@ -76,10 +75,11 @@ export const gridTheme = themeQuartz.withParams({
   columnBorder: { style: "solid", width: 1, color: "#2A2A2A" },
   headerColumnBorder: false,
   fontFamily: FONT,
-  fontSize: 11,
+  fontSize: 9,
   headerFontSize: 9,
-  headerFontWeight: 600,
-  /* Dense rows; GRID_SCALE stays ~11–12px on large desktops. */
+  headerFontWeight: 300,
+  headerTextColor: "#FD9D24",
+  /* Scenarios baseline: thin mono, amber headers, matched header/cell size. */
   spacing: 2,
   headerHeight: 20,
   rowHeight: 18,
@@ -175,27 +175,11 @@ export function scenarioAxisKey(row) {
 }
 
 /**
- * Stamp contiguous rowSpans for a key field.
- * First cell of a run gets span N; followers get 0 (blank + no rowspan).
- */
-function stampRowSpans(rows, keyFn, spanField) {
-  let i = 0;
-  while (i < rows.length) {
-    const key = keyFn(rows[i]);
-    let j = i + 1;
-    while (j < rows.length && keyFn(rows[j]) === key) j += 1;
-    rows[i][spanField] = j - i;
-    for (let k = i + 1; k < j; k += 1) rows[k][spanField] = 0;
-    i = j;
-  }
-}
-
-/**
- * Sort Cohort → PSA → SDA and stamp `_cohortSpan` / `_psaSpan` for
- * Bloomberg-style merged cells (no redundant Scenario axis column).
+ * Sort Cohort → PSA → SDA so AG Grid `spanRows: true` can merge contiguous
+ * equal Cohort Name and PSA cells (enableCellSpan on the Scenarios grid).
  */
 export function withCohortPsaRowSpans(rows) {
-  const sorted = [...(rows || [])].sort((a, b) => {
+  return [...(rows || [])].sort((a, b) => {
     const ca = String(a.cohort || "");
     const cb = String(b.cohort || "");
     if (ca !== cb) return ca.localeCompare(cb);
@@ -204,18 +188,6 @@ export function withCohortPsaRowSpans(rows) {
     if (pa !== pb) return pa - pb;
     return (Number(a.sda_multiple) || 0) - (Number(b.sda_multiple) || 0);
   });
-  const out = sorted.map((r) => ({
-    ...r,
-    _cohortSpan: 1,
-    _psaSpan: 1,
-  }));
-  stampRowSpans(out, (r) => String(r.cohort || ""), "_cohortSpan");
-  stampRowSpans(
-    out,
-    (r) => `${r.cohort || ""}|${r.psa_multiple ?? ""}`,
-    "_psaSpan"
-  );
-  return out;
 }
 
 /** @deprecated Prefer withCohortPsaRowSpans (cohort-first grid). */
@@ -405,6 +377,7 @@ export function DataGrid({
   showToolbar = true,
   toolbarStart = null,
   gridProps = {},
+  themeParams = null,
 }) {
   const defaultColDef = useMemo(() => ({ ...sharedDefaultColDef }), []);
   const apiRef = useRef(null);
@@ -412,10 +385,21 @@ export function DataGrid({
   const onRowStatsRef = useRef(onRowStats);
   onRowStatsRef.current = onRowStats;
   const gridScale = useGridScale();
-  const scaledTheme = useMemo(
-    () => gridTheme.withParams(GRID_SCALE[gridScale] || GRID_SCALE.base),
-    [gridScale]
-  );
+  const scaledTheme = useMemo(() => {
+    const scale = GRID_SCALE[gridScale] || GRID_SCALE.base;
+    const extra = themeParams || {};
+    /* When matchHeaderFontSize, data cells use the same px as headers. */
+    const fontSize =
+      extra.matchHeaderFontSize != null
+        ? (extra.headerFontSize ?? scale.headerFontSize)
+        : extra.fontSize;
+    const { matchHeaderFontSize: _m, ...rest } = extra;
+    return gridTheme.withParams({
+      ...scale,
+      ...rest,
+      ...(fontSize != null ? { fontSize } : {}),
+    });
+  }, [gridScale, themeParams]);
   const iconSize = gridScale === "xl" ? 16 : gridScale === "lg" ? 14 : 12;
 
   const emitRowStats = useCallback((api) => {
@@ -574,6 +558,7 @@ export function DataGrid({
       )}
       <div className="cf-grid-host ag-theme-cashflow">
         <AgGridReact
+          key={gridProps.enableCellSpan ? "cell-span" : "default"}
           theme={scaledTheme}
           rowData={rowData}
           columnDefs={columnDefs}
@@ -582,7 +567,8 @@ export function DataGrid({
           suppressCellFocus
           animateRows={false}
           rowSelection={{ mode: "singleRow", checkboxes: false }}
-          enableCellTextSelection
+          /* spanRows conflicts with enableCellTextSelection in AG Grid 36 */
+          enableCellTextSelection={!gridProps.enableCellSpan}
           ensureDomOrder
           enableBrowserTooltips
           tooltipShowDelay={400}

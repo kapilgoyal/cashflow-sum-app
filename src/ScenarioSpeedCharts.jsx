@@ -1,8 +1,7 @@
 /**
- * Side-panel PSA CPR + SDA/SDR CDR paths from public/psa_sda_standards.csv.
- * Shows every scenario speed used in the grid (PSA 75/100/125, SDA 50/100/200).
+ * Side-panel PSA CPR + SDA/SDR CDR paths for every distinct schedule speed.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -14,42 +13,15 @@ import {
   YAxis,
 } from "recharts";
 import { FONT } from "./cashflowGrid";
+import {
+  buildSpeedChartRows,
+  distinctPsaMultiples,
+  distinctSdaMultiples,
+  seriesForMultiples,
+} from "./scenarioSpeeds";
 
-const STANDARDS_URL = "/psa_sda_standards.csv";
 /** Curve structure is visible by month 120; keep chart dense. */
 const CHART_MONTHS = 120;
-
-const PSA_SERIES = [
-  { key: "psa_75_cpr", label: "75 PSA", color: "#4A5F7A" },
-  { key: "psa_100_cpr", label: "100 PSA", color: "#FD9D24" },
-  { key: "psa_125_cpr", label: "125 PSA", color: "#1F8A44" },
-];
-
-const SDA_SERIES = [
-  { key: "sda_50_cdr", label: "50 SDA", color: "#4A5F7A" },
-  { key: "sda_100_cdr", label: "100 SDA", color: "#FD9D24" },
-  { key: "sda_200_cdr", label: "200 SDA", color: "#C51D46" },
-];
-
-function parseCsv(text) {
-  const lines = String(text || "")
-    .trim()
-    .split(/\r?\n/)
-    .filter(Boolean);
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(",").map((h) => h.trim());
-  const rows = [];
-  for (let i = 1; i < lines.length; i += 1) {
-    const cells = lines[i].split(",");
-    const row = {};
-    headers.forEach((h, idx) => {
-      const raw = (cells[idx] ?? "").trim();
-      row[h] = h === "month" ? Number(raw) : Number(raw);
-    });
-    rows.push(row);
-  }
-  return rows;
-}
 
 function pctTick(v) {
   if (v == null || Number.isNaN(Number(v))) return "";
@@ -61,11 +33,11 @@ function pctTick(v) {
 
 function tipStyle() {
   return {
-    background: "#FFFFFF",
-    border: "1px solid #D0D7E2",
+    background: "#0C0C0C",
+    border: "1px solid #323232",
     borderRadius: 0,
     fontSize: 11,
-    color: "#001A41",
+    color: "#FCFCFC",
     fontFamily: FONT,
   };
 }
@@ -77,7 +49,7 @@ function SpeedLineChart({ title, data, series, yLabel }) {
         <h3 className="scenario-speed-title">{title}</h3>
       </div>
       <div className="scenario-speed-chart">
-        {!data.length ? (
+        {!data.length || !series.length ? (
           <p className="muted strat-chart-empty">No Speed Paths Loaded.</p>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
@@ -86,7 +58,7 @@ function SpeedLineChart({ title, data, series, yLabel }) {
               margin={{ top: 8, right: 10, left: 0, bottom: 4 }}
             >
               <CartesianGrid
-                stroke="#D0D7E2"
+                stroke="#323232"
                 strokeDasharray="2 4"
                 strokeOpacity={0.9}
               />
@@ -95,14 +67,14 @@ function SpeedLineChart({ title, data, series, yLabel }) {
                 type="number"
                 domain={[1, CHART_MONTHS]}
                 ticks={[1, 30, 60, 90, 120]}
-                tick={{ fill: "#4A5F7A", fontSize: 10, fontFamily: FONT }}
-                axisLine={{ stroke: "#8A9BB0" }}
-                tickLine={{ stroke: "#8A9BB0" }}
+                tick={{ fill: "#808080", fontSize: 10, fontFamily: FONT }}
+                axisLine={{ stroke: "#464646" }}
+                tickLine={{ stroke: "#464646" }}
                 label={{
                   value: "Month",
                   position: "insideBottom",
                   offset: -2,
-                  fill: "#4A5F7A",
+                  fill: "#808080",
                   fontSize: 10,
                   fontFamily: FONT,
                 }}
@@ -110,22 +82,22 @@ function SpeedLineChart({ title, data, series, yLabel }) {
               <YAxis
                 tickFormatter={pctTick}
                 width={46}
-                tick={{ fill: "#4A5F7A", fontSize: 10, fontFamily: FONT }}
-                axisLine={{ stroke: "#8A9BB0" }}
-                tickLine={{ stroke: "#8A9BB0" }}
+                tick={{ fill: "#808080", fontSize: 10, fontFamily: FONT }}
+                axisLine={{ stroke: "#464646" }}
+                tickLine={{ stroke: "#464646" }}
                 label={{
                   value: yLabel,
                   angle: -90,
                   position: "insideLeft",
                   offset: 8,
-                  fill: "#4A5F7A",
+                  fill: "#808080",
                   fontSize: 10,
                   fontFamily: FONT,
                 }}
               />
               <Tooltip
                 contentStyle={tipStyle()}
-                labelStyle={{ color: "#4A5F7A" }}
+                labelStyle={{ color: "#808080" }}
                 labelFormatter={(m) => `Month ${m}`}
                 formatter={(v, name) => [pctTick(v), name]}
               />
@@ -134,8 +106,9 @@ function SpeedLineChart({ title, data, series, yLabel }) {
                 align="right"
                 iconType="plainline"
                 wrapperStyle={{
-                  fontSize: 10,
+                  fontSize: 9,
                   fontFamily: FONT,
+                  fontWeight: 300,
                   paddingBottom: 4,
                 }}
               />
@@ -146,7 +119,7 @@ function SpeedLineChart({ title, data, series, yLabel }) {
                   dataKey={s.key}
                   name={s.label}
                   stroke={s.color}
-                  strokeWidth={1.5}
+                  strokeWidth={1.25}
                   dot={false}
                   isAnimationActive={false}
                 />
@@ -160,51 +133,33 @@ function SpeedLineChart({ title, data, series, yLabel }) {
 }
 
 export default function ScenarioSpeedCharts() {
-  const [rows, setRows] = useState([]);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(STANDARDS_URL);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
-        if (cancelled) return;
-        setRows(parseCsv(text));
-        setError(null);
-      } catch (e) {
-        if (!cancelled) {
-          setRows([]);
-          setError(e?.message || "Load Failed");
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+  const psaMultiples = useMemo(() => distinctPsaMultiples(), []);
+  const sdaMultiples = useMemo(() => distinctSdaMultiples(), []);
+  const psaSeries = useMemo(
+    () => seriesForMultiples("psa", psaMultiples),
+    [psaMultiples]
+  );
+  const sdaSeries = useMemo(
+    () => seriesForMultiples("sda", sdaMultiples),
+    [sdaMultiples]
+  );
   const chartData = useMemo(
-    () => (rows || []).filter((r) => Number(r.month) <= CHART_MONTHS),
-    [rows]
+    () => buildSpeedChartRows(CHART_MONTHS, psaMultiples, sdaMultiples),
+    [psaMultiples, sdaMultiples]
   );
 
   return (
     <aside className="scenario-speed-rail" aria-label="Scenario Speeds">
-      {error && (
-        <p className="muted strat-chart-empty">Speeds: {error}</p>
-      )}
       <SpeedLineChart
-        title="PSA Speeds (CPR)"
+        title={`PSA Speeds (CPR) · ${psaMultiples.length}`}
         data={chartData}
-        series={PSA_SERIES}
+        series={psaSeries}
         yLabel="CPR"
       />
       <SpeedLineChart
-        title="SDA / SDR Speeds (CDR)"
+        title={`SDA / SDR Speeds (CDR) · ${sdaMultiples.length}`}
         data={chartData}
-        series={SDA_SERIES}
+        series={sdaSeries}
         yLabel="CDR"
       />
     </aside>

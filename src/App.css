@@ -21,11 +21,11 @@
   --cf-nav-hover: #1a1a1a;
   --cf-nav-width: 152px;
   --cf-nav-width-collapsed: 48px;
-  /* Slick Terminal density: ~11–12px body/nav/grid; KPI values larger for contrast. */
-  --cf-font-body: 11px;
+  /* Scenarios look app-wide: thin mono; grid header/cell same size; KPIs stay larger. */
+  --cf-font-body: 9px;
   --cf-font-sm: 9px;
-  --cf-font-md: 11px;
-  --cf-font-lg: 12px;
+  --cf-font-md: 9px;
+  --cf-font-lg: 10px;
   --cf-font-kpi-label: 9px;
   --cf-font-kpi-value: 17px;
   --cf-font-chart: 9px;
@@ -55,6 +55,7 @@ body,
 body {
   font-family: var(--cf-font);
   font-size: var(--cf-font-body);
+  font-weight: 300;
   line-height: 1.25;
   color: var(--cf-text);
   background: var(--cf-bg);
@@ -62,10 +63,31 @@ body {
   font-feature-settings: "tnum" 1;
 }
 
+/* Scenarios type baseline on every screen (IBM Plex Mono · weight 300).
+   KPI values keep larger size + 600 weight for contrast. */
 .app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  font-family: var(--cf-font);
+  font-weight: 300;
+}
+
+.app .brand,
+.app .section-title,
+.app .section-meta,
+.app .qc-composer-title,
+.app .qc-composer-label,
+.app .qc-composer-badge,
+.app .collat-section-title,
+.app .collat-section-meta,
+.app .ia-panel-title,
+.app .sidenav-btn,
+.app .cf-btn,
+.app .muted,
+.app .status-banner {
+  font-family: var(--cf-font);
+  font-weight: 300;
 }
 
 .shell {
@@ -106,7 +128,7 @@ body {
   color: var(--cf-nav-text);
   font: inherit;
   font-size: var(--cf-font-md);
-  font-weight: 600;
+  font-weight: 300;
   letter-spacing: 0.01em;
   text-align: left;
   cursor: pointer;
@@ -227,7 +249,7 @@ body {
 
 .topbar-name {
   font-size: var(--cf-font-lg);
-  font-weight: 700;
+  font-weight: 300;
   letter-spacing: 0.02em;
   color: var(--cf-text);
   line-height: 1;
@@ -235,7 +257,7 @@ body {
 
 .topbar-version {
   font-size: var(--cf-font-sm);
-  font-weight: 600;
+  font-weight: 300;
   letter-spacing: 0.02em;
   color: var(--cf-accent);
   line-height: 1;
@@ -249,7 +271,7 @@ body {
   padding-left: 10px;
   border-left: 1px solid var(--cf-hairline);
   font-size: var(--cf-font-body);
-  font-weight: 600;
+  font-weight: 300;
   letter-spacing: 0.01em;
   color: var(--cf-text);
   line-height: 1.2;
@@ -288,6 +310,61 @@ body {
 .section-fill {
   flex: 1;
   min-height: 0;
+}
+
+/* App-wide grid type (Scenarios look): thin weight, amber headers, matched sizes */
+.ag-theme-cashflow {
+  --ag-header-font-weight: 300;
+  --ag-header-foreground-color: var(--cf-accent);
+  font-weight: 300;
+}
+
+.ag-theme-cashflow .ag-cell,
+.ag-theme-cashflow .ag-cell-value,
+.ag-theme-cashflow .ag-spanned-cell,
+.ag-theme-cashflow .cf-row-span,
+.ag-theme-cashflow .cf-num {
+  font-weight: 300 !important;
+  color: var(--cf-text);
+  font-size: var(--ag-header-font-size, var(--ag-font-size)) !important;
+}
+
+.ag-theme-cashflow .ag-header-cell,
+.ag-theme-cashflow .ag-header-cell-text,
+.ag-theme-cashflow .cf-grid-header,
+.ag-theme-cashflow .ag-header-group-cell,
+.ag-theme-cashflow .ag-header-group-cell-label,
+.ag-theme-cashflow .ag-header-group-text {
+  font-weight: 300 !important;
+  color: var(--cf-accent) !important;
+}
+
+/* Group headers: center over children */
+.ag-theme-cashflow .ag-header-group-cell,
+.ag-theme-cashflow .ag-header-group-cell.cf-hdr-group-center {
+  justify-content: center;
+}
+
+.ag-theme-cashflow .ag-header-group-cell .ag-header-group-cell-label {
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+}
+
+.ag-theme-cashflow .ag-header-cell.cf-hdr-left .ag-header-cell-label {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.ag-theme-cashflow .ag-header-cell.ag-right-aligned-header .ag-header-cell-label {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.section-meta,
+.scenario-speed-title,
+.scenario-speed-rail {
+  font-weight: 300;
 }
 
 /* Scenarios: dense grid + PSA/SDA speed rail */
@@ -342,7 +419,7 @@ body {
 .scenario-speed-title {
   margin: 0;
   font-size: var(--cf-font-sm);
-  font-weight: 700;
+  font-weight: 300;
   letter-spacing: 0.02em;
   color: var(--cf-text);
 }
@@ -356,7 +433,7 @@ body {
 .section-title {
   margin: 0 0 6px;
   font-size: var(--cf-font-sm);
-  font-weight: 700;
+  font-weight: 300;
   letter-spacing: 0.02em;
   color: var(--cf-text);
 }
@@ -384,7 +461,7 @@ body {
 .section-title-chart {
   letter-spacing: 0.01em;
   font-size: var(--cf-font-body);
-  font-weight: 600;
+  font-weight: 300;
   color: var(--cf-text);
 }
 
@@ -432,7 +509,7 @@ body {
 
 .scatter-legend-title {
   font-size: var(--cf-font-sm);
-  font-weight: 600;
+  font-weight: 300;
   color: var(--cf-text);
   margin-bottom: 3px;
   letter-spacing: 0.01em;
@@ -464,7 +541,7 @@ body {
 
 .scatter-legend-btn.is-active {
   color: var(--cf-accent);
-  font-weight: 700;
+  font-weight: 300;
 }
 
 .scatter-legend-all {
@@ -530,7 +607,7 @@ body {
 
 .field label {
   font-size: var(--cf-font-sm);
-  font-weight: 600;
+  font-weight: 300;
   letter-spacing: 0.01em;
   color: var(--cf-muted);
 }
@@ -590,7 +667,7 @@ body {
 
 .drill-current {
   color: var(--cf-text);
-  font-weight: 700;
+  font-weight: 300;
 }
 
 .drill-link {
@@ -604,7 +681,7 @@ body {
 }
 
 .ag-theme-cashflow .cf-id {
-  font-weight: 600;
+  font-weight: 300;
   letter-spacing: 0.02em;
 }
 
@@ -621,7 +698,7 @@ body {
   min-height: var(--cf-control-h);
   font: inherit;
   font-size: var(--cf-font-md);
-  font-weight: 600;
+  font-weight: 300;
   letter-spacing: 0.01em;
   color: var(--cf-on-accent);
   background: var(--cf-accent);
@@ -648,7 +725,7 @@ body {
 
 .result strong {
   color: var(--cf-accent);
-  font-weight: 600;
+  font-weight: 300;
 }
 
 .error {
@@ -687,7 +764,7 @@ body {
 
 .qc-stat {
   font-size: var(--cf-font-md);
-  font-weight: 600;
+  font-weight: 300;
   letter-spacing: 0.01em;
   color: var(--cf-muted);
 }
@@ -750,14 +827,14 @@ body {
 
 .qc-composer-title {
   font-size: var(--cf-font-md);
-  font-weight: 600;
+  font-weight: 300;
   color: var(--cf-text);
   letter-spacing: 0.01em;
 }
 
 .qc-composer-badge {
   font-size: var(--cf-font-sm, 10px);
-  font-weight: 600;
+  font-weight: 300;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--cf-muted);
@@ -773,7 +850,7 @@ body {
 
 .qc-composer-label {
   font-size: var(--cf-font-sm, 10px);
-  font-weight: 600;
+  font-weight: 300;
   color: var(--cf-muted);
   letter-spacing: 0.02em;
 }
@@ -798,8 +875,9 @@ body {
 }
 
 .qc-composer-predicate {
-  font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+  font-family: var(--cf-font);
   font-size: var(--cf-font-md);
+  font-weight: 300;
 }
 
 .qc-composer-actions {
@@ -820,7 +898,7 @@ body {
   color: var(--cf-on-accent, #001a41);
   font-family: inherit;
   font-size: var(--cf-font-md);
-  font-weight: 600;
+  font-weight: 300;
   cursor: pointer;
 }
 
@@ -881,7 +959,7 @@ body {
 
 .qc-kpi-label {
   font-size: var(--cf-font-kpi-label);
-  font-weight: 600;
+  font-weight: 300;
   letter-spacing: 0.01em;
   line-height: 1.1;
   color: var(--cf-muted);
@@ -889,7 +967,7 @@ body {
 
 .qc-kpi-value {
   font-size: var(--cf-font-kpi-value);
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   color: var(--cf-text);
@@ -953,7 +1031,7 @@ body {
   align-items: center;
   gap: 6px;
   font-size: var(--cf-font-sm);
-  font-weight: 600;
+  font-weight: 300;
   letter-spacing: 0.01em;
   color: var(--cf-muted);
 }
@@ -966,12 +1044,12 @@ body {
 
 .qc-outcome-pass {
   color: var(--cf-up);
-  font-weight: 600;
+  font-weight: 300;
 }
 
 .qc-outcome-fail {
   color: var(--cf-down);
-  font-weight: 600;
+  font-weight: 300;
 }
 
 .qc-outcome-skip {
@@ -1058,7 +1136,7 @@ body {
 
 .asf-grid-summary-total {
   color: var(--cf-text);
-  font-weight: 600;
+  font-weight: 300;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1153,7 +1231,7 @@ body {
 .strat-chart-title {
   margin: 0;
   font-size: var(--cf-font-md);
-  font-weight: 600;
+  font-weight: 300;
   letter-spacing: 0.01em;
   color: var(--cf-text);
 }
@@ -1227,7 +1305,7 @@ body {
   color: #fff;
   font-size: var(--cf-font-sm);
   font-family: inherit;
-  font-weight: 600;
+  font-weight: 300;
   letter-spacing: 0.02em;
   cursor: pointer;
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.45);
@@ -1296,8 +1374,22 @@ body {
   border-bottom: 1px solid var(--cf-hairline);
   align-items: flex-start;
   padding-top: 4px;
-  font-weight: 600;
+  font-weight: 300;
   color: var(--cf-text);
+}
+
+/* AG Grid 36 cell-span wrappers (Cohort / PSA / Recovery / Fnma Lag) */
+.ag-theme-cashflow .ag-spanned-cell-wrapper,
+.ag-theme-cashflow .ag-spanned-cell {
+  background-color: var(--cf-grid);
+}
+
+.ag-theme-cashflow .ag-spanned-cell.cf-row-span {
+  align-items: flex-start;
+  padding-top: 4px;
+  font-weight: 300;
+  color: var(--cf-text);
+  border-bottom: 1px solid var(--cf-hairline);
 }
 
 .chart-wrap {
@@ -1364,13 +1456,13 @@ body {
 
 .cohort-kpi-rail .qc-kpi-label {
   flex: 0 1 auto;
-  font-weight: 500;
+  font-weight: 300;
   white-space: nowrap;
 }
 
 .cohort-kpi-rail .qc-kpi-value {
   flex: 1 1 auto;
-  font-weight: 700;
+  font-weight: 600;
   text-align: right;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -1475,13 +1567,13 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Wide desktop: stay dense (~11–12px body/nav/grid); KPIs step up for contrast. */
+/* Wide desktop: Scenarios scale (header = cell); KPIs step up for contrast. */
 @media (min-width: 1280px) {
   :root {
-    --cf-font-body: 12px;
+    --cf-font-body: 10px;
     --cf-font-sm: 10px;
-    --cf-font-md: 11px;
-    --cf-font-lg: 13px;
+    --cf-font-md: 10px;
+    --cf-font-lg: 11px;
     --cf-font-kpi-label: 10px;
     --cf-font-kpi-value: 20px;
     --cf-font-chart: 10px;
@@ -1495,7 +1587,7 @@ body {
 
   .ag-theme-cashflow,
   .ag-theme-cashflow .ag-root-wrapper {
-    --ag-font-size: 11px;
+    --ag-font-size: 10px;
     --ag-header-font-size: 10px;
     --ag-row-height: 22px;
     --ag-header-height: 24px;
@@ -1506,10 +1598,10 @@ body {
 
 @media (min-width: 1600px) {
   :root {
-    --cf-font-body: 12px;
-    --cf-font-sm: 10px;
-    --cf-font-md: 12px;
-    --cf-font-lg: 13px;
+    --cf-font-body: 11px;
+    --cf-font-sm: 11px;
+    --cf-font-md: 11px;
+    --cf-font-lg: 12px;
     --cf-font-kpi-label: 10px;
     --cf-font-kpi-value: 22px;
     --cf-font-chart: 10px;
@@ -1523,7 +1615,7 @@ body {
 
   .ag-theme-cashflow,
   .ag-theme-cashflow .ag-root-wrapper {
-    --ag-font-size: 12px;
+    --ag-font-size: 11px;
     --ag-header-font-size: 11px;
     --ag-row-height: 22px;
     --ag-header-height: 24px;
@@ -1963,7 +2055,7 @@ body {
 .collat-section-title {
   margin: 0;
   font-size: var(--cf-font-md);
-  font-weight: 700;
+  font-weight: 300;
   color: var(--cf-text);
   display: inline-flex;
   align-items: center;
@@ -1984,7 +2076,7 @@ body {
   background: var(--cf-panel);
   color: var(--cf-muted);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 300;
   font-family: var(--cf-font);
   line-height: 1;
   cursor: help;
@@ -2039,7 +2131,7 @@ body {
   color: var(--cf-muted);
   font: inherit;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 300;
   padding: 4px 2px;
   cursor: pointer;
   min-height: 28px;
@@ -2063,7 +2155,7 @@ body {
   min-height: 36px;
   font: inherit;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 300;
   cursor: pointer;
   padding: 0;
 }
@@ -2156,10 +2248,11 @@ body {
   --ia-accent: #fd9d24;
   --ia-hairline: #585858;
   --ia-empty: #1a1a1a;
-  --ia-font: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  --ia-font: var(--cf-font);
   background: var(--ia-bg);
   color: var(--ia-text);
-  font-family: var(--ia-font);
+  font-family: var(--cf-font);
+  font-weight: 300;
   gap: 8px;
 }
 
@@ -2200,7 +2293,7 @@ body {
 
 .ia-kpi-label {
   font-size: var(--cf-font-kpi-label);
-  font-weight: 400;
+  font-weight: 300;
   letter-spacing: 0.02em;
   color: var(--ia-muted);
   line-height: 1.1;
@@ -2208,7 +2301,7 @@ body {
 
 .ia-kpi-value {
   font-size: var(--cf-font-kpi-value);
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   color: var(--ia-accent);
@@ -2275,7 +2368,7 @@ body {
 .ia-panel-title {
   margin: 0;
   font-size: var(--cf-font-md);
-  font-weight: 500;
+  font-weight: 300;
   color: var(--ia-text);
   letter-spacing: 0.01em;
 }
@@ -2342,8 +2435,8 @@ body {
 }
 
 .ia-scorecard-table th {
-  color: var(--ia-muted);
-  font-weight: 500;
+  color: var(--cf-accent);
+  font-weight: 300;
 }
 
 .ia-scorecard-table td.ia-num,
@@ -2397,7 +2490,7 @@ body {
 
 .ia-slider-label strong {
   color: var(--ia-accent);
-  font-weight: 500;
+  font-weight: 300;
   min-width: 3.5em;
 }
 

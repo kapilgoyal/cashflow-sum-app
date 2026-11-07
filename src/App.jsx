@@ -28,7 +28,6 @@ import {
   moneyCol,
   pcaLabel,
   staLabel,
-  withCohortPsaRowSpans,
 } from "./cashflowGrid";
 import { apiUrl } from "./apiBase";
 import {
@@ -39,6 +38,7 @@ import {
   relabelCohortFields,
   remappedKeyedObject,
 } from "./cohortLabels";
+import { COHORT_SPEED_SCHEDULE } from "./scenarioSpeeds";
 import LoanLevelCollateral from "./LoanLevelCollateral";
 import LoanQc from "./LoanQc";
 import InvestorAnalysis from "./InvestorAnalysis";
@@ -909,64 +909,84 @@ export default function App() {
     };
   }, [cohortStats, clusterFilter]);
 
-  const scenarioColumnDefs = useMemo(
-    () => [
+  const scenarioColumnDefs = useMemo(() => {
+    /* Group headers center; numeric leaf headers right; Cohort left. */
+    const speedCol = (field, headerName) => ({
+      field,
+      headerName,
+      flex: 1,
+      minWidth: 64,
+      sortable: false,
+      filter: false,
+      type: "numericColumn",
+      valueFormatter: (p) => fmtInt(p.value),
+      cellClass: "cf-num",
+      headerClass: "cf-grid-header ag-right-aligned-header",
+    });
+
+    return [
       {
         field: "cohort",
-        headerName: "Cohort Name",
-        flex: 1.6,
-        minWidth: 132,
+        headerName: "Cohort",
+        flex: 1.8,
+        minWidth: 140,
         sortable: false,
         filter: false,
-        rowSpan: (p) => Math.max(1, p.data?._cohortSpan || 1),
-        cellClassRules: {
-          "cf-row-span": (p) => (p.data?._cohortSpan || 0) > 1,
-        },
-        valueGetter: (p) =>
-          p.data?._cohortSpan === 0
-            ? ""
-            : cohortLabel(p.data?.cohort) || "",
+        spanHeaderHeight: true,
+        headerClass: "cf-grid-header cf-hdr-left",
+        valueFormatter: (p) => cohortLabel(p.value) || "",
       },
       {
-        field: "psa_multiple",
         headerName: "PSA",
-        width: 64,
-        sortable: false,
-        filter: false,
-        type: "numericColumn",
-        cellClass: "cf-num",
-        rowSpan: (p) => Math.max(1, p.data?._psaSpan || 1),
-        cellClassRules: {
-          "cf-row-span": (p) => (p.data?._psaSpan || 0) > 1,
-          "cf-num": () => true,
-        },
-        valueGetter: (p) =>
-          p.data?._psaSpan === 0 ? "" : p.data?.psa_multiple,
-        valueFormatter: (p) =>
-          p.value === "" || p.value == null ? "" : fmtInt(p.value),
+        marryChildren: true,
+        headerClass: "cf-hdr-group-center",
+        children: [
+          speedCol("psaDown", "Down"),
+          speedCol("psaBase", "Base"),
+          speedCol("psaUp", "Up"),
+        ],
       },
-      intCol("sda_multiple", "SDA", 64),
+      {
+        headerName: "SDA",
+        marryChildren: true,
+        headerClass: "cf-hdr-group-center",
+        children: [
+          speedCol("sdaLow", "Low"),
+          speedCol("sdaBase", "Base"),
+          speedCol("sdaHigh", "High"),
+        ],
+      },
       {
         field: "recovery",
-        headerName: "Recovery Rate",
-        width: 104,
+        headerName: "Wtd Recovery Rate",
+        flex: 1.1,
+        minWidth: 96,
+        sortable: false,
+        filter: false,
+        spanHeaderHeight: true,
+        type: "numericColumn",
+        headerClass: "cf-grid-header ag-right-aligned-header",
         valueFormatter: (p) => fmtPct(p.value, 1),
         cellClass: "cf-num",
       },
       {
         field: "lag",
-        headerName: "Fnma Lag",
-        width: 84,
+        headerName: "Wtd FNMA Lag (Month)",
+        flex: 1.2,
+        minWidth: 110,
+        sortable: false,
+        filter: false,
+        spanHeaderHeight: true,
+        type: "numericColumn",
+        headerClass: "cf-grid-header ag-right-aligned-header",
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
             ? ""
-            : `${Number(p.value).toFixed(0)} Mo`,
+            : Number(p.value).toFixed(1),
         cellClass: "cf-num",
       },
-      { field: "scenario_id", headerName: "ID", hide: true },
-    ],
-    []
-  );
+    ];
+  }, []);
 
   const aggColumnDefs = useMemo(
     () => [
@@ -1003,7 +1023,17 @@ export default function App() {
       moneyCol("realized_loss", "Realized Loss", 100),
       moneyCol("total_cash", "Total Cash", 100),
       moneyCol("ending_balance", "End UPB", 110),
-      intCol("avg_used_recovery_lag_months", "Avg Used Lag", 100),
+      {
+        field: "avg_used_recovery_lag_months",
+        headerName: "Wtd FNMA Lag",
+        width: 100,
+        type: "numericColumn",
+        valueFormatter: (p) =>
+          p.value == null || Number.isNaN(Number(p.value))
+            ? ""
+            : Number(p.value).toFixed(1),
+        cellClass: "cf-num",
+      },
     ],
     []
   );
@@ -1159,43 +1189,24 @@ export default function App() {
     []
   );
 
-  /** Full 27-cell grid — never cohort-filtered; Scenarios is a standalone view. */
+  /**
+   * Wide cohort speed schedule + Recovery / FNMA Lag from underlying loans.
+   * Recovery = UPB-weighted loan Urban/severity (or cohort fallback when no MI);
+   * Lag = UPB-weighted FNMA state lag — never scenario-grid constants.
+   */
   const scenarioRows = useMemo(() => {
     const byCohort = Object.fromEntries(
       (cohortStats || []).map((r) => [cohortLabel(r.cohort), r])
     );
-    const base = (
-      scenarios.length
-        ? scenarios
-        : aggregates.map((a) => ({
-            scenario_id: a.scenario_id,
-            cohort: a.cohort,
-            psa_multiple: a.psa_multiple,
-            sda_multiple: a.sda_multiple,
-            pca_level: a.pca_level,
-            sta_level: a.sta_level,
-            recovery_rate: a.recovery_rate,
-            recovery_period_months: a.recovery_period_months,
-            recovery_lag_months: a.recovery_lag_months,
-            avg_used_recovery_lag_months: a.avg_used_recovery_lag_months,
-          }))
-    ).map((s) => {
-      const stats = byCohort[cohortLabel(s.cohort)] || {};
-      const recovery = stats.recovery ?? s.recovery_rate;
-      const lag =
-        stats.lag ??
-        s.avg_used_recovery_lag_months ??
-        s.recovery_lag_months ??
-        null;
+    return COHORT_SPEED_SCHEDULE.map((row) => {
+      const stats = byCohort[row.cohort] || {};
       return {
-        ...s,
-        cohort: cohortLabel(s.cohort),
-        recovery,
-        lag,
+        ...row,
+        recovery: stats.recovery ?? null,
+        lag: stats.lag ?? null,
       };
     });
-    return withCohortPsaRowSpans(base);
-  }, [scenarios, aggregates, cohortStats]);
+  }, [cohortStats]);
 
   const scatterByCluster = useMemo(() => {
     const groups = Object.fromEntries(CLUSTER_ORDER.map((c) => [c, []]));
@@ -1424,9 +1435,10 @@ export default function App() {
   }
 
   const axisTick = {
-    fill: "#4A5F7A",
-    fontSize: 10,
+    fill: "#808080",
+    fontSize: 9,
     fontFamily: FONT,
+    fontWeight: 300,
   };
 
   const scenarioDisplayName = useCallback(
@@ -1849,19 +1861,19 @@ export default function App() {
           )}
 
           {pane === "scenarios" && (
-            <section className="section section-fill">
-              <div className="section-head">
-                <p className="section-meta">27 Cells</p>
-              </div>
+            <section className="section section-fill section-scenarios">
               <div className="scenario-layout">
                 <DataGrid
                   rowData={scenarioRows}
                   columnDefs={scenarioColumnDefs}
-                  getRowId={(p) => String(p.data.scenario_id)}
+                  getRowId={(p) => String(p.data.cohort)}
                   heightClass="grid-wrap-fill scenario-grid"
                   exportName="scenarios"
                   showToolbar={false}
-                  gridProps={{ suppressRowTransform: true }}
+                  themeParams={{
+                    headerHeight: 20,
+                    groupHeaderHeight: 20,
+                  }}
                 />
                 <ScenarioSpeedCharts />
               </div>

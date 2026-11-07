@@ -1207,6 +1207,7 @@ class AsfTapeRepository:
                 "avg_remaining_term": (slot["term_sum"] / slot["term_w"]) if slot["term_w"] else None,
                 "avg_dti": (slot["dti_sum"] / slot["dti_w"]) if slot["dti_w"] else None,
             }
+            # Always UPB-weighted (never loan-count simple average).
             if slot["rec_upb"] > 0:
                 row["recovery"] = slot["rec_num"] / slot["rec_upb"]
                 row["lag"] = slot["lag_num"] / slot["rec_upb"]
