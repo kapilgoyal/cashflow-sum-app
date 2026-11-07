@@ -215,40 +215,225 @@ class AsfTapeRepository:
                 cur.execute(QC_CHECKS_TABLE_SQL)
                 for row in rows:
                     cur.execute(sql, row)
-                # Drop retired demo / obsolete check defs + their results.
+                # Drop retired built-in defs only — never wipe source='custom'.
                 if keep_ids:
                     cur.execute(
-                        "DELETE FROM public.qc_results "
-                        "WHERE check_id <> ALL(%s)",
+                        """
+                        DELETE FROM public.qc_results
+                        WHERE check_id IN (
+                            SELECT check_id FROM public.qc_checks
+                            WHERE source <> 'custom'
+                              AND check_id <> ALL(%s)
+                        )
+                        """,
                         (list(keep_ids),),
                     )
                     cur.execute(
-                        "DELETE FROM public.qc_checks "
-                        "WHERE check_id <> ALL(%s)",
+                        """
+                        DELETE FROM public.qc_checks
+                        WHERE source <> 'custom'
+                          AND check_id <> ALL(%s)
+                        """,
                         (list(keep_ids),),
                     )
             conn.commit()
         return len(rows)
+
+    def list_custom_checks(self) -> list[dict[str, Any]]:
+        sql = """
+            SELECT
+                check_id, source, edit_number, nl_description, sql_predicate,
+                required_columns, status_mode, skip_reason, updated_at
+            FROM public.qc_checks
+            WHERE source = 'custom'
+            ORDER BY updated_at DESC, check_id
+        """
+        with connect(self.require_url(), connect_timeout=30) as conn:
+            with conn.cursor() as cur:
+                cur.execute(QC_CHECKS_TABLE_SQL)
+                cur.execute(sql)
+                cols = [d.name for d in cur.description]
+                out = []
+                for tup in cur.fetchall():
+                    row = dict(zip(cols, tup))
+                    if isinstance(row.get("updated_at"), datetime):
+                        row["updated_at"] = row["updated_at"].isoformat()
+                    if row.get("required_columns") is not None:
+                        row["required_columns"] = list(row["required_columns"])
+                    out.append(row)
+                return out
+
+    def get_check(self, check_id: str) -> dict[str, Any] | None:
+        builtin = CHECKS_BY_ID.get(check_id)
+        if builtin is not None:
+            return {
+                "check_id": builtin.check_id,
+                "source": builtin.source,
+                "edit_number": builtin.edit_number,
+                "nl_description": builtin.nl_description,
+                "sql_predicate": builtin.sql_predicate,
+                "required_columns": list(builtin.required_columns),
+                "status_mode": (
+                    "skipped" if builtin.sql_predicate is None else "active"
+                ),
+                "skip_reason": builtin.skip_reason,
+                "rule_name": builtin.rule_name,
+            }
+        sql = """
+            SELECT
+                check_id, source, edit_number, nl_description, sql_predicate,
+                required_columns, status_mode, skip_reason, updated_at
+            FROM public.qc_checks
+            WHERE check_id = %s
+        """
+        with connect(self.require_url(), connect_timeout=30) as conn:
+            with conn.cursor() as cur:
+                cur.execute(QC_CHECKS_TABLE_SQL)
+                cur.execute(sql, (check_id,))
+                tup = cur.fetchone()
+                if not tup:
+                    return None
+                cols = [d.name for d in cur.description]
+                row = dict(zip(cols, tup))
+                if isinstance(row.get("updated_at"), datetime):
+                    row["updated_at"] = row["updated_at"].isoformat()
+                if row.get("required_columns") is not None:
+                    row["required_columns"] = list(row["required_columns"])
+                row["rule_name"] = (
+                    f"NQM-{row['edit_number']}"
+                    if row.get("edit_number") is not None
+                    else "Custom"
+                )
+                return row
+
+    def save_custom_check(
+        self,
+        *,
+        nl_description: str,
+        sql_predicate: str,
+        required_columns: list[str] | None = None,
+        check_id: str | None = None,
+        skip_reason: str | None = None,
+        status_mode: str = "active",
+    ) -> dict[str, Any]:
+        """Insert or update a Groq/custom English rule (source=custom)."""
+        from app.services.qc_predicate import validate_predicate
+
+        cleaned, cols = validate_predicate(sql_predicate)
+        req = list(required_columns or cols)
+        cid = (check_id or "").strip() or f"custom_{uuid.uuid4().hex[:10]}"
+        if check_id:
+            existing = self.get_check(cid)
+            if existing and existing.get("source") not in (None, "custom"):
+                raise ValueError("cannot overwrite a built-in QC check")
+        row = {
+            "check_id": cid,
+            "source": "custom",
+            "edit_number": None,
+            "nl_description": (nl_description or "").strip(),
+            "sql_predicate": cleaned,
+            "required_columns": req,
+            "status_mode": status_mode,
+            "skip_reason": skip_reason,
+        }
+        if not row["nl_description"]:
+            raise ValueError("nl_description is required")
+        sql = """
+            INSERT INTO public.qc_checks (
+                check_id, source, edit_number, nl_description, sql_predicate,
+                required_columns, status_mode, skip_reason, updated_at
+            ) VALUES (
+                %(check_id)s, %(source)s, %(edit_number)s, %(nl_description)s,
+                %(sql_predicate)s, %(required_columns)s, %(status_mode)s,
+                %(skip_reason)s, now()
+            )
+            ON CONFLICT (check_id) DO UPDATE SET
+                source = 'custom',
+                edit_number = NULL,
+                nl_description = EXCLUDED.nl_description,
+                sql_predicate = EXCLUDED.sql_predicate,
+                required_columns = EXCLUDED.required_columns,
+                status_mode = EXCLUDED.status_mode,
+                skip_reason = EXCLUDED.skip_reason,
+                updated_at = now()
+        """
+        with connect(self.require_url(), connect_timeout=30) as conn:
+            with conn.cursor() as cur:
+                cur.execute(QC_CHECKS_TABLE_SQL)
+                cur.execute(sql, row)
+            conn.commit()
+        saved = self.get_check(cid)
+        assert saved is not None
+        return saved
+
+    def delete_custom_check(self, check_id: str) -> bool:
+        with connect(self.require_url(), connect_timeout=30) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT source FROM public.qc_checks WHERE check_id = %s",
+                    (check_id,),
+                )
+                tup = cur.fetchone()
+                if not tup:
+                    return False
+                if tup[0] != "custom":
+                    raise ValueError("cannot delete a built-in QC check")
+                cur.execute(
+                    "DELETE FROM public.qc_results WHERE check_id = %s",
+                    (check_id,),
+                )
+                cur.execute(
+                    "DELETE FROM public.qc_checks WHERE check_id = %s",
+                    (check_id,),
+                )
+            conn.commit()
+        return True
+
+    def _checks_for_run(self) -> list[dict[str, Any]]:
+        """Built-in ALL_CHECKS plus persisted custom rules."""
+        out: list[dict[str, Any]] = []
+        for check in ALL_CHECKS:
+            out.append(
+                {
+                    "check_id": check.check_id,
+                    "sql_predicate": check.sql_predicate,
+                    "required_columns": list(check.required_columns),
+                    "skip_reason": check.skip_reason,
+                }
+            )
+        for custom in self.list_custom_checks():
+            out.append(
+                {
+                    "check_id": custom["check_id"],
+                    "sql_predicate": custom.get("sql_predicate"),
+                    "required_columns": list(custom.get("required_columns") or []),
+                    "skip_reason": custom.get("skip_reason"),
+                }
+            )
+        return out
 
     def run_qc(self, run_id: str | None = None) -> dict[str, Any]:
         run_id = run_id or uuid.uuid4().hex[:12]
         cols = self.tape_columns()
         tape_n = self.count_tape()
         results: list[dict[str, Any]] = []
+        checks = self._checks_for_run()
 
         with connect(self.require_url(), connect_timeout=120) as conn:
             with conn.cursor() as cur:
                 cur.execute(QC_RESULTS_TABLE_SQL)
-                for check in ALL_CHECKS:
-                    missing = [c for c in check.required_columns if c not in cols]
-                    if check.sql_predicate is None or missing:
-                        detail = check.skip_reason or (
+                for check in checks:
+                    required = list(check.get("required_columns") or [])
+                    missing = [c for c in required if c not in cols]
+                    predicate = check.get("sql_predicate")
+                    if predicate is None or missing:
+                        detail = check.get("skip_reason") or (
                             f"asf_tape lacks required field(s): {', '.join(missing)}"
                             if missing
                             else "no SQL predicate"
                         )
                         row = {
-                            "check_id": check.check_id,
+                            "check_id": check["check_id"],
                             "run_id": run_id,
                             "outcome": "skipped",
                             "tape_row_count": tape_n,
@@ -260,14 +445,14 @@ class AsfTapeRepository:
                     else:
                         sql = (
                             f"SELECT COUNT(*) FROM public.asf_tape "
-                            f"WHERE {check.sql_predicate}"
+                            f"WHERE {predicate}"
                         )
                         cur.execute(sql)
                         fail_n = int(cur.fetchone()[0])
                         pass_n = tape_n - fail_n
                         outcome = "fail" if fail_n > 0 else "pass"
                         row = {
-                            "check_id": check.check_id,
+                            "check_id": check["check_id"],
                             "run_id": run_id,
                             "outcome": outcome,
                             "tape_row_count": tape_n,
@@ -308,7 +493,8 @@ class AsfTapeRepository:
             WITH latest AS (
                 SELECT run_id
                 FROM public.qc_results
-                ORDER BY ran_at DESC
+                GROUP BY run_id
+                ORDER BY MAX(ran_at) DESC, run_id DESC
                 LIMIT 1
             )
             SELECT
@@ -334,7 +520,12 @@ class AsfTapeRepository:
              AND r.run_id = (SELECT run_id FROM latest)
             WHERE c.source <> 'demo'
             ORDER BY
-                CASE c.source WHEN 'foundation' THEN 0 ELSE 1 END,
+                CASE c.source
+                    WHEN 'foundation' THEN 0
+                    WHEN 'absolute_basis' THEN 1
+                    WHEN 'custom' THEN 2
+                    ELSE 3
+                END,
                 c.edit_number NULLS FIRST,
                 c.check_id
         """
@@ -356,7 +547,7 @@ class AsfTapeRepository:
                         else (
                             f"NQM-{row['edit_number']}"
                             if row.get("edit_number") is not None
-                            else row["check_id"]
+                            else "Custom"
                         )
                     )
                     out.append(row)
@@ -370,17 +561,23 @@ class AsfTapeRepository:
         limit: int = 2000,
     ) -> tuple[list[dict[str, Any]], int, dict[str, Any]]:
         """Loans matching a QC check predicate (default: failing rows)."""
-        check = CHECKS_BY_ID.get(check_id)
+        check = self.get_check(check_id)
         if check is None:
             raise KeyError(f"unknown check_id: {check_id}")
         meta = {
-            "check_id": check.check_id,
-            "rule_name": check.rule_name,
-            "nl_description": check.nl_description,
+            "check_id": check["check_id"],
+            "rule_name": check.get("rule_name") or "Custom",
+            "nl_description": check.get("nl_description"),
             "failing_only": failing_only,
+            "source": check.get("source"),
         }
-        if not check.sql_predicate:
-            return [], 0, {**meta, "skipped": True, "skip_reason": check.skip_reason}
+        predicate = check.get("sql_predicate")
+        if not predicate:
+            return [], 0, {
+                **meta,
+                "skipped": True,
+                "skip_reason": check.get("skip_reason"),
+            }
 
         cols = (
             "loan_id",
@@ -390,6 +587,7 @@ class AsfTapeRepository:
             "original_ltv",
             "original_cltv",
             "state",
+            "postal_code",
             "documentation_type",
             "property_type",
             "occupancy",
@@ -405,7 +603,7 @@ class AsfTapeRepository:
         if "loan_id" not in select_cols:
             select_cols = ("loan_id",) + select_cols
         col_sql = ", ".join(select_cols)
-        where = check.sql_predicate if failing_only else f"NOT ({check.sql_predicate})"
+        where = predicate if failing_only else f"NOT ({predicate})"
         # When failing_only=False and we want "passing", NOT (fail predicate).
         # For "all loans for rule context" callers can pass failing_only=True only.
         count_sql = f"SELECT COUNT(*) FROM public.asf_tape WHERE {where}"
