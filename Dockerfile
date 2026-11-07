@@ -18,7 +18,8 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PORT=8000
+    PORT=8000 \
+    DATABASE_URL=sqlite:////data/cashflow.db
 
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
@@ -28,6 +29,10 @@ COPY data ./data
 COPY public ./public
 COPY api/README.md ./api/README.md
 COPY --from=frontend /ui/dist ./dist
+
+# Prototype SQLite file. Container restart / new revision wipes /data unless a
+# volume is mounted there. Override DATABASE_URL with postgres://… for Neon.
+RUN mkdir -p /data
 
 EXPOSE 8000
 # Shell-form CMD so ${PORT} expands (exec-form JSON does not).

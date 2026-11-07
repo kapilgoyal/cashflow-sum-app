@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.repositories.connect import connect, source_label
 from app.repositories.env_load import load_dotenv
 from app.repositories.neon_cf_repository import NeonCfRepository
 
@@ -41,7 +42,11 @@ def neon_scenarios() -> dict:
         rows = repo.list_scenarios()
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    return {"n": len(rows), "source": "neon.securitization_scenarios", "scenarios": rows}
+    return {
+        "n": len(rows),
+        "source": source_label("securitization_scenarios", repo.url),
+        "scenarios": rows,
+    }
 
 
 @router.get("/cashflows/month1")
@@ -55,9 +60,7 @@ def neon_month1(
         rows = repo.list_month1_enriched(
             scenario_id=scenario_id, limit=limit, offset=offset
         )
-        import psycopg
-
-        with psycopg.connect(repo.require_url(), connect_timeout=30) as conn:
+        with connect(repo.require_url(), connect_timeout=30) as conn:
             with conn.cursor() as cur:
                 if scenario_id:
                     cur.execute(
@@ -78,7 +81,7 @@ def neon_month1(
         "n": len(rows),
         "total": total,
         "scenario_id": scenario_id,
-        "source": "neon.loan_cashflows_month1_enriched",
+        "source": source_label("loan_cashflows_month1_enriched", repo.url),
         "rows": rows,
     }
 
@@ -99,6 +102,6 @@ def neon_loan_month(
         "n": len(rows),
         "loan_id": loan_id,
         "scenario_id": scenario_id,
-        "source": "neon.loan_month_cf_enriched",
+        "source": source_label("loan_month_cf_enriched", repo.url),
         "rows": rows,
     }

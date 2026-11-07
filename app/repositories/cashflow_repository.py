@@ -1,4 +1,4 @@
-"""Persist loan-level month-1 cash flows: Neon if DATABASE_URL, else SQLite + JSON.
+"""Persist loan-level month-1 cash flows: DATABASE_URL (sqlite or Neon) + JSON.
 
 Neon fact table is normalized (scenario_id FK + CF measures only). Scenario
 definition fields come from securitization_scenarios via the enriched view.
@@ -7,7 +7,6 @@ definition fields come from securitization_scenarios via the enriched view.
 from __future__ import annotations
 
 import json
-import os
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -18,6 +17,7 @@ from app.repositories.cashflow_schema import (
     LOAN_CF_MONTH1_TABLE_SQL,
     MONTH1_FACT_COLS,
 )
+from app.repositories.connect import connect, is_postgres_url
 from app.repositories.scenario_repository import CREATE_SQL as SCENARIO_SQL
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -32,11 +32,9 @@ CREATE_SQL = LOAN_CF_MONTH1_TABLE_SQL
 
 
 def _resolve_db_url() -> str | None:
-    return (
-        os.environ.get("DATABASE_URL_UNPOOLED")
-        or os.environ.get("DATABASE_URL")
-        or os.environ.get("NEON_DATABASE_URL")
-    )
+    from app.repositories.connect import resolve_database_url
+
+    return resolve_database_url()
 
 
 def _fact_tuple(r: dict[str, Any]) -> tuple:
@@ -110,6 +108,8 @@ class CashflowRepository:
         self.agg_json_path.write_text(
             json.dumps(agg_payload, indent=2), encoding="utf-8"
         )
+        import pandas as pd
+
         pd.DataFrame(aggregates).to_csv(self.agg_csv_path, index=False)
         status["json"] = {
             "loan_json": str(self.loan_json_path),
@@ -129,7 +129,7 @@ class CashflowRepository:
             status["neon"] = "skipped: DATABASE_URL not set (using SQLite/local JSON)"
         else:
             try:
-                status["neon"] = self._save_neon(url, loan_rows)
+                status["neon"] = self._save_database(url, loan_rows)
             except Exception as exc:  # noqa: BLE001
                 status["neon"] = f"skipped: DB unreachable ({type(exc).__name__}: {exc})"
 
@@ -176,16 +176,11 @@ class CashflowRepository:
             conn.commit()
         return f"wrote {len(loan_rows)} rows → {self.sqlite_path}"
 
-    def _save_neon(self, url: str, loan_rows: list[dict[str, Any]]) -> str:
-        try:
-            import psycopg
-            from psycopg import sql
-        except ImportError:
-            return "skipped: psycopg not installed"
-
-        with psycopg.connect(url, connect_timeout=30) as conn:
+    def _save_database(self, url: str, loan_rows: list[dict[str, Any]]) -> str:
+        with connect(url, connect_timeout=30) as conn:
             with conn.cursor() as cur:
                 cur.execute(SCENARIO_SQL)
+                cur.execute(LOAN_CF_MONTH1_TABLE_SQL)
                 cur.execute(
                     """
                     SELECT column_name FROM information_schema.columns
@@ -193,7 +188,9 @@ class CashflowRepository:
                     """
                 )
                 cols = {r[0] for r in cur.fetchall()}
-                if not cols or "cohort" in cols or "psa_multiple" in cols:
+                if is_postgres_url(url) and (
+                    not cols or "cohort" in cols or "psa_multiple" in cols
+                ):
                     raise RuntimeError(
                         "loan_cashflows_month1 is missing or denormalized — "
                         "run scripts/migrate_normalize_loan_cf_month1.py first"
@@ -203,15 +200,21 @@ class CashflowRepository:
                     if s:
                         cur.execute(s)
                 cur.execute("DELETE FROM loan_cashflows_month1")
-                copy = sql.SQL(
-                    "COPY loan_cashflows_month1 ({}) FROM STDIN"
-                ).format(sql.SQL(", ").join(map(sql.Identifier, MONTH1_FACT_COLS)))
-                with cur.copy(copy) as copy_writer:
+                copy_sql = (
+                    "COPY loan_cashflows_month1 ("
+                    + ", ".join(MONTH1_FACT_COLS)
+                    + ") FROM STDIN"
+                )
+                with cur.copy(copy_sql) as copy_writer:
                     for r in loan_rows:
                         copy_writer.write_row(_fact_tuple(r))
                 cur.execute(LOAN_CF_MONTH1_ENRICHED_VIEW_SQL)
             conn.commit()
-        return f"seeded {len(loan_rows)} normalized rows into loan_cashflows_month1 (Neon)"
+        kind = "Neon" if is_postgres_url(url) else "SQLite"
+        return (
+            f"seeded {len(loan_rows)} normalized rows into "
+            f"loan_cashflows_month1 ({kind})"
+        )
 
     def load_aggregates(self) -> dict[str, Any] | None:
         if not self.agg_json_path.exists():

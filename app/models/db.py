@@ -1,21 +1,24 @@
-"""DATABASE_URL / Neon engine factory (stub — no eager connect)."""
+"""DATABASE_URL engine factory — sqlite by default, Postgres/Neon when URL is postgres."""
 
 from __future__ import annotations
 
-import os
 from functools import lru_cache
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-# Neon / Postgres; leave unset for offline scaffold work.
+from app.repositories.connect import (
+    dialect_name,
+    is_postgres_url,
+    path_to_sqlite_url,
+    provider_hint,
+    resolve_database_url,
+    sqlite_path_from_url,
+)
+
 DATABASE_URL_ENV = "DATABASE_URL"
 NEON_DATABASE_URL_ENV = "NEON_DATABASE_URL"
-
-
-def resolve_database_url() -> str | None:
-    return os.environ.get(DATABASE_URL_ENV) or os.environ.get(NEON_DATABASE_URL_ENV)
 
 
 @lru_cache(maxsize=1)
@@ -24,11 +27,17 @@ def get_engine(url: str | None = None) -> Engine | None:
     resolved = url or resolve_database_url()
     if not resolved:
         return None
-    # Neon-friendly: require SSL when using postgres schemes without query params.
     connect_args: dict = {}
-    if resolved.startswith("postgres") and "sslmode=" not in resolved:
-        connect_args["sslmode"] = "require"
-    return create_engine(resolved, pool_pre_ping=True, connect_args=connect_args)
+    sa_url = resolved
+    if is_postgres_url(resolved):
+        if "sslmode=" not in resolved:
+            connect_args["sslmode"] = "require"
+    else:
+        path = sqlite_path_from_url(resolved)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        sa_url = path_to_sqlite_url(path)
+        connect_args["check_same_thread"] = False
+    return create_engine(sa_url, pool_pre_ping=True, connect_args=connect_args)
 
 
 def get_session_factory(url: str | None = None) -> sessionmaker[Session] | None:
@@ -41,9 +50,21 @@ def get_session_factory(url: str | None = None) -> sessionmaker[Session] | None:
 def session_status() -> dict:
     """Health/diagnostics helper — does not open a connection unless URL set."""
     url = resolve_database_url()
-    return {
-        "configured": bool(url),
-        "dialect": "postgresql" if url else None,
-        "provider_hint": "neon" if url and "neon.tech" in url else ("postgres" if url else None),
-        "note": "stub: call repositories only when DATABASE_URL is set",
+    hint = provider_hint(url)
+    out = {
+        "configured": True,
+        "dialect": dialect_name(url),
+        "provider_hint": hint,
+        "note": (
+            "postgres/Neon via DATABASE_URL"
+            if is_postgres_url(url)
+            else "prototype sqlite file (set DATABASE_URL=postgres://… for Neon)"
+        ),
     }
+    if not is_postgres_url(url):
+        out["sqlite_path"] = str(sqlite_path_from_url(url))
+        out["sqlite_url_examples"] = [
+            "sqlite:////data/cashflow.db",
+            "sqlite:///./data/cashflow.db",
+        ]
+    return out
