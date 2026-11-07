@@ -129,20 +129,12 @@ export default function LoanQc({ onDrillLoan }) {
   }, [qcRows]);
 
   const qcSummary = useMemo(() => {
-    const pass = qcActiveRows.filter((r) => r.outcome === "pass").length;
-    const failRules = qcActiveRows.filter((r) => r.outcome === "fail").length;
     const checks = qcActiveRows.length;
     const failedLoans = qcActiveRows.reduce(
       (s, r) => s + (Number(r.fail_count) || 0),
       0
     );
-    return {
-      pass,
-      fail: failRules,
-      checks,
-      failedLoans,
-      total: checks,
-    };
+    return { checks, failedLoans };
   }, [qcActiveRows]);
 
   const qcFilteredRows = qcActiveRows;
