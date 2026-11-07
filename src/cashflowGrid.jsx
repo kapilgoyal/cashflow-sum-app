@@ -161,7 +161,7 @@ export function staLabel(row) {
   return row.sta_level || STA[row.sda_multiple] || row.sda_multiple || "";
 }
 
-/** PSA×SDA axis label used for Scenario column merge. */
+/** PSA×SDA axis label (legacy helper for CF drill labels). */
 export function scenarioAxisLabel(row) {
   if (!row) return "";
   const psa = row.psa_multiple ?? "";
@@ -175,37 +175,52 @@ export function scenarioAxisKey(row) {
 }
 
 /**
- * Sort by PSA→SDA→cohort and stamp `_scenarioLabel` / `_scenarioSpan`
- * so adjacent same-axis rows can rowspan the Scenario column.
+ * Stamp contiguous rowSpans for a key field.
+ * First cell of a run gets span N; followers get 0 (blank + no rowspan).
  */
-export function withScenarioRowSpans(rows) {
+function stampRowSpans(rows, keyFn, spanField) {
+  let i = 0;
+  while (i < rows.length) {
+    const key = keyFn(rows[i]);
+    let j = i + 1;
+    while (j < rows.length && keyFn(rows[j]) === key) j += 1;
+    rows[i][spanField] = j - i;
+    for (let k = i + 1; k < j; k += 1) rows[k][spanField] = 0;
+    i = j;
+  }
+}
+
+/**
+ * Sort Cohort → PSA → SDA and stamp `_cohortSpan` / `_psaSpan` for
+ * Bloomberg-style merged cells (no redundant Scenario axis column).
+ */
+export function withCohortPsaRowSpans(rows) {
   const sorted = [...(rows || [])].sort((a, b) => {
+    const ca = String(a.cohort || "");
+    const cb = String(b.cohort || "");
+    if (ca !== cb) return ca.localeCompare(cb);
     const pa = Number(a.psa_multiple) || 0;
     const pb = Number(b.psa_multiple) || 0;
     if (pa !== pb) return pa - pb;
-    const sa = Number(a.sda_multiple) || 0;
-    const sb = Number(b.sda_multiple) || 0;
-    if (sa !== sb) return sa - sb;
-    return String(a.cohort || "").localeCompare(String(b.cohort || ""));
+    return (Number(a.sda_multiple) || 0) - (Number(b.sda_multiple) || 0);
   });
   const out = sorted.map((r) => ({
     ...r,
-    _scenarioLabel: scenarioAxisLabel(r),
-    _scenarioSpan: 1,
+    _cohortSpan: 1,
+    _psaSpan: 1,
   }));
-  let i = 0;
-  while (i < out.length) {
-    let j = i + 1;
-    while (j < out.length && out[j]._scenarioLabel === out[i]._scenarioLabel) {
-      j += 1;
-    }
-    out[i]._scenarioSpan = j - i;
-    for (let k = i + 1; k < j; k += 1) {
-      out[k]._scenarioSpan = 0;
-    }
-    i = j;
-  }
+  stampRowSpans(out, (r) => String(r.cohort || ""), "_cohortSpan");
+  stampRowSpans(
+    out,
+    (r) => `${r.cohort || ""}|${r.psa_multiple ?? ""}`,
+    "_psaSpan"
+  );
   return out;
+}
+
+/** @deprecated Prefer withCohortPsaRowSpans (cohort-first grid). */
+export function withScenarioRowSpans(rows) {
+  return withCohortPsaRowSpans(rows);
 }
 
 export const sharedDefaultColDef = {
@@ -566,7 +581,7 @@ export function DataGrid({
           columnTypes={sharedColTypes}
           suppressCellFocus
           animateRows={false}
-          rowSelection="single"
+          rowSelection={{ mode: "singleRow", checkboxes: false }}
           enableCellTextSelection
           ensureDomOrder
           enableBrowserTooltips
