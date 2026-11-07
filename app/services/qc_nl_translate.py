@@ -13,31 +13,35 @@ import urllib.error
 import urllib.request
 from typing import Any
 
-from app.repositories.asf_tape_schema import ASF_TAPE_COLUMNS
 from app.repositories.env_load import load_dotenv
 from app.services.qc_predicate import validate_predicate
+from app.services.qc_tape_schema import schema_prompt_block
 
 GROQ_MODEL = "llama-3.1-8b-instant"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-_COLUMN_LIST = ", ".join(ASF_TAPE_COLUMNS)
+_SCHEMA = schema_prompt_block()
 
 _SYSTEM = f"""You translate English loan-tape QC checks into SQL WHERE fragments.
 
-Target table: public.asf_tape
-Allowed columns only: {_COLUMN_LIST}
+{_SCHEMA}
 
 Rules:
 - Return JSON only: {{"sql_predicate": "...", "required_columns": ["col", ...]}}
-- sql_predicate identifies FAILING rows (true = fail the check).
-- Use only the allowed columns. No semicolons, comments, or subqueries.
-- Prefer IS NULL / comparisons / COALESCE / length / regexp_replace / abs.
+- sql_predicate identifies FAILING rows (boolean true = the loan fails the check).
+- Use only the columns listed above. No semicolons, comments, JOINs, or subqueries.
+- Prefer IS NULL / comparisons / COALESCE / length / regexp_replace / abs / trim.
 - Rates and LTV/CLTV/DTI are decimals (0.80 = 80%). FICO is integer 300–850.
+- Example: "FICO below 620" → original_fico IS NOT NULL AND original_fico < 620
+- Example: "LTV above 80%" → original_ltv IS NOT NULL AND original_ltv > 0.80
 """
 
 
 def groq_api_key() -> str | None:
-    load_dotenv()
+    # Always merge .env / .env.local so a blank process env cannot hide the key.
+    load_dotenv(overwrite=False)
+    if not (os.environ.get("GROQ_API_KEY") or "").strip():
+        load_dotenv(overwrite=True)
     key = (os.environ.get("GROQ_API_KEY") or "").strip()
     return key or None
 

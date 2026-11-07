@@ -23,9 +23,16 @@ def load_dotenv(overwrite: bool = False) -> list[str]:
             key = key.strip()
             if not key:
                 continue
-            if not overwrite and key in os.environ:
+            cleaned = val.strip().strip('"').strip("'")
+            # Treat missing/blank env as unset so .env can fill GROQ_API_KEY etc.
+            existing = os.environ.get(key)
+            if (
+                not overwrite
+                and existing is not None
+                and str(existing).strip() != ""
+            ):
                 continue
-            os.environ[key] = val.strip().strip('"').strip("'")
+            os.environ[key] = cleaned
             loaded.append(key)
     return loaded
 

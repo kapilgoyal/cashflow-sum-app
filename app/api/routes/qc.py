@@ -20,6 +20,15 @@ class TranslateBody(BaseModel):
     english: str = Field(..., min_length=1, max_length=2000)
 
 
+class PreviewBody(BaseModel):
+    """Draft test: translate if needed, run against tape, do not save."""
+
+    english: str = Field(..., min_length=1, max_length=2000)
+    sql_predicate: str | None = Field(default=None, max_length=2000)
+    failing_only: bool = True
+    limit: int = Field(default=2000, ge=1, le=5000)
+
+
 class CustomCheckBody(BaseModel):
     english: str = Field(..., min_length=1, max_length=2000)
     sql_predicate: str | None = Field(default=None, max_length=2000)
@@ -50,6 +59,8 @@ def _enrich_results(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             row["status_label"] = "Skip"
         else:
             row["status_label"] = ""
+        if not row.get("scope"):
+            row["scope"] = "Custom" if row.get("source") == "custom" else "Global"
     return rows
 
 
@@ -130,6 +141,57 @@ def qc_translate(body: TranslateBody) -> dict:
             status_code=400, detail=result.get("error") or "translate failed"
         )
     return {"ok": True, **result}
+
+
+@router.post("/preview")
+def qc_preview(body: PreviewBody) -> dict:
+    """Translate (if needed) and test a draft rule at loan level — no save."""
+    repo = _repo()
+    predicate = (body.sql_predicate or "").strip() or None
+    mode = "provided"
+    warning = None
+    model = None
+    required: list[str] = []
+
+    if predicate:
+        try:
+            predicate, required = validate_predicate(predicate)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    else:
+        translated = translate_english(body.english)
+        if not translated.get("ok") or not translated.get("sql_predicate"):
+            raise HTTPException(
+                status_code=400,
+                detail=translated.get("error") or "translate failed",
+            )
+        predicate = translated["sql_predicate"]
+        required = list(translated.get("required_columns") or [])
+        mode = translated.get("mode") or "mock"
+        warning = translated.get("warning")
+        model = translated.get("model")
+
+    try:
+        preview = repo.preview_predicate(
+            predicate,
+            failing_only=body.failing_only,
+            limit=body.limit,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    return {
+        "ok": bool(preview.get("ok")),
+        "english": body.english.strip(),
+        "mode": mode,
+        "model": model,
+        "warning": warning,
+        "groq_configured": bool(groq_api_key()),
+        "required_columns": required or preview.get("required_columns") or [],
+        **preview,
+    }
 
 
 @router.get("/checks")

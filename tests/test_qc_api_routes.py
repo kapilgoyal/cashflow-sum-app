@@ -40,6 +40,22 @@ def test_translate_mock_and_save_run(client: TestClient) -> None:
     assert body["warning"]
     assert "original_fico" in body["sql_predicate"]
 
+    preview = client.post(
+        "/api/qc/preview",
+        json={
+            "english": "Flag loans with FICO below 620",
+            "sql_predicate": body["sql_predicate"],
+            "failing_only": True,
+        },
+    )
+    assert preview.status_code == 200, preview.text
+    prev = preview.json()
+    assert prev["ok"] is True
+    assert prev["fail_count"] is not None
+    assert prev["pass_count"] is not None
+    assert prev["outcome"] in {"pass", "fail"}
+    assert isinstance(prev["loans"], list)
+
     created = client.post(
         "/api/qc/checks",
         json={
@@ -54,9 +70,11 @@ def test_translate_mock_and_save_run(client: TestClient) -> None:
     run = client.post("/api/qc/run")
     assert run.status_code == 200, run.text
     results = run.json()["results"]
+    assert results[0]["scope"] == "Custom"
     custom = next(r for r in results if r["check_id"] == check["check_id"])
     assert custom["outcome"] in {"pass", "fail"}
     assert custom["status_label"] in {"Pass", "Fail"}
+    assert custom["scope"] == "Custom"
 
     listed = client.get("/api/qc/checks", params={"source": "custom"})
     assert listed.status_code == 200
