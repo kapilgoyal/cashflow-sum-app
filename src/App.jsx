@@ -31,7 +31,7 @@ import {
   moneyCol,
   pcaLabel,
   staLabel,
-  withScenarioRowSpans,
+  withCohortPsaRowSpans,
 } from "./cashflowGrid";
 import { apiUrl } from "./apiBase";
 import {
@@ -43,6 +43,7 @@ import {
   remappedKeyedObject,
 } from "./cohortLabels";
 import LoanLevelCollateral from "./LoanLevelCollateral";
+import ScenarioSpeedCharts from "./ScenarioSpeedCharts";
 import "./App.css";
 
 
@@ -1091,39 +1092,50 @@ export default function App() {
   const scenarioColumnDefs = useMemo(
     () => [
       {
-        field: "_scenarioLabel",
-        headerName: "Scenario",
-        width: 160,
-        sortable: false,
-        filter: false,
-        rowSpan: (p) => Math.max(1, p.data?._scenarioSpan || 1),
-        cellClassRules: {
-          "cf-row-span": (p) => (p.data?._scenarioSpan || 0) > 1,
-        },
-        valueGetter: (p) =>
-          p.data?._scenarioSpan === 0 ? "" : p.data?._scenarioLabel || "",
-      },
-      { field: "scenario_id", headerName: "ID", hide: true },
-      {
         field: "cohort",
         headerName: "Cohort",
-        flex: 1.8,
-        minWidth: 160,
-        valueFormatter: (p) => cohortLabel(p.value),
+        flex: 1.6,
+        minWidth: 132,
+        sortable: false,
+        rowSpan: (p) => Math.max(1, p.data?._cohortSpan || 1),
+        cellClassRules: {
+          "cf-row-span": (p) => (p.data?._cohortSpan || 0) > 1,
+        },
+        valueGetter: (p) =>
+          p.data?._cohortSpan === 0
+            ? ""
+            : cohortLabel(p.data?.cohort) || "",
       },
-      intCol("psa_multiple", "PSA", 72),
-      intCol("sda_multiple", "SDA", 72),
+      {
+        field: "psa_multiple",
+        headerName: "PSA",
+        width: 64,
+        sortable: false,
+        type: "numericColumn",
+        filter: "agNumberColumnFilter",
+        cellClass: "cf-num",
+        rowSpan: (p) => Math.max(1, p.data?._psaSpan || 1),
+        cellClassRules: {
+          "cf-row-span": (p) => (p.data?._psaSpan || 0) > 1,
+          "cf-num": () => true,
+        },
+        valueGetter: (p) =>
+          p.data?._psaSpan === 0 ? "" : p.data?.psa_multiple,
+        valueFormatter: (p) =>
+          p.value === "" || p.value == null ? "" : fmtInt(p.value),
+      },
+      intCol("sda_multiple", "SDA", 64),
       {
         field: "recovery",
-        headerName: "Recovery",
-        width: 100,
+        headerName: "Recovery Rate",
+        width: 104,
         valueFormatter: (p) => fmtPct(p.value, 1),
         cellClass: "cf-num",
       },
       {
         field: "lag",
-        headerName: "Lag",
-        width: 72,
+        headerName: "Fnma Lag",
+        width: 84,
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
             ? ""
@@ -1133,10 +1145,11 @@ export default function App() {
       {
         field: "ran",
         headerName: "Ran",
-        width: 64,
+        width: 56,
         valueGetter: (p) =>
           ranScenarioIds.includes(p.data.scenario_id) ? "Yes" : "",
       },
+      { field: "scenario_id", headerName: "ID", hide: true },
     ],
     [ranScenarioIds]
   );
@@ -1367,7 +1380,7 @@ export default function App() {
     });
     const want = selectedCohort ? cohortLabel(selectedCohort) : null;
     const filtered = want ? base.filter((s) => s.cohort === want) : base;
-    return withScenarioRowSpans(filtered);
+    return withCohortPsaRowSpans(filtered);
   }, [scenarios, aggregates, selectedCohort, cohortStats]);
 
   const scatterByCluster = useMemo(() => {
@@ -2146,8 +2159,8 @@ export default function App() {
                     ? cohortLabel(selectedCohort)
                     : "27 Cells"}
                 </p>
-                <div className="section-actions">
-                  {(selectedCohort || selectedLoanId) && (
+                {(selectedCohort || selectedLoanId) && (
+                  <div className="section-actions">
                     <button
                       type="button"
                       className="linkish"
@@ -2155,35 +2168,22 @@ export default function App() {
                     >
                       Clear Drill
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={handleRunMonth1}
-                    disabled={running}
-                  >
-                    {running ? "Running…" : "Run Month 1"}
-                  </button>
-                </div>
+                  </div>
+                )}
               </div>
               <DrillTrail crumbs={drillCrumbs} onJump={onDrillJump} />
-              {runError && (
-                <StatusBanner tone="error">Run: {runError}</StatusBanner>
-              )}
-              {runMeta && (
-                <p className="section-meta">
-                  Ran {runMeta.ok}/{runMeta.n_tasks}
-                </p>
-              )}
-              <DataGrid
-                rowData={filteredScenarios}
-                columnDefs={scenarioColumnDefs}
-                getRowId={(p) => String(p.data.scenario_id)}
-                onRowDrill={drillScenario}
-                heightClass="grid-wrap-fill"
-                exportName="scenarios"
-                gridProps={{ suppressRowTransform: true }}
-              />
+              <div className="scenario-layout">
+                <DataGrid
+                  rowData={filteredScenarios}
+                  columnDefs={scenarioColumnDefs}
+                  getRowId={(p) => String(p.data.scenario_id)}
+                  onRowDrill={drillScenario}
+                  heightClass="grid-wrap-fill scenario-grid"
+                  exportName="scenarios"
+                  gridProps={{ suppressRowTransform: true }}
+                />
+                <ScenarioSpeedCharts />
+              </div>
             </section>
           )}
 

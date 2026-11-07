@@ -31,6 +31,8 @@ Documented in `assumptions.csv` (`psa_seasoning_rule`, `sda_seasoning_rule`) and
 - PSA: 0.2% × age through month 30, then 6% CPR (× multiple/100).
 - SDA: ramp to 0.60% CDR by month 30, flat to 60, decline to 0.03% by 120, then flat (× multiple/100).
 
+Materialized month paths for the Scenarios side charts live in `data/psa_sda_standards.csv` (mirrored to `public/psa_sda_standards.csv`). Regenerate with `scripts/generate_psa_sda_standards.py`.
+
 ## UI / API
 
 - Nav tab **Assumptions** — AG Grid of each `assumptions.csv` row (value, path, source name, URL, notes).

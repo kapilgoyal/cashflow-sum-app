@@ -274,6 +274,69 @@ body {
   min-height: 0;
 }
 
+/* Scenarios: dense grid + PSA/SDA speed rail */
+.scenario-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.scenario-layout .scenario-grid {
+  flex: 1 1 58%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.scenario-speed-rail {
+  flex: 0 0 min(340px, 36%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 240px;
+  min-height: 0;
+}
+
+.scenario-speed-panel {
+  flex: 1 1 50%;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  border-top: 1px solid var(--cf-hairline);
+  padding-top: 4px;
+}
+
+.scenario-speed-panel:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.scenario-speed-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.scenario-speed-title {
+  margin: 0;
+  font-size: var(--cf-font-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--cf-text);
+}
+
+.scenario-speed-chart {
+  flex: 1;
+  min-height: 140px;
+  width: 100%;
+}
+
 .section-title {
   margin: 0 0 6px;
   font-size: var(--cf-font-sm);
@@ -1383,6 +1446,26 @@ body {
 @media (max-width: 900px) {
   .strat-charts {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  }
+
+  .scenario-layout {
+    flex-direction: column;
+  }
+
+  .scenario-layout .scenario-grid {
+    flex: 1 1 auto;
+    min-height: 280px;
+  }
+
+  .scenario-speed-rail {
+    flex: 0 0 auto;
+    min-width: 0;
+    width: 100%;
+    max-width: none;
+  }
+
+  .scenario-speed-chart {
+    min-height: 180px;
   }
 
   .cohort-chart-row {
