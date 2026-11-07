@@ -110,16 +110,23 @@ export default function LoanQc({ onDrillLoan }) {
   const qcActiveRows = useMemo(() => {
     const rows = (qcRows || [])
       .filter((r) => r && r.source !== "demo")
+      // Pass/Fail only — drop Warning/skipped rules from the grid
       .filter((r) => {
         const o = String(r.outcome || "").toLowerCase();
-        return o === "pass" || o === "fail" || o === "skipped" || o === "warn";
+        return o === "pass" || o === "fail";
       })
-      .map((r) => ({
-        ...r,
-        scope: r.scope || (r.source === "custom" ? "Custom" : "Global"),
-        status_label: qcStatusLabel(r.outcome),
-      }));
-    // Custom rules first, then Global
+      .map((r) => {
+        const raw =
+          r.scope || (r.source === "custom" ? "Custom" : "Standard");
+        const scope =
+          raw === "Global" || raw === "global" ? "Standard" : raw;
+        return {
+          ...r,
+          scope,
+          status_label: qcStatusLabel(r.outcome),
+        };
+      });
+    // Custom rules first, then Standard
     return [...rows].sort((a, b) => {
       const as = a.scope === "Custom" ? 0 : 1;
       const bs = b.scope === "Custom" ? 0 : 1;
@@ -133,10 +140,6 @@ export default function LoanQc({ onDrillLoan }) {
   const qcSummary = useMemo(() => {
     const pass = qcActiveRows.filter((r) => r.outcome === "pass").length;
     const failRules = qcActiveRows.filter((r) => r.outcome === "fail").length;
-    const warn = qcActiveRows.filter((r) => {
-      const o = String(r.outcome || "").toLowerCase();
-      return o === "skipped" || o === "warn" || o === "warning";
-    }).length;
     const checks = qcActiveRows.length;
     const failedLoans = qcActiveRows.reduce(
       (s, r) => s + (Number(r.fail_count) || 0),
@@ -145,7 +148,6 @@ export default function LoanQc({ onDrillLoan }) {
     return {
       pass,
       fail: failRules,
-      warn,
       checks,
       failedLoans,
       total: checks,
@@ -158,9 +160,8 @@ export default function LoanQc({ onDrillLoan }) {
     () => [
       { name: "Pass", value: qcSummary.pass, fill: "#1F8A44" },
       { name: "Fail", value: qcSummary.fail, fill: "#C62828" },
-      { name: "Warn", value: qcSummary.warn, fill: "#FD9D24" },
     ],
-    [qcSummary.pass, qcSummary.fail, qcSummary.warn]
+    [qcSummary.pass, qcSummary.fail]
   );
 
   const qcColumnDefs = useMemo(
@@ -171,7 +172,7 @@ export default function LoanQc({ onDrillLoan }) {
         width: 100,
         suppressSizeToFit: true,
         cellClass: (p) =>
-          p.value === "Custom" ? "qc-scope-custom" : "qc-scope-global",
+          p.value === "Custom" ? "qc-scope-custom" : "qc-scope-standard",
       },
       {
         field: "nl_description",
@@ -557,7 +558,7 @@ export default function LoanQc({ onDrillLoan }) {
           </button>
         </div>
         <div className="qc-kpi-strip" role="status" aria-label="QC Summary">
-          <div className="qc-kpi">
+          <div className="qc-kpi qc-kpi-checks">
             <span className="qc-kpi-label">QC Checks</span>
             <span className="qc-kpi-value">{fmtInt(qcSummary.checks)}</span>
           </div>
@@ -566,10 +567,6 @@ export default function LoanQc({ onDrillLoan }) {
             <span className="qc-kpi-value">
               {fmtInt(qcSummary.failedLoans)}
             </span>
-          </div>
-          <div className="qc-kpi qc-kpi-warn">
-            <span className="qc-kpi-label">Warning</span>
-            <span className="qc-kpi-value">{fmtInt(qcSummary.warn)}</span>
           </div>
         </div>
       </div>

@@ -1018,12 +1018,12 @@ body {
   color: #7dcc9a;
 }
 
-.qc-kpi-fail .qc-kpi-value {
-  color: #f07a94;
+.qc-kpi-checks .qc-kpi-value {
+  color: var(--cf-accent);
 }
 
-.qc-kpi-warn .qc-kpi-value {
-  color: #fd9d24;
+.qc-kpi-fail .qc-kpi-value {
+  color: #f07a94;
 }
 
 .qc-view-toggle {
@@ -1086,6 +1086,7 @@ body {
   font-weight: 300;
 }
 
+.qc-scope-standard,
 .qc-scope-global {
   color: var(--cf-muted);
   font-weight: 300;
