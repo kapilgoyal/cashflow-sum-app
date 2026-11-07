@@ -1175,10 +1175,11 @@ export default function App() {
     () => [
       {
         field: "cohort",
-        headerName: "Cohort",
+        headerName: "Cohort Name",
         flex: 1.6,
         minWidth: 132,
         sortable: false,
+        filter: false,
         rowSpan: (p) => Math.max(1, p.data?._cohortSpan || 1),
         cellClassRules: {
           "cf-row-span": (p) => (p.data?._cohortSpan || 0) > 1,
@@ -1193,8 +1194,8 @@ export default function App() {
         headerName: "PSA",
         width: 64,
         sortable: false,
+        filter: false,
         type: "numericColumn",
-        filter: "agNumberColumnFilter",
         cellClass: "cf-num",
         rowSpan: (p) => Math.max(1, p.data?._psaSpan || 1),
         cellClassRules: {
@@ -1224,16 +1225,9 @@ export default function App() {
             : `${Number(p.value).toFixed(0)} Mo`,
         cellClass: "cf-num",
       },
-      {
-        field: "ran",
-        headerName: "Ran",
-        width: 56,
-        valueGetter: (p) =>
-          ranScenarioIds.includes(p.data.scenario_id) ? "Yes" : "",
-      },
       { field: "scenario_id", headerName: "ID", hide: true },
     ],
-    [ranScenarioIds]
+    []
   );
 
   const aggColumnDefs = useMemo(
@@ -1427,7 +1421,8 @@ export default function App() {
     []
   );
 
-  const filteredScenarios = useMemo(() => {
+  /** Full 27-cell grid — never cohort-filtered; Scenarios is a standalone view. */
+  const scenarioRows = useMemo(() => {
     const byCohort = Object.fromEntries(
       (cohortStats || []).map((r) => [cohortLabel(r.cohort), r])
     );
@@ -1461,10 +1456,8 @@ export default function App() {
         lag,
       };
     });
-    const want = selectedCohort ? cohortLabel(selectedCohort) : null;
-    const filtered = want ? base.filter((s) => s.cohort === want) : base;
-    return withCohortPsaRowSpans(filtered);
-  }, [scenarios, aggregates, selectedCohort, cohortStats]);
+    return withCohortPsaRowSpans(base);
+  }, [scenarios, aggregates, cohortStats]);
 
   const scatterByCluster = useMemo(() => {
     const groups = Object.fromEntries(CLUSTER_ORDER.map((c) => [c, []]));
@@ -1554,15 +1547,6 @@ export default function App() {
     setSelectedCohort(cohort);
     if (cohort) setClusterFilter(cohort);
     setCfView("month1");
-    setPane("scenarios");
-  }, []);
-
-  const drillScenario = useCallback((row) => {
-    if (!row?.scenario_id) return;
-    setSelectedScenarioId(row.scenario_id);
-    if (row.cohort) setSelectedCohort(cohortLabel(row.cohort));
-    setSelectedLoanId(null);
-    setCfView("month1");
     setPane("cashflow");
   }, []);
 
@@ -1620,11 +1604,19 @@ export default function App() {
     }
     crumbs.push({ id: "agg", label: "CF Aggregates", jumpable: cfView !== "agg" });
     if (selectedScenarioId && cfView !== "agg") {
-      crumbs.push({
-        id: "scenario",
-        label: selectedScenarioId,
-        jumpable: false,
-      });
+      const row =
+        (scenarios || []).find((s) => s.scenario_id === selectedScenarioId) ||
+        (aggregates || []).find((s) => s.scenario_id === selectedScenarioId);
+      const scenarioLabel = row
+        ? `${cohortLabel(row.cohort)} PSA ${row.psa_multiple} / SDA ${row.sda_multiple}`
+        : "";
+      if (scenarioLabel) {
+        crumbs.push({
+          id: "scenario",
+          label: scenarioLabel,
+          jumpable: false,
+        });
+      }
     }
     if (cfView === "month1" || cfView === "loanMonth") {
       crumbs.push({
@@ -1647,7 +1639,14 @@ export default function App() {
       });
     }
     return crumbs;
-  }, [selectedCohort, selectedScenarioId, selectedLoanId, cfView]);
+  }, [
+    selectedCohort,
+    selectedScenarioId,
+    selectedLoanId,
+    cfView,
+    scenarios,
+    aggregates,
+  ]);
 
   async function handleRunMonth1() {
     setRunning(true);
@@ -2232,32 +2231,16 @@ export default function App() {
           {pane === "scenarios" && (
             <section className="section section-fill">
               <div className="section-head">
-                <p className="section-meta">
-                  {selectedCohort
-                    ? cohortLabel(selectedCohort)
-                    : "27 Cells"}
-                </p>
-                {(selectedCohort || selectedLoanId) && (
-                  <div className="section-actions">
-                    <button
-                      type="button"
-                      className="linkish"
-                      onClick={clearDrill}
-                    >
-                      Clear Drill
-                    </button>
-                  </div>
-                )}
+                <p className="section-meta">27 Cells</p>
               </div>
-              <DrillTrail crumbs={drillCrumbs} onJump={onDrillJump} />
               <div className="scenario-layout">
                 <DataGrid
-                  rowData={filteredScenarios}
+                  rowData={scenarioRows}
                   columnDefs={scenarioColumnDefs}
                   getRowId={(p) => String(p.data.scenario_id)}
-                  onRowDrill={drillScenario}
                   heightClass="grid-wrap-fill scenario-grid"
                   exportName="scenarios"
+                  showToolbar={false}
                   gridProps={{ suppressRowTransform: true }}
                 />
                 <ScenarioSpeedCharts />
