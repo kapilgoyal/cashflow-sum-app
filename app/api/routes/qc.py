@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query
 
 from app.repositories.asf_tape_repository import AsfTapeRepository
+from app.repositories.connect import source_label
 from app.repositories.env_load import load_dotenv
 
 router = APIRouter(prefix="/api/qc", tags=["qc"])
@@ -32,7 +33,10 @@ def qc_results() -> dict:
         "tape_row_count": tape_n,
         "run_id": run_id,
         "n": len(rows),
-        "source": "neon.qc_checks + neon.qc_results",
+        "source": (
+            f"{source_label('qc_checks', repo.url)} + "
+            f"{source_label('qc_results', repo.url)}"
+        ),
         "results": rows,
     }
 

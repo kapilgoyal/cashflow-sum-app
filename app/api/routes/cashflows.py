@@ -45,9 +45,9 @@ def _neon_month1_summary() -> dict | None:
     if not url:
         return None
     try:
-        import psycopg
+        from app.repositories.connect import connect, source_label
 
-        with psycopg.connect(url, connect_timeout=30) as conn:
+        with connect(url, connect_timeout=30) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
@@ -76,7 +76,7 @@ def _neon_month1_summary() -> dict | None:
         return {
             "aggregates": rows,
             "ran_scenario_ids": ids,
-            "source": "neon.loan_cashflows_month1_enriched",
+            "source": source_label("loan_cashflows_month1_enriched", url),
         }
     except Exception:  # noqa: BLE001
         return None
