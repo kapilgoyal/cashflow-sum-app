@@ -1,4 +1,5 @@
-# Always-on FastAPI for Railway. Pure Python — ignore Vite/Node in this image.
+# API-only reference image (Railway-era). Production/Azure uses the root Dockerfile
+# (Vite build + FastAPI StaticFiles in one python:3.12-slim image).
 FROM python:3.12-slim
 
 WORKDIR /app

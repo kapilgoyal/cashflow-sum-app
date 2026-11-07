@@ -39,8 +39,8 @@ Optional Neon seed: set `DATABASE_URL`; scripts attempt insert and skip cleanly 
 
 ## Deploy (durable)
 
-**Frontend (static)** — Vercel  
-**API (always-on)** — Railway (`uvicorn app.main:app`, see `Procfile` / `railway.toml`)
+**Current:** Vite UI on Vercel; always-on FastAPI on Railway.  
+**Cutover:** one Azure Container App serves both from the root `Dockerfile` (Vite `dist/` via FastAPI `StaticFiles` + existing `/api` and `/health`). Vercel and Railway are not removed in this change. Portal steps: [deploy/azure.md](deploy/azure.md).
 
 Vercel no longer runs Python serverless (Mangum retired under `deploy/legacy-vercel-mangum/`). That avoided the 225 MB function size ceiling.
 
@@ -59,6 +59,15 @@ Vercel no longer runs Python serverless (Mangum retired under `deploy/legacy-ver
 5. Public API: `https://cashflow-sum-app-production.up.railway.app` (service in **kind-emotion**).
 6. Health: `GET /health`. Dockerfile / `railway.toml` start commands use shell form so `${PORT}` expands.
 
+
+### Azure Container Apps (UI + API, cutover)
+
+1. In the Azure portal, create a **Consumption** Container App, **Basic** Container Registry, and GitHub OIDC app registration. Exact clicks and the six GitHub secrets: [deploy/azure.md](deploy/azure.md).
+2. Set `DATABASE_URL` on the Container App (not in GitHub). Leave `VITE_API_BASE_URL` unset in the image so the UI calls same-origin `/api`.
+3. Workflow [`.github/workflows/azure-container-app.yml`](.github/workflows/azure-container-app.yml) builds, pushes to ACR, and deploys on `master` once `AZURE_CLIENT_ID` exists (or **Run workflow**).
+4. Health: `GET /health`. Title Case nav/headers in the UI are unchanged.
+
+Estimated cost: **~$15–40/month** (East US, always-on 0.5 vCPU / 1 GiB + ACR Basic). See [deploy/azure.md](deploy/azure.md).
 
 ### Vercel (React)
 
