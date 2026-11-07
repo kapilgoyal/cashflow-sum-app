@@ -969,16 +969,6 @@ body {
   color: var(--cf-down);
 }
 
-.qc-view-toggle {
-  gap: 10px;
-}
-
-.qc-chart-wrap {
-  flex: 1 1 auto;
-  min-height: 220px;
-  width: 100%;
-}
-
 .qc-drill {
   display: flex;
   flex-direction: column;
