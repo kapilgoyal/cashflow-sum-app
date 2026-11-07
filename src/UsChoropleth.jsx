@@ -34,7 +34,15 @@ export function StateChoropleth({
   selected,
   onSelect,
   fmtTip,
+  palette,
 }) {
+  const colors = {
+    low: "#E8EEF5",
+    high: "#001A41",
+    empty: "#F3F5F8",
+    stroke: "#FFFFFF",
+    ...(palette || {}),
+  };
   const valueKey = metric === "loans" ? "loan_count" : "upb";
   const byState = new Map();
   for (const row of rows || []) {
@@ -56,7 +64,9 @@ export function StateChoropleth({
         {Object.entries(US_STATE_PATHS).map(([abbr, d]) => {
           const row = byState.get(abbr);
           const v = row ? Number(row[valueKey]) || 0 : 0;
-          const fill = row ? scaleColor(v / max) : "#F3F5F8";
+          const fill = row
+            ? scaleColor(v / max, { low: colors.low, high: colors.high })
+            : colors.empty;
           const isSel = selected === abbr;
           const tip = row
             ? `${abbr}: ${fmtTip ? fmtTip(v) : v}`
@@ -66,7 +76,7 @@ export function StateChoropleth({
               key={abbr}
               d={d}
               fill={fill}
-              stroke={isSel ? "#FD9D24" : "#FFFFFF"}
+              stroke={isSel ? "#FD9D24" : colors.stroke}
               strokeWidth={isSel ? 2.2 : 0.6}
               className={`choropleth-state-path${row ? " is-clickable" : ""}${
                 isSel ? " is-selected" : ""
@@ -93,7 +103,7 @@ export function StateChoropleth({
         <span
           className="choropleth-swatch"
           style={{
-            background: `linear-gradient(90deg, #E8EEF5, #001A41)`,
+            background: `linear-gradient(90deg, ${colors.low}, ${colors.high})`,
           }}
         />
         <span>High</span>

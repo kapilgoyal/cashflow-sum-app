@@ -43,6 +43,7 @@ import {
   remappedKeyedObject,
 } from "./cohortLabels";
 import LoanLevelCollateral from "./LoanLevelCollateral";
+import InvestorAnalysis from "./InvestorAnalysis";
 import "./App.css";
 
 
@@ -52,6 +53,7 @@ const NAV = [
   { id: "asf", label: "Investor Tape" },
   { id: "qc", label: "Loan QC" },
   { id: "collateral", label: "Collateral" },
+  { id: "investor", label: "Investor Analysis" },
   { id: "cohort", label: "Cohort" },
   { id: "scenarios", label: "Scenarios" },
   { id: "cashflow", label: "Cash Flow" },
@@ -72,6 +74,7 @@ const NAV_SHORT = {
   asf: "Tape",
   qc: "QC",
   collateral: "Collat",
+  investor: "Invest",
   cohort: "Cohort",
   scenarios: "Scen",
   cashflow: "CF",
@@ -1908,6 +1911,8 @@ export default function App() {
           )}
 
           {pane === "collateral" && <LoanLevelCollateral />}
+
+          {pane === "investor" && <InvestorAnalysis />}
 
           {pane === "cohort" && (
             <>
