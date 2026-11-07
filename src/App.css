@@ -21,18 +21,18 @@
   --cf-nav-hover: #1a1a1a;
   --cf-nav-width: 152px;
   --cf-nav-width-collapsed: 48px;
-  /* Dense Bloomberg Terminal scale — compact body, no oversized display type. */
-  --cf-font-body: 12px;
-  --cf-font-sm: 10px;
+  /* Slick Terminal density: ~11–12px body/nav/grid; KPI values larger for contrast. */
+  --cf-font-body: 11px;
+  --cf-font-sm: 9px;
   --cf-font-md: 11px;
-  --cf-font-lg: 13px;
-  --cf-font-kpi-label: 10px;
-  --cf-font-kpi-value: 14px;
-  --cf-font-chart: 10px;
-  --cf-control-h: 28px;
-  --cf-icon: 28px;
-  --cf-topbar-h: 36px;
-  --cf-kpi-min-h: 32px;
+  --cf-font-lg: 12px;
+  --cf-font-kpi-label: 9px;
+  --cf-font-kpi-value: 17px;
+  --cf-font-chart: 9px;
+  --cf-control-h: 26px;
+  --cf-icon: 26px;
+  --cf-topbar-h: 32px;
+  --cf-kpi-min-h: 36px;
   --cf-grid-mid-h: 110px;
   --cf-tap: 44px;
   /* Terminal-style mono stack (Bloomberg Prop/Fixed are proprietary). */
@@ -55,7 +55,7 @@ body,
 body {
   font-family: var(--cf-font);
   font-size: var(--cf-font-body);
-  line-height: 1.3;
+  line-height: 1.25;
   color: var(--cf-text);
   background: var(--cf-bg);
   -webkit-font-smoothing: antialiased;
@@ -778,8 +778,9 @@ body {
   font-size: var(--cf-font-kpi-value);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   color: var(--cf-text);
-  line-height: 1.1;
+  line-height: 1.05;
 }
 
 .qc-kpi.is-active {
@@ -1256,9 +1257,10 @@ body {
 
 .cohort-kpi-rail .qc-kpi-value {
   flex: 1 1 auto;
-  font-weight: 400;
+  font-weight: 700;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .section-cohort-chart {
@@ -1360,21 +1362,49 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Wide desktop: slight step-up only — stay compact (~12–13px body). */
+/* Wide desktop: stay dense (~11–12px body/nav/grid); KPIs step up for contrast. */
 @media (min-width: 1280px) {
   :root {
-    --cf-font-body: 13px;
-    --cf-font-sm: 11px;
-    --cf-font-md: 12px;
-    --cf-font-lg: 14px;
-    --cf-font-kpi-label: 11px;
-    --cf-font-kpi-value: 15px;
-    --cf-font-chart: 11px;
-    --cf-control-h: 30px;
-    --cf-icon: 30px;
-    --cf-topbar-h: 40px;
-    --cf-kpi-min-h: 36px;
+    --cf-font-body: 12px;
+    --cf-font-sm: 10px;
+    --cf-font-md: 11px;
+    --cf-font-lg: 13px;
+    --cf-font-kpi-label: 10px;
+    --cf-font-kpi-value: 20px;
+    --cf-font-chart: 10px;
+    --cf-control-h: 28px;
+    --cf-icon: 28px;
+    --cf-topbar-h: 36px;
+    --cf-kpi-min-h: 42px;
     --cf-grid-mid-h: 128px;
+    --cf-nav-width: 160px;
+  }
+
+  .ag-theme-cashflow,
+  .ag-theme-cashflow .ag-root-wrapper {
+    --ag-font-size: 11px;
+    --ag-header-font-size: 10px;
+    --ag-row-height: 22px;
+    --ag-header-height: 24px;
+    --ag-icon-size: 12px;
+    --ag-spacing: 2px;
+  }
+}
+
+@media (min-width: 1600px) {
+  :root {
+    --cf-font-body: 12px;
+    --cf-font-sm: 10px;
+    --cf-font-md: 12px;
+    --cf-font-lg: 13px;
+    --cf-font-kpi-label: 10px;
+    --cf-font-kpi-value: 22px;
+    --cf-font-chart: 10px;
+    --cf-control-h: 28px;
+    --cf-icon: 28px;
+    --cf-topbar-h: 36px;
+    --cf-kpi-min-h: 46px;
+    --cf-grid-mid-h: 136px;
     --cf-nav-width: 168px;
   }
 
@@ -1382,47 +1412,19 @@ body {
   .ag-theme-cashflow .ag-root-wrapper {
     --ag-font-size: 12px;
     --ag-header-font-size: 11px;
-    --ag-row-height: 24px;
-    --ag-header-height: 26px;
+    --ag-row-height: 22px;
+    --ag-header-height: 24px;
     --ag-icon-size: 13px;
-    --ag-spacing: 3px;
-  }
-}
-
-@media (min-width: 1600px) {
-  :root {
-    --cf-font-body: 13px;
-    --cf-font-sm: 11px;
-    --cf-font-md: 12px;
-    --cf-font-lg: 14px;
-    --cf-font-kpi-label: 11px;
-    --cf-font-kpi-value: 16px;
-    --cf-font-chart: 11px;
-    --cf-control-h: 32px;
-    --cf-icon: 32px;
-    --cf-topbar-h: 42px;
-    --cf-kpi-min-h: 38px;
-    --cf-grid-mid-h: 140px;
-    --cf-nav-width: 176px;
-  }
-
-  .ag-theme-cashflow,
-  .ag-theme-cashflow .ag-root-wrapper {
-    --ag-font-size: 13px;
-    --ag-header-font-size: 12px;
-    --ag-row-height: 26px;
-    --ag-header-height: 28px;
-    --ag-icon-size: 14px;
-    --ag-spacing: 3px;
+    --ag-spacing: 2px;
   }
 
   .main {
-    padding: 10px 12px 12px;
-    gap: 8px;
+    padding: 8px 10px 10px;
+    gap: 6px;
   }
 
   .field input {
-    width: 108px;
+    width: 100px;
   }
 }
 
@@ -2088,10 +2090,11 @@ body {
 
 .ia-kpi-value {
   font-size: var(--cf-font-kpi-value);
-  font-weight: 400;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   color: var(--ia-accent);
-  line-height: 1.1;
+  line-height: 1.05;
 }
 
 .ia-filters {

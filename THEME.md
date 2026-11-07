@@ -4,7 +4,7 @@
 
 ## Top bar / nav
 
-Height **36px** default, **44px** from 1280px, **52px** from 1600px (**44px** on phone). Pure black `#000000`. Left: hamburger/close · white **CashFlow** · amber **v0.3.0**. Desktop sidenav is a near-black strip with amber selected tab (black type on amber). Collapsible (persisted). On phone (≤720px): collapsed = no rail (full-bleed content); hamburger opens a left drawer over a dimmed backdrop; tap targets ≥44px.
+Height **32px** default, **36px** from 1280px (**44px** on phone). Pure black `#000000`. Left: hamburger/close · white **CashFlow** · amber **v0.3.0**. Desktop sidenav is a near-black strip with amber selected tab (black type on amber). Collapsible (persisted). On phone (≤720px): collapsed = no rail (full-bleed content); hamburger opens a left drawer over a dimmed backdrop; tap targets ≥44px.
 
 ## Palette
 
@@ -35,17 +35,17 @@ Height **36px** default, **44px** from 1280px, **52px** from 1600px (**44px** on
 
 | Viewport | Body | Labels | Grid cells | KPI value | Controls |
 | --- | --- | --- | --- | --- | --- |
-| Default | 12px | 10px | 11px | 14px | 28px |
-| ≥1280px | 13px | 11px | 12px | 15px | 30px |
-| ≥1600px | 13px | 11px | 13px | 16px | 32px |
+| Default | 11px | 9px | 11px | 17px | 26px |
+| ≥1280px | 12px | 10px | 11px | 20px | 28px |
+| ≥1600px | 12px | 10px | 12px | 22px | 28px |
 | Phone | compact type | — | — | — | ≥44px taps |
 
-Dense Terminal hierarchy — no oversized display fonts. Body stays ~12–13px.
+Slick Terminal hierarchy — dense body/nav/grid (~11–12px); KPI values larger for contrast.
 
 ## Density / chrome
 
 - Section padding `6–10px`, main gap `6–8px`.
-- AG Grid dark Quartz params; tight `rowHeight`/`headerHeight` **20/22** by default, **24/26** at 1280px, **26/28** at 1600px. Square corners.
+- AG Grid dark Quartz params; dense `rowHeight`/`headerHeight` **18/20** by default, **20/22** at 1280px, **22/24** at 1600px. Square corners.
 - No heavy outer grid/section frame (`wrapperBorder: false`); light row/column hairlines only.
 - KPI strip: black chips, light type, amber underline when active.
 - Responsive: strat charts stack; touch-sized export/copy icons; mobile hamburger drawer.

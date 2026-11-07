@@ -11,8 +11,16 @@ export const FONT =
   '"IBM Plex Mono", "Roboto Mono", ui-monospace, Menlo, monospace';
 
 const GRID_SCALE = {
-  /* Tight Terminal density — compact cells, no oversized type. */
+  /* Slick Terminal density — ~11–12px cells; no display-scale blow-up. */
   base: {
+    fontSize: 11,
+    headerFontSize: 9,
+    headerHeight: 20,
+    rowHeight: 18,
+    spacing: 2,
+    iconSize: 11,
+  },
+  lg: {
     fontSize: 11,
     headerFontSize: 10,
     headerHeight: 22,
@@ -20,21 +28,13 @@ const GRID_SCALE = {
     spacing: 2,
     iconSize: 12,
   },
-  lg: {
+  xl: {
     fontSize: 12,
     headerFontSize: 11,
-    headerHeight: 26,
-    rowHeight: 24,
-    spacing: 3,
-    iconSize: 13,
-  },
-  xl: {
-    fontSize: 13,
-    headerFontSize: 12,
-    headerHeight: 28,
-    rowHeight: 26,
-    spacing: 3,
-    iconSize: 14,
+    headerHeight: 24,
+    rowHeight: 22,
+    spacing: 2,
+    iconSize: 12,
   },
 };
 
@@ -77,12 +77,12 @@ export const gridTheme = themeQuartz.withParams({
   headerColumnBorder: false,
   fontFamily: FONT,
   fontSize: 11,
-  headerFontSize: 10,
+  headerFontSize: 9,
   headerFontWeight: 600,
-  /* Tight rows; modest step-up on large desktops via GRID_SCALE. */
+  /* Dense rows; GRID_SCALE stays ~11–12px on large desktops. */
   spacing: 2,
-  headerHeight: 22,
-  rowHeight: 20,
+  headerHeight: 20,
+  rowHeight: 18,
   borderRadius: 0,
   wrapperBorderRadius: 0,
   rangeSelectionBorderColor: "#FD9D24",
@@ -416,7 +416,7 @@ export function DataGrid({
     () => gridTheme.withParams(GRID_SCALE[gridScale] || GRID_SCALE.base),
     [gridScale]
   );
-  const iconSize = gridScale === "xl" ? 18 : gridScale === "lg" ? 16 : 14;
+  const iconSize = gridScale === "xl" ? 16 : gridScale === "lg" ? 14 : 12;
 
   const emitRowStats = useCallback((api) => {
     const cb = onRowStatsRef.current;
