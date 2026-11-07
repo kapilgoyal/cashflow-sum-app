@@ -960,7 +960,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 6px 10px;
   margin: 0 0 2px;
   min-height: var(--cf-control-h);
@@ -1022,8 +1022,13 @@ body {
   color: #f07a94;
 }
 
+.qc-kpi-warn .qc-kpi-value {
+  color: #fd9d24;
+}
+
 .qc-view-toggle {
   gap: 10px;
+  margin-right: auto;
 }
 
 .qc-chart-wrap {

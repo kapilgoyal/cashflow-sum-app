@@ -132,9 +132,24 @@ export default function LoanQc({ onDrillLoan }) {
 
   const qcSummary = useMemo(() => {
     const pass = qcActiveRows.filter((r) => r.outcome === "pass").length;
-    const fail = qcActiveRows.filter((r) => r.outcome === "fail").length;
-    const total = pass + fail;
-    return { pass, fail, total };
+    const failRules = qcActiveRows.filter((r) => r.outcome === "fail").length;
+    const warn = qcActiveRows.filter((r) => {
+      const o = String(r.outcome || "").toLowerCase();
+      return o === "skipped" || o === "warn" || o === "warning";
+    }).length;
+    const checks = qcActiveRows.length;
+    const failedLoans = qcActiveRows.reduce(
+      (s, r) => s + (Number(r.fail_count) || 0),
+      0
+    );
+    return {
+      pass,
+      fail: failRules,
+      warn,
+      checks,
+      failedLoans,
+      total: checks,
+    };
   }, [qcActiveRows]);
 
   const qcFilteredRows = qcActiveRows;
@@ -143,8 +158,9 @@ export default function LoanQc({ onDrillLoan }) {
     () => [
       { name: "Pass", value: qcSummary.pass, fill: "#1F8A44" },
       { name: "Fail", value: qcSummary.fail, fill: "#C62828" },
+      { name: "Warn", value: qcSummary.warn, fill: "#FD9D24" },
     ],
-    [qcSummary.pass, qcSummary.fail]
+    [qcSummary.pass, qcSummary.fail, qcSummary.warn]
   );
 
   const qcColumnDefs = useMemo(
@@ -539,6 +555,22 @@ export default function LoanQc({ onDrillLoan }) {
           >
             Chart
           </button>
+        </div>
+        <div className="qc-kpi-strip" role="status" aria-label="QC Summary">
+          <div className="qc-kpi">
+            <span className="qc-kpi-label">QC Checks</span>
+            <span className="qc-kpi-value">{fmtInt(qcSummary.checks)}</span>
+          </div>
+          <div className="qc-kpi qc-kpi-fail">
+            <span className="qc-kpi-label">Total Failed</span>
+            <span className="qc-kpi-value">
+              {fmtInt(qcSummary.failedLoans)}
+            </span>
+          </div>
+          <div className="qc-kpi qc-kpi-warn">
+            <span className="qc-kpi-label">Warning</span>
+            <span className="qc-kpi-value">{fmtInt(qcSummary.warn)}</span>
+          </div>
         </div>
       </div>
 
