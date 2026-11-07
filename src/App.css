@@ -1653,7 +1653,6 @@ body {
   }
 
   .qc-kpi,
-  .qc-view-toggle .linkish,
   .strat-cohort-filter .select,
   .btn,
   .select,
@@ -1906,18 +1905,6 @@ body {
 
   .qc-kpi-value {
     font-size: var(--cf-font-kpi-value);
-  }
-
-  .qc-view-toggle {
-    min-height: var(--cf-tap);
-    align-items: center;
-  }
-
-  .qc-view-toggle .linkish {
-    min-height: var(--cf-tap);
-    display: inline-flex;
-    align-items: center;
-    padding: 0 8px;
   }
 
   .grid-wrap-qc-rules,
