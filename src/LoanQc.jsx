@@ -26,7 +26,6 @@ export default function LoanQc({ onDrillLoan }) {
   const [qcRows, setQcRows] = useState([]);
   const [qcLoading, setQcLoading] = useState(false);
   const [qcError, setQcError] = useState(null);
-  const [qcStatusFilter, setQcStatusFilter] = useState("all");
   const [qcView, setQcView] = useState("grid");
   const [qcSelectedRule, setQcSelectedRule] = useState(null);
   const [qcDrillLoans, setQcDrillLoans] = useState([]);
@@ -93,15 +92,7 @@ export default function LoanQc({ onDrillLoan }) {
     return { pass, fail, total };
   }, [qcActiveRows]);
 
-  const qcFilteredRows = useMemo(() => {
-    if (qcStatusFilter === "pass") {
-      return qcActiveRows.filter((r) => r.outcome === "pass");
-    }
-    if (qcStatusFilter === "fail") {
-      return qcActiveRows.filter((r) => r.outcome === "fail");
-    }
-    return qcActiveRows;
-  }, [qcActiveRows, qcStatusFilter]);
+  const qcFilteredRows = qcActiveRows;
 
   const qcChartData = useMemo(
     () => [
@@ -478,32 +469,6 @@ export default function LoanQc({ onDrillLoan }) {
   return (
     <section className="section section-fill section-qc">
       <div className="qc-toolbar">
-        <div className="qc-kpi-strip" role="toolbar" aria-label="QC Filters">
-          <button
-            type="button"
-            className={`qc-kpi${qcStatusFilter === "all" ? " is-active" : ""}`}
-            onClick={() => setQcStatusFilter("all")}
-          >
-            <span className="qc-kpi-label">Total Rules</span>
-            <span className="qc-kpi-value">{qcSummary.total}</span>
-          </button>
-          <button
-            type="button"
-            className={`qc-kpi qc-kpi-pass${qcStatusFilter === "pass" ? " is-active" : ""}`}
-            onClick={() => setQcStatusFilter("pass")}
-          >
-            <span className="qc-kpi-label">Passed</span>
-            <span className="qc-kpi-value">{qcSummary.pass}</span>
-          </button>
-          <button
-            type="button"
-            className={`qc-kpi qc-kpi-fail${qcStatusFilter === "fail" ? " is-active" : ""}`}
-            onClick={() => setQcStatusFilter("fail")}
-          >
-            <span className="qc-kpi-label">Failed</span>
-            <span className="qc-kpi-value">{qcSummary.fail}</span>
-          </button>
-        </div>
         <div
           className="cf-grid-toolbar-actions qc-view-toggle"
           role="toolbar"
