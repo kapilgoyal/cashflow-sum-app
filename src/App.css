@@ -290,40 +290,42 @@ body {
   min-height: 0;
 }
 
-/* Scenarios only: thinner type (rest of app unchanged for now) */
+/* Scenarios only: thin weight (size unchanged; rest of app later) */
 .section-scenarios {
-  font-weight: 400;
+  font-weight: 300;
 }
 
 .section-scenarios .section-meta {
-  font-weight: 400;
+  font-weight: 300;
   color: var(--cf-muted);
 }
 
+.section-scenarios .ag-theme-cashflow {
+  --ag-header-font-weight: 300;
+  font-weight: 300;
+}
+
+.section-scenarios .ag-theme-cashflow .ag-header-cell,
 .section-scenarios .ag-theme-cashflow .ag-header-cell-text,
 .section-scenarios .ag-theme-cashflow .cf-grid-header,
 .section-scenarios .ag-theme-cashflow .ag-cell,
-.section-scenarios .ag-theme-cashflow .ag-spanned-cell {
-  font-weight: 400;
-}
-
+.section-scenarios .ag-theme-cashflow .ag-cell-value,
+.section-scenarios .ag-theme-cashflow .ag-spanned-cell,
 .section-scenarios .ag-theme-cashflow .cf-row-span,
-.section-scenarios .ag-theme-cashflow .ag-spanned-cell.cf-row-span {
-  font-weight: 500;
+.section-scenarios .ag-theme-cashflow .cf-num {
+  font-weight: 300 !important;
 }
 
-.section-scenarios .ag-theme-cashflow .cf-speed-base {
-  font-weight: 600;
-  color: var(--cf-text);
-}
-
+/* Base speeds: amber accent, still thin — no heavier weight */
+.section-scenarios .ag-theme-cashflow .cf-speed-base,
 .section-scenarios .ag-theme-cashflow .cf-speed-base-hdr .ag-header-cell-text {
-  font-weight: 600;
-  color: var(--cf-text);
+  font-weight: 300 !important;
+  color: var(--cf-accent);
 }
 
-.section-scenarios .scenario-speed-title {
-  font-weight: 500;
+.section-scenarios .scenario-speed-title,
+.section-scenarios .scenario-speed-rail {
+  font-weight: 300;
 }
 
 /* Scenarios: dense grid + PSA/SDA speed rail */

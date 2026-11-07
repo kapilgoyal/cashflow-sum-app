@@ -1881,6 +1881,7 @@ export default function App() {
                   heightClass="grid-wrap-fill scenario-grid"
                   exportName="scenarios"
                   showToolbar={false}
+                  themeParams={{ headerFontWeight: 300 }}
                 />
                 <ScenarioSpeedCharts />
               </div>

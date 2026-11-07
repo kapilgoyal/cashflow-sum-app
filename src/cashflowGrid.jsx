@@ -377,6 +377,7 @@ export function DataGrid({
   showToolbar = true,
   toolbarStart = null,
   gridProps = {},
+  themeParams = null,
 }) {
   const defaultColDef = useMemo(() => ({ ...sharedDefaultColDef }), []);
   const apiRef = useRef(null);
@@ -385,8 +386,12 @@ export function DataGrid({
   onRowStatsRef.current = onRowStats;
   const gridScale = useGridScale();
   const scaledTheme = useMemo(
-    () => gridTheme.withParams(GRID_SCALE[gridScale] || GRID_SCALE.base),
-    [gridScale]
+    () =>
+      gridTheme.withParams({
+        ...(GRID_SCALE[gridScale] || GRID_SCALE.base),
+        ...(themeParams || {}),
+      }),
+    [gridScale, themeParams]
   );
   const iconSize = gridScale === "xl" ? 16 : gridScale === "lg" ? 14 : 12;
 
