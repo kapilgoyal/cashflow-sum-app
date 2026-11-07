@@ -1590,12 +1590,6 @@ export default function App() {
       setPane("cohort");
       return;
     }
-    if (crumb.id === "scenarios") {
-      setCfView("agg");
-      setSelectedLoanId(null);
-      setPane("scenarios");
-      return;
-    }
     if (crumb.id === "agg") {
       setCfView("agg");
       setSelectedLoanId(null);
@@ -1624,7 +1618,6 @@ export default function App() {
         jumpable: false,
       });
     }
-    crumbs.push({ id: "scenarios", label: "Scenarios", jumpable: true });
     crumbs.push({ id: "agg", label: "CF Aggregates", jumpable: cfView !== "agg" });
     if (selectedScenarioId && cfView !== "agg") {
       crumbs.push({
