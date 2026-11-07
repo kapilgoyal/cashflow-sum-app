@@ -75,14 +75,24 @@ export default function LoanQc({ onDrillLoan }) {
   }, [refreshResults]);
 
   const qcActiveRows = useMemo(() => {
-    return (qcRows || [])
+    const rows = (qcRows || [])
       .filter((r) => r && r.source !== "demo")
       .filter((r) => r.outcome === "pass" || r.outcome === "fail")
       .map((r) => ({
         ...r,
+        scope: r.scope || (r.source === "custom" ? "Custom" : "Global"),
         status_label:
           r.outcome === "pass" ? "Pass" : r.outcome === "fail" ? "Fail" : "",
       }));
+    // Custom rules first, then Global
+    return [...rows].sort((a, b) => {
+      const as = a.scope === "Custom" ? 0 : 1;
+      const bs = b.scope === "Custom" ? 0 : 1;
+      if (as !== bs) return as - bs;
+      return String(a.nl_description || "").localeCompare(
+        String(b.nl_description || "")
+      );
+    });
   }, [qcRows]);
 
   const qcSummary = useMemo(() => {
@@ -105,17 +115,24 @@ export default function LoanQc({ onDrillLoan }) {
   const qcColumnDefs = useMemo(
     () => [
       {
+        field: "scope",
+        headerName: "Scope",
+        width: 100,
+        suppressSizeToFit: true,
+        cellClass: (p) =>
+          p.value === "Custom" ? "qc-scope-custom" : "qc-scope-global",
+      },
+      {
         field: "nl_description",
         headerName: "Description",
-        flex: 2,
-        minWidth: 220,
-        pinned: "left",
-        lockPinned: true,
+        flex: 3,
+        minWidth: 280,
       },
       {
         field: "status_label",
         headerName: "Status",
-        width: 80,
+        width: 110,
+        suppressSizeToFit: true,
         cellClass: (p) => {
           if (p.value === "Pass") return "qc-outcome-pass";
           if (p.value === "Fail") return "qc-outcome-fail";
@@ -125,7 +142,8 @@ export default function LoanQc({ onDrillLoan }) {
       {
         field: "pass_count",
         headerName: "Passed Loans",
-        width: 110,
+        width: 140,
+        suppressSizeToFit: true,
         type: "numericColumn",
         filter: "agNumberColumnFilter",
         cellClass: "cf-num",
@@ -133,7 +151,8 @@ export default function LoanQc({ onDrillLoan }) {
       {
         field: "fail_count",
         headerName: "Failed Loans",
-        width: 110,
+        width: 140,
+        suppressSizeToFit: true,
         type: "numericColumn",
         filter: "agNumberColumnFilter",
         cellClass: "cf-num",
