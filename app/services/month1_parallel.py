@@ -117,7 +117,14 @@ def _worker(payload: dict[str, Any]) -> dict[str, Any]:
                 "month": HORIZON_MONTHS,
                 "n_loans": len(loans),
                 **{k: round(v, 8) for k, v in totals.items()},
-                # UPB-weighted FNMA lag (never loan-count simple average).
+                # UPB-weighted from loan CF (never scenario-grid constants /
+                # loan-count simple average). Recovery = Urban/severity per loan;
+                # lag = FNMA state months used on that loan.
+                "avg_used_recovery_rate": _upb_weighted_mean(
+                    loan_rows,
+                    "recovery_rate",
+                    weight_key="beginning_balance",
+                ),
                 "avg_used_recovery_lag_months": _upb_weighted_mean(
                     loan_rows,
                     "used_recovery_lag_months",
@@ -217,15 +224,22 @@ def run_month1_parallel(
             "sda_multiple": r.get("sda_multiple"),
             "pca_level": r.get("pca_level"),
             "sta_level": r.get("sta_level"),
-            "recovery_rate": r.get("recovery_rate"),
             "recovery_period_months": r.get("recovery_period_months"),
-            "recovery_lag_months": r.get("recovery_lag_months"),
             "status": r.get("status"),
             "elapsed_ms": r.get("elapsed_ms"),
             "error": r.get("error"),
         }
         if r.get("aggregate"):
             agg.update(r["aggregate"])
+        # Prefer loan UPB-weighted rates over scenario-grid constants.
+        if agg.get("avg_used_recovery_rate") is not None:
+            agg["recovery_rate"] = agg["avg_used_recovery_rate"]
+        else:
+            agg["recovery_rate"] = r.get("recovery_rate")
+        if agg.get("avg_used_recovery_lag_months") is not None:
+            agg["recovery_lag_months"] = agg["avg_used_recovery_lag_months"]
+        else:
+            agg["recovery_lag_months"] = r.get("recovery_lag_months")
         aggregates.append(agg)
 
     return {
@@ -267,9 +281,10 @@ def run_month1_parallel(
             "note": (
                 "PCA=PSA, STA=SDA. Down/Base/Up from CF-41 grid. "
                 "Each of 27 cells runs its cohort loans for month 1 only. "
-                "Cohort recovery_rate 60/55/75 (not one pool rate). "
-                "used_recovery_lag_months from Fannie Mae state time frames "
-                "(https://singlefamily.fanniemae.com/media/6726/display)."
+                "Recovery + lag on aggregates are UPB-weighted from loans "
+                "(Urban/severity recovery; FNMA state lag); cohort 60/55/75 "
+                "is only the no-MI / missing-cell fallback. "
+                "https://singlefamily.fanniemae.com/media/6726/display"
             ),
         },
         "aggregates": aggregates,

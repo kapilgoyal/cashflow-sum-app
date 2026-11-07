@@ -1190,30 +1190,23 @@ export default function App() {
   );
 
   /**
-   * Wide cohort speed schedule (reference layout) + Recovery / FNMA Lag.
-   * One row per cohort — PSA/SDA Down·Base·Up as columns.
+   * Wide cohort speed schedule + Recovery / FNMA Lag from underlying loans.
+   * Recovery = UPB-weighted loan Urban/severity (or cohort fallback when no MI);
+   * Lag = UPB-weighted FNMA state lag — never scenario-grid constants.
    */
   const scenarioRows = useMemo(() => {
     const byCohort = Object.fromEntries(
       (cohortStats || []).map((r) => [cohortLabel(r.cohort), r])
     );
-    const scenarioByCohort = {};
-    for (const s of scenarios.length ? scenarios : aggregates) {
-      const key = cohortLabel(s.cohort);
-      if (!scenarioByCohort[key]) scenarioByCohort[key] = s;
-    }
     return COHORT_SPEED_SCHEDULE.map((row) => {
       const stats = byCohort[row.cohort] || {};
-      const scen = scenarioByCohort[row.cohort] || {};
-      const recovery = stats.recovery ?? scen.recovery_rate ?? null;
-      const lag =
-        stats.lag ??
-        scen.avg_used_recovery_lag_months ??
-        scen.recovery_lag_months ??
-        null;
-      return { ...row, recovery, lag };
+      return {
+        ...row,
+        recovery: stats.recovery ?? null,
+        lag: stats.lag ?? null,
+      };
     });
-  }, [scenarios, aggregates, cohortStats]);
+  }, [cohortStats]);
 
   const scatterByCluster = useMemo(() => {
     const groups = Object.fromEntries(CLUSTER_ORDER.map((c) => [c, []]));
