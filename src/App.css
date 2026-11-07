@@ -85,10 +85,24 @@ body {
 .app .ia-panel-title,
 .app .sidenav-btn,
 .app .cf-btn,
+.app .btn,
 .app .muted,
 .app .status-banner {
   font-family: var(--cf-font);
-  font-weight: 300;
+}
+
+/* Shared titles / labels / buttons (QC composer + app chrome) */
+.app .brand,
+.app .section-title,
+.app .qc-composer-title,
+.app .qc-composer-label,
+.app .qc-composer-badge,
+.app .collat-section-title,
+.app .ia-panel-title,
+.app .cf-btn,
+.app .btn {
+  font-size: 10px;
+  font-weight: 600;
 }
 
 .shell {
@@ -444,8 +458,9 @@ body {
 
 .section-title {
   margin: 0 0 6px;
-  font-size: var(--cf-font-sm);
-  font-weight: 300;
+  font-family: var(--cf-font);
+  font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--cf-text);
 }
@@ -618,8 +633,9 @@ body {
 }
 
 .field label {
-  font-size: var(--cf-font-sm);
-  font-weight: 300;
+  font-family: var(--cf-font);
+  font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--cf-muted);
 }
@@ -628,8 +644,9 @@ body {
   width: 96px;
   min-height: var(--cf-control-h);
   padding: 3px 6px;
-  font: inherit;
-  font-size: var(--cf-font-body);
+  font-family: var(--cf-font);
+  font-size: 11px;
+  font-weight: 400;
   font-feature-settings: "tnum" 1;
   color: var(--cf-text);
   background: var(--cf-bg);
@@ -647,8 +664,9 @@ body {
   color: var(--cf-text);
   border: 1px solid var(--cf-hairline);
   border-radius: 0;
-  font-family: inherit;
-  font-size: var(--cf-font-md);
+  font-family: var(--cf-font);
+  font-size: 11px;
+  font-weight: 400;
   min-height: var(--cf-control-h);
   padding: 2px 6px;
   margin-left: 4px;
@@ -708,9 +726,9 @@ body {
 .btn {
   padding: 4px 10px;
   min-height: var(--cf-control-h);
-  font: inherit;
-  font-size: var(--cf-font-md);
-  font-weight: 300;
+  font-family: var(--cf-font);
+  font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--cf-on-accent);
   background: var(--cf-accent);
@@ -838,15 +856,17 @@ body {
 }
 
 .qc-composer-title {
-  font-size: var(--cf-font-md);
-  font-weight: 300;
+  font-family: var(--cf-font);
+  font-size: 10px;
+  font-weight: 600;
   color: var(--cf-text);
   letter-spacing: 0.01em;
 }
 
 .qc-composer-badge {
-  font-size: var(--cf-font-sm, 10px);
-  font-weight: 300;
+  font-family: var(--cf-font);
+  font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--cf-muted);
@@ -861,8 +881,9 @@ body {
 }
 
 .qc-composer-label {
-  font-size: var(--cf-font-sm, 10px);
-  font-weight: 300;
+  font-family: var(--cf-font);
+  font-size: 10px;
+  font-weight: 600;
   color: var(--cf-muted);
   letter-spacing: 0.02em;
 }
@@ -876,8 +897,9 @@ body {
   border-radius: 0;
   background: var(--cf-panel, #fff);
   color: var(--cf-text);
-  font-family: inherit;
-  font-size: var(--cf-font-body);
+  font-family: var(--cf-font);
+  font-size: 11px;
+  font-weight: 400;
   line-height: 1.35;
 }
 
@@ -888,8 +910,8 @@ body {
 
 .qc-composer-predicate {
   font-family: var(--cf-font);
-  font-size: var(--cf-font-md);
-  font-weight: 300;
+  font-size: 11px;
+  font-weight: 400;
 }
 
 .qc-composer-actions {
@@ -908,9 +930,9 @@ body {
   border-radius: 0;
   background: var(--cf-accent, #fd9d24);
   color: var(--cf-on-accent, #001a41);
-  font-family: inherit;
-  font-size: var(--cf-font-md);
-  font-weight: 300;
+  font-family: var(--cf-font);
+  font-size: 10px;
+  font-weight: 600;
   cursor: pointer;
 }
 
