@@ -28,7 +28,7 @@ from app.repositories.asf_tape_schema import (
 from app.services.assumptions import default_has_mi
 from app.repositories.connect import connect
 from app.repositories.env_load import load_dotenv, resolve_pg_url
-from app.repositories.tape_repository import DEFAULT_TAPE
+from app.repositories.tape_repository import DEFAULT_TAPE, TapeRepository
 from app.services.cohort_labels import (
     canonical_cohort_label,
     cohort_match_values,
@@ -885,70 +885,132 @@ class AsfTapeRepository:
         return relabel_records(loans), total, meta
 
     def cohort_stats(self) -> list[dict[str, Any]]:
-        """Per K-prototype cohort pool stats for the Cohort tab grid."""
-        sql = """
-            SELECT
-                COALESCE(cohort, 'unlabeled') AS cohort,
-                COUNT(*)::int AS loan_count,
-                COALESCE(SUM(current_loan_amount), 0)::float AS upb,
-                (SUM(current_interest_rate * current_loan_amount)
-                    / NULLIF(SUM(current_loan_amount), 0))::float AS wac,
-                (SUM(remaining_term * current_loan_amount)
-                    / NULLIF(SUM(current_loan_amount), 0))::float AS wam,
-                AVG(original_ltv)::float AS avg_ltv,
-                AVG(original_cltv)::float AS avg_cltv,
-                AVG(original_fico)::float AS avg_fico,
-                AVG(current_interest_rate)::float AS avg_rate,
-                AVG(refinance_incentive)::float AS avg_refi_incentive,
-                AVG(remaining_term)::float AS avg_remaining_term,
-                AVG(originator_dti)::float AS avg_dti
-            FROM public.asf_tape
-            GROUP BY 1
-            ORDER BY upb DESC
+        """Per K-prototype cohort pool stats for the Cohort tab grid.
+
+        Groups by cluster-tape HLTV/LLTV labels (not Excel short names on asf_tape).
         """
+        try:
+            cluster_map = TapeRepository().load_cluster_map()
+        except FileNotFoundError:
+            cluster_map = {}
+
         with connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
-                cur.execute(sql)
-                cols = [d.name for d in cur.description]
-                rows = [dict(zip(cols, tup)) for tup in cur.fetchall()]
                 cur.execute(
                     """
                     SELECT
+                        loan_id,
                         COALESCE(cohort, 'unlabeled') AS cohort,
                         state,
                         original_fico,
                         original_ltv,
+                        original_cltv,
                         current_loan_amount,
+                        current_interest_rate,
+                        remaining_term,
+                        refinance_incentive,
+                        originator_dti,
                         has_mi
                     FROM public.asf_tape
                     """
                 )
                 loan_cols = [d.name for d in cur.description]
                 loan_rows = [dict(zip(loan_cols, tup)) for tup in cur.fetchall()]
-        weighted: dict[str, dict[str, float]] = {}
+
+        buckets: dict[str, dict[str, Any]] = {}
         for ln in loan_rows:
-            key = canonical_cohort_label(ln.get("cohort"))
+            lid = str(ln.get("loan_id") or "")
+            key = cluster_map.get(lid) or canonical_cohort_label(ln.get("cohort"))
+            if not key:
+                key = "unlabeled"
             upb = float(ln.get("current_loan_amount") or 0.0)
+            rate = float(ln.get("current_interest_rate") or 0.0)
+            term = float(ln.get("remaining_term") or 0.0)
+            slot = buckets.setdefault(
+                key,
+                {
+                    "cohort": key,
+                    "loan_count": 0,
+                    "upb": 0.0,
+                    "wac_num": 0.0,
+                    "wam_num": 0.0,
+                    "ltv_sum": 0.0,
+                    "cltv_sum": 0.0,
+                    "fico_sum": 0.0,
+                    "rate_sum": 0.0,
+                    "ri_sum": 0.0,
+                    "term_sum": 0.0,
+                    "dti_sum": 0.0,
+                    "ltv_n": 0,
+                    "cltv_n": 0,
+                    "fico_n": 0,
+                    "rate_n": 0,
+                    "ri_n": 0,
+                    "term_n": 0,
+                    "dti_n": 0,
+                    "rec_upb": 0.0,
+                    "rec_num": 0.0,
+                    "lag_num": 0.0,
+                },
+            )
+            slot["loan_count"] += 1
+            slot["upb"] += upb
+            slot["wac_num"] += rate * upb
+            slot["wam_num"] += term * upb
+            for field, sum_key, n_key in (
+                ("original_ltv", "ltv_sum", "ltv_n"),
+                ("original_cltv", "cltv_sum", "cltv_n"),
+                ("original_fico", "fico_sum", "fico_n"),
+                ("current_interest_rate", "rate_sum", "rate_n"),
+                ("refinance_incentive", "ri_sum", "ri_n"),
+                ("remaining_term", "term_sum", "term_n"),
+                ("originator_dti", "dti_sum", "dti_n"),
+            ):
+                val = ln.get(field)
+                if val is None:
+                    continue
+                try:
+                    num = float(val)
+                except (TypeError, ValueError):
+                    continue
+                slot[sum_key] += num
+                slot[n_key] += 1
             try:
                 cohort_rate = recovery_for_cohort(key)[0]
             except KeyError:
                 cohort_rate = 0.60
-            rate, _src = resolve_loan_recovery_rate(
+            rec, _src = resolve_loan_recovery_rate(
                 has_mi=ln.get("has_mi"),
                 original_fico=ln.get("original_fico"),
                 original_ltv=ln.get("original_ltv"),
                 cohort_recovery_rate=cohort_rate,
             )
             lag = recovery_lag_months_for_state(ln.get("state"))
-            slot = weighted.setdefault(key, {"upb": 0.0, "rate": 0.0, "lag": 0.0})
-            slot["upb"] += upb
-            slot["rate"] += rate * upb
-            slot["lag"] += lag * upb
-        out = relabel_records(rows)
-        for row in out:
-            key = canonical_cohort_label(row.get("cohort"))
-            slot = weighted.get(key)
-            if slot and slot["upb"] > 0:
-                row["recovery"] = slot["rate"] / slot["upb"]
-                row["lag"] = slot["lag"] / slot["upb"]
-        return out
+            slot["rec_upb"] += upb
+            slot["rec_num"] += rec * upb
+            slot["lag_num"] += lag * upb
+
+        out: list[dict[str, Any]] = []
+        for key, slot in buckets.items():
+            upb = float(slot["upb"])
+            n = int(slot["loan_count"])
+            row = {
+                "cohort": key,
+                "loan_count": n,
+                "upb": upb,
+                "wac": (slot["wac_num"] / upb) if upb else None,
+                "wam": (slot["wam_num"] / upb) if upb else None,
+                "avg_ltv": (slot["ltv_sum"] / slot["ltv_n"]) if slot["ltv_n"] else None,
+                "avg_cltv": (slot["cltv_sum"] / slot["cltv_n"]) if slot["cltv_n"] else None,
+                "avg_fico": (slot["fico_sum"] / slot["fico_n"]) if slot["fico_n"] else None,
+                "avg_rate": (slot["rate_sum"] / slot["rate_n"]) if slot["rate_n"] else None,
+                "avg_refi_incentive": (slot["ri_sum"] / slot["ri_n"]) if slot["ri_n"] else None,
+                "avg_remaining_term": (slot["term_sum"] / slot["term_n"]) if slot["term_n"] else None,
+                "avg_dti": (slot["dti_sum"] / slot["dti_n"]) if slot["dti_n"] else None,
+            }
+            if slot["rec_upb"] > 0:
+                row["recovery"] = slot["rec_num"] / slot["rec_upb"]
+                row["lag"] = slot["lag_num"] / slot["rec_upb"]
+            out.append(row)
+        out.sort(key=lambda r: float(r.get("upb") or 0), reverse=True)
+        return relabel_records(out)

@@ -63,8 +63,6 @@ const Y_DOMAIN = [-2.4, 3.2];
 const X_TICKS = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
 const Y_TICKS = [-2, -1, 0, 1, 2, 3];
 const POINT_SIZE = 28;
-const OFF_AXIS_FEATURES = ["Documentation", "Remaining Term"];
-
 const LS_CLUSTER_KEY = "cashflow.clusterFilter";
 const LS_GRID_KEY = "cashflow.agGridState";
 const LS_NAV_KEY = "cashflow.navPane";
@@ -2104,22 +2102,6 @@ export default function App() {
                           ))}
                         </ComposedChart>
                       </ResponsiveContainer>
-                      <aside
-                        className="scatter-offaxis-note"
-                        aria-label="Off-Axis Clustering Features"
-                      >
-                        <span
-                          className="scatter-offaxis-mark"
-                          aria-hidden="true"
-                        >
-                          ★
-                        </span>
-                        <ul>
-                          {OFF_AXIS_FEATURES.map((f) => (
-                            <li key={f}>• {f}</li>
-                          ))}
-                        </ul>
-                      </aside>
                     </>
                   )}
                 </div>
