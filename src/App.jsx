@@ -984,7 +984,7 @@ export default function App() {
       },
       {
         field: "lag",
-        headerName: "FNMA Lag (Mo)",
+        headerName: "FNMA Lag (Month)",
         flex: 1.1,
         minWidth: 96,
         sortable: false,
