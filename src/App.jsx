@@ -910,6 +910,7 @@ export default function App() {
   }, [cohortStats, clusterFilter]);
 
   const scenarioColumnDefs = useMemo(() => {
+    /* Group headers center; numeric leaf headers right; Cohort left. */
     const speedCol = (field, headerName) => ({
       field,
       headerName,
@@ -920,6 +921,7 @@ export default function App() {
       type: "numericColumn",
       valueFormatter: (p) => fmtInt(p.value),
       cellClass: "cf-num",
+      headerClass: "cf-grid-header ag-right-aligned-header",
     });
 
     return [
@@ -931,11 +933,13 @@ export default function App() {
         sortable: false,
         filter: false,
         spanHeaderHeight: true,
+        headerClass: "cf-grid-header cf-hdr-left",
         valueFormatter: (p) => cohortLabel(p.value) || "",
       },
       {
         headerName: "PSA",
         marryChildren: true,
+        headerClass: "cf-hdr-group-center",
         children: [
           speedCol("psaDown", "Down"),
           speedCol("psaBase", "Base"),
@@ -945,6 +949,7 @@ export default function App() {
       {
         headerName: "SDA",
         marryChildren: true,
+        headerClass: "cf-hdr-group-center",
         children: [
           speedCol("sdaLow", "Low"),
           speedCol("sdaBase", "Base"),
@@ -959,6 +964,8 @@ export default function App() {
         sortable: false,
         filter: false,
         spanHeaderHeight: true,
+        type: "numericColumn",
+        headerClass: "cf-grid-header ag-right-aligned-header",
         valueFormatter: (p) => fmtPct(p.value, 1),
         cellClass: "cf-num",
       },
@@ -970,6 +977,8 @@ export default function App() {
         sortable: false,
         filter: false,
         spanHeaderHeight: true,
+        type: "numericColumn",
+        headerClass: "cf-grid-header ag-right-aligned-header",
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
             ? ""

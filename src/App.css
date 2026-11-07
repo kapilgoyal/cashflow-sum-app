@@ -331,8 +331,27 @@ body {
   color: var(--cf-accent) !important;
 }
 
-.section-scenarios .ag-theme-cashflow .ag-header-group-cell {
+/* Group headers (PSA / SDA): center over children */
+.section-scenarios .ag-theme-cashflow .ag-header-group-cell,
+.section-scenarios .ag-theme-cashflow .ag-header-group-cell.cf-hdr-group-center {
   justify-content: center;
+}
+
+.section-scenarios .ag-theme-cashflow .ag-header-group-cell .ag-header-group-cell-label {
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+}
+
+/* Cohort: left; numeric leaf headers: right (match cells) */
+.section-scenarios .ag-theme-cashflow .ag-header-cell.cf-hdr-left .ag-header-cell-label {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.section-scenarios .ag-theme-cashflow .ag-header-cell.ag-right-aligned-header .ag-header-cell-label {
+  justify-content: flex-end;
+  text-align: right;
 }
 
 .section-scenarios .scenario-speed-title,
