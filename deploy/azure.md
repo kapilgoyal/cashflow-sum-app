@@ -1,27 +1,27 @@
 # Azure Container Apps (combined UI + API)
 
-One always-on container serves the Vite UI and FastAPI. Vercel and Railway stay up until you cut over.
+One always-on container serves the Vite UI and FastAPI. This is the only production host (GHCR image build + Azure Container App).
 
 Do **not** invent Azure credentials. Create the resources below in the [Azure portal](https://portal.azure.com), then paste the IDs Azure shows you into GitHub secrets.
 
 ## 1. Resource group, registry, Container App
 
-1. **Resource groups** → **Create** → name e.g. `cashflow` → region **East US** (or yours).
+1. **Resource groups** → **Create** → name e.g. `cashflow-rg` → region **East US** (or yours).
 2. **Container registries** → **Create**
    - SKU **Basic** (~$5/month)
    - Same resource group
    - After create: **Access keys** → **Admin user** = On (so the app can pull images; GitHub never stores the password)
 3. **Container Apps** → **Create**
-   - Name e.g. `cashflow-sum-app`
+   - Name e.g. `cashflow-app`
    - Environment: **Create new** → **Consumption** (not Dedicated)
-   - First image: quickstart (`mcr.microsoft.com/k8se/quickstart:latest`) is fine; GitHub replaces it
+   - First image: quickstart (`mcr.microsoft.com/k8se/quickstart:latest`) is fine; CI / import replaces it
    - **Ingress**: External / accept traffic from anywhere / target port **80** for the placeholder (workflow sets **8000**)
    - CPU **0.5**, memory **1 GiB**
    - Scale: min replicas **1** (always-on), max **2**
 4. After the app exists:
    - **Identity** → System assigned = **On**
    - **Containers** / **Environment variables** (as secrets, not committed):
-     - `DATABASE_URL` — same Neon pooled URL as Railway
+     - `DATABASE_URL` — omit for sqlite default, or set Neon pooled URL
      - `DATABASE_URL_UNPOOLED` — optional
      - `PORT` = `8000`
    - Registry → **Access control (IAM)** → **Add role assignment** → **AcrPull** → the Container App’s system identity (optional if Admin user is On)
@@ -57,13 +57,35 @@ Repo → **Settings** → **Secrets and variables** → **Actions**. Create thes
 
 Do **not** put `DATABASE_URL` in GitHub. It lives on the Container App.
 
+Unused legacy secrets (`RAILWAY_TOKEN`, `RAILWAY_SERVICE_ID`, any Vercel tokens) are not referenced by workflows — remove them in the repo settings when convenient.
+
 Fallback if you cannot use OIDC: a service-principal JSON secret named `AZURE_CREDENTIALS` (Microsoft’s older `azure/login` `creds:` path). Prefer OIDC; this workflow uses OIDC only.
 
 ## 4. Deploy
 
-1. Merge this PR (or run **Actions** → **Azure Container App** → **Run workflow** on `master`).
-2. Open the Container App URL Azure prints. Health: `GET /health`. UI is `/` (same origin as `/api`).
-3. Leave Vercel (`VITE_API_BASE_URL` → Railway) until the Azure URL is good, then point DNS / users at Azure and stop the other two hosts.
+### Path A — GHCR then import (current prototype)
+
+1. Push to `master` (or **Actions** → **Azure proto GHCR image** → **Run workflow**).
+2. Image: `ghcr.io/kapilgoyal/cashflow-sum-app:proto` (and `:${{sha}}`).
+3. On a machine with `az` logged into the subscription:
+
+```bash
+az acr import -n cashflowacr -g cashflow-rg \
+  --source ghcr.io/kapilgoyal/cashflow-sum-app:proto \
+  --image cashflow-sum-app:proto --force
+
+SUFFIX="m$(date +%m%d%H%M)"
+az containerapp update -n cashflow-app -g cashflow-rg \
+  --image cashflowacr.azurecr.io/cashflow-sum-app:proto \
+  --revision-suffix "${SUFFIX}"
+```
+
+4. Health: `GET https://<container-app-fqdn>/health`. UI is `/` (same origin as `/api`).
+
+### Path B — OIDC workflow → ACR
+
+1. Once the six `AZURE_*` secrets exist, push to `master` or **Actions** → **Azure Container App** → **Run workflow**.
+2. Workflow builds, pushes to ACR, and updates the Container App.
 
 ## Cost (East US list, Consumption, min replicas = 1)
 

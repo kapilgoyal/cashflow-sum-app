@@ -159,7 +159,7 @@ def run_month1_parallel(
 
     t_wall0 = time.perf_counter()
     results: list[dict[str, Any]] = []
-    # Vercel / constrained runtimes: threads (same _worker, no formula change).
+    # Constrained runtimes: threads (same _worker, no formula change).
     use_threads = bool(os.environ.get("VERCEL")) or max_workers <= 4
     executor_cls = ThreadPoolExecutor if use_threads else ProcessPoolExecutor
     executor_name = (

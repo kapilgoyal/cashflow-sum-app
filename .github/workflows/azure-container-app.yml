@@ -1,5 +1,5 @@
 # Build the combined Vite + FastAPI image and deploy to Azure Container Apps.
-# Does not remove Railway or Vercel; this is the cutover path.
+# Active hosting path with GHCR (see azure-proto-ghcr.yml).
 #
 # Required GitHub Actions secrets (OIDC — no Azure password in GitHub):
 #   AZURE_CLIENT_ID          Entra app registration Application (client) ID
@@ -31,7 +31,7 @@ jobs:
     name: build-push-deploy
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Push to master is a no-op until OIDC secrets exist (keeps Railway/Vercel green).
+    # Skip automatic push until OIDC secrets exist.
     # workflow_dispatch always runs so a missing secret fails with a clear error.
     if: ${{ github.event_name == 'workflow_dispatch' || secrets.AZURE_CLIENT_ID != '' }}
     steps:

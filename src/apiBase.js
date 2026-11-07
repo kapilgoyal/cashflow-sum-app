@@ -3,8 +3,8 @@
  *
  * - Local Vite: leave unset → relative `/api/...` (proxied to uvicorn :8000).
  * - Combined container (Azure Container Apps): leave unset → same-origin `/api`.
- * - Split Vercel UI: set `VITE_API_BASE_URL` at build time to the always-on
- *   FastAPI host (e.g. https://cashflow-api.up.railway.app) with no trailing slash.
+ * - Optional override: set `VITE_API_BASE_URL` at build time (no trailing slash)
+ *   only when the UI and API are on different origins.
  */
 const RAW = (import.meta.env.VITE_API_BASE_URL || "").trim().replace(/\/$/, "");
 

@@ -1,10 +1,11 @@
-# Temporary path to produce cashflow-sum-app:proto when ACR Tasks is disabled
-# on the Azure subscription. Image is imported into cashflowacr after this run.
+# Build combined Vite + FastAPI image and push to GHCR.
+# Windows/az imports ghcr.io/kapilgoyal/cashflow-sum-app:proto into cashflowacr
+# when ACR Tasks is unavailable, then rolls the Container App.
 name: Azure proto GHCR image
 
 on:
   push:
-    branches: [cursor/azure-proto-deploy-6d82]
+    branches: [master]
   workflow_dispatch:
 
 permissions:
