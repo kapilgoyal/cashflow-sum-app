@@ -1054,6 +1054,16 @@ body {
   text-underline-offset: 2px;
 }
 
+.qc-scope-custom {
+  color: var(--cf-accent);
+  font-weight: 300;
+}
+
+.qc-scope-global {
+  color: var(--cf-muted);
+  font-weight: 300;
+}
+
 .qc-outcome-pass {
   color: var(--cf-up);
   font-weight: 300;
