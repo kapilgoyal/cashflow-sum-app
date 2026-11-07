@@ -11,9 +11,9 @@ export const FONT =
   '"IBM Plex Mono", "Roboto Mono", ui-monospace, Menlo, monospace';
 
 const GRID_SCALE = {
-  /* Slick Terminal density — ~11–12px cells; no display-scale blow-up. */
+  /* Scenarios look app-wide: header + cell same size, thin weight. */
   base: {
-    fontSize: 11,
+    fontSize: 9,
     headerFontSize: 9,
     headerHeight: 20,
     rowHeight: 18,
@@ -21,7 +21,7 @@ const GRID_SCALE = {
     iconSize: 11,
   },
   lg: {
-    fontSize: 11,
+    fontSize: 10,
     headerFontSize: 10,
     headerHeight: 22,
     rowHeight: 20,
@@ -29,7 +29,7 @@ const GRID_SCALE = {
     iconSize: 12,
   },
   xl: {
-    fontSize: 12,
+    fontSize: 11,
     headerFontSize: 11,
     headerHeight: 24,
     rowHeight: 22,
@@ -76,9 +76,10 @@ export const gridTheme = themeQuartz.withParams({
   columnBorder: { style: "solid", width: 1, color: "#2A2A2A" },
   headerColumnBorder: false,
   fontFamily: FONT,
-  fontSize: 11,
+  fontSize: 9,
   headerFontSize: 9,
-  headerFontWeight: 600,
+  headerFontWeight: 300,
+  headerTextColor: "#FD9D24",
   /* Dense rows; GRID_SCALE stays ~11–12px on large desktops. */
   spacing: 2,
   headerHeight: 20,
