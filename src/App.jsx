@@ -921,9 +921,8 @@ export default function App() {
       {
         field: "cohort",
         headerName: "Cohort Name",
-        width: 118,
-        maxWidth: 130,
-        flex: 0,
+        flex: 2.2,
+        minWidth: 140,
         sortable: false,
         filter: false,
         /* AG Grid 36+: enableCellSpan + spanRows (legacy rowSpan blanks only). */
@@ -934,7 +933,8 @@ export default function App() {
       {
         field: "psa_multiple",
         headerName: "PSA",
-        width: 64,
+        flex: 0.7,
+        minWidth: 56,
         sortable: false,
         filter: false,
         type: "numericColumn",
@@ -943,11 +943,22 @@ export default function App() {
         valueFormatter: (p) =>
           p.value === "" || p.value == null ? "" : fmtInt(p.value),
       },
-      intCol("sda_multiple", "SDA", 64),
+      {
+        field: "sda_multiple",
+        headerName: "SDA",
+        flex: 0.7,
+        minWidth: 56,
+        sortable: false,
+        filter: false,
+        type: "numericColumn",
+        valueFormatter: (p) => fmtInt(p.value),
+        cellClass: "cf-num",
+      },
       {
         field: "recovery",
         headerName: "Recovery Rate",
-        width: 104,
+        flex: 1.2,
+        minWidth: 100,
         sortable: false,
         filter: false,
         spanRows: sameCohortSpan,
@@ -957,7 +968,8 @@ export default function App() {
       {
         field: "lag",
         headerName: "FNMA Lag (Mo)",
-        width: 96,
+        flex: 1.2,
+        minWidth: 100,
         sortable: false,
         filter: false,
         spanRows: sameCohortSpan,
