@@ -2001,55 +2001,157 @@ body {
 .section-collateral {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   min-height: 0;
   overflow: auto;
 }
 
-.collat-topbar {
+.collat-kpi-row {
+  display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  align-items: flex-start;
+  gap: 6px;
+  align-items: stretch;
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--cf-bg);
+  padding-bottom: 4px;
 }
 
-.collat-toolbar {
+.collat-kpi {
+  flex: 1 1 118px;
+  min-width: 108px;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid var(--cf-hairline);
+  background: var(--cf-bg-deep, #0a0a0a);
+  color: var(--cf-text);
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+button.collat-kpi {
+  cursor: pointer;
+}
+
+.collat-kpi.is-active {
+  border-color: var(--cf-accent);
+  box-shadow: inset 0 3px 0 var(--cf-accent);
+}
+
+.collat-kpi-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--cf-muted);
+}
+
+.collat-kpi-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cf-text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.collat-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 0 4px;
+  border-bottom: 1px solid var(--cf-hairline);
+}
+
+.collat-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.collat-cohort-chips,
+.collat-toggle {
+  display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
 }
 
-.collat-cohort-chips {
+.collat-chip {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--cf-hairline);
+  background: var(--cf-panel);
+  color: var(--cf-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.collat-chip.is-active {
+  border-color: var(--cf-accent);
+  background: var(--cf-selected);
+  color: var(--cf-accent);
+}
+
+.collat-chip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.collat-ltv-mode .select {
+  min-height: 36px;
+}
+
+.collat-active-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
   align-items: center;
 }
 
-.collat-coverage {
-  margin: 0;
+.collat-active-chip {
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--cf-accent);
+  background: transparent;
+  color: var(--cf-accent);
+  font: inherit;
   font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .collat-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
   padding-bottom: 16px;
 }
 
 .collat-panel {
   background: var(--cf-panel);
   border: 1px solid var(--cf-hairline);
-  padding: 10px 12px;
-  min-height: 220px;
+  padding: 12px 14px;
+  min-height: 240px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .collat-panel-wide {
   grid-column: 1 / -1;
-  min-height: 280px;
+  min-height: 300px;
 }
 
 .collat-panel-full {
@@ -2074,20 +2176,21 @@ body {
   gap: 6px;
 }
 
-.collat-section-meta {
-  font-size: 10px;
+.collat-section-hint {
+  font-size: 11px;
   color: var(--cf-muted);
+  white-space: nowrap;
 }
 
 .collat-info {
-  width: 18px;
-  height: 18px;
-  min-width: 18px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
   border-radius: 50%;
   border: 1px solid var(--cf-chrome);
   background: var(--cf-panel);
   color: var(--cf-muted);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 300;
   font-family: var(--cf-font);
   line-height: 1;
@@ -2107,14 +2210,21 @@ body {
 
 .collat-observation {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--cf-muted);
   line-height: 1.35;
 }
 
+.collat-chart-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 180px;
+}
+
 .collat-chart {
   flex: 1;
-  min-height: 160px;
+  min-height: 180px;
   width: 100%;
 }
 
@@ -2222,19 +2332,37 @@ body {
   .collat-geo {
     grid-template-columns: 1fr;
   }
+
+  .collat-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 @media (min-width: 1280px) {
+  .collat-kpi-value {
+    font-size: 20px;
+  }
+
   .collat-observation {
     font-size: var(--cf-font-md);
   }
 
-  .collat-chart {
-    min-height: 180px;
+  .collat-chart,
+  .collat-chart-wrap {
+    min-height: 200px;
   }
 }
 
 @media (max-width: 720px) {
+  .collat-kpi {
+    min-height: 52px;
+  }
+
+  .collat-kpi-value {
+    font-size: 16px;
+  }
+
   .collat-info {
     width: 28px;
     height: 28px;
@@ -2245,9 +2373,13 @@ body {
   .collat-heatmap-cell,
   .collat-heatmap-axis,
   .collat-top-state,
-  .collat-toolbar .linkish,
-  .collat-cohort-chips .linkish {
+  .collat-chip,
+  .collat-active-chip {
     min-height: 44px;
+  }
+
+  .collat-section-hint {
+    display: none;
   }
 }
 
