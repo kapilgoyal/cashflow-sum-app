@@ -316,8 +316,12 @@ body {
   font-weight: 300 !important;
 }
 
-/* Base speeds: amber accent, still thin — no heavier weight */
-.section-scenarios .ag-theme-cashflow .cf-speed-base,
+/* Base speeds: amber on header only; data stays normal thin text */
+.section-scenarios .ag-theme-cashflow .cf-speed-base {
+  font-weight: 300 !important;
+  color: var(--cf-text);
+}
+
 .section-scenarios .ag-theme-cashflow .cf-speed-base-hdr .ag-header-cell-text {
   font-weight: 300 !important;
   color: var(--cf-accent);
