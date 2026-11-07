@@ -579,7 +579,7 @@ export function DataGrid({
           columnTypes={sharedColTypes}
           suppressCellFocus
           animateRows={false}
-          rowSelection="single"
+          rowSelection={{ mode: "singleRow", checkboxes: false }}
           enableCellTextSelection
           ensureDomOrder
           enableBrowserTooltips

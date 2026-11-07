@@ -1370,7 +1370,8 @@ export default function App() {
       const lag =
         stats.lag ??
         s.avg_used_recovery_lag_months ??
-        (s.recovery_lag_months ? s.recovery_lag_months : null);
+        s.recovery_lag_months ??
+        null;
       return {
         ...s,
         cohort: cohortLabel(s.cohort),
