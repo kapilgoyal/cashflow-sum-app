@@ -1862,6 +1862,7 @@ export default function App() {
                     headerTextColor: "#FD9D24",
                     headerHeight: 20,
                     groupHeaderHeight: 20,
+                    matchHeaderFontSize: true,
                   }}
                 />
                 <ScenarioSpeedCharts />

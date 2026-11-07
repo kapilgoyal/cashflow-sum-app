@@ -312,6 +312,8 @@ body {
 .section-scenarios .ag-theme-cashflow .cf-num {
   font-weight: 300 !important;
   color: var(--cf-text);
+  /* Same size as headers (9 / 10 / 11px by viewport scale) */
+  font-size: var(--ag-header-font-size) !important;
 }
 
 /* Amber on every column / group header; data rows stay light text */

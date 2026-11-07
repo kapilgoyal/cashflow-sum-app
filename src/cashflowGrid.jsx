@@ -385,14 +385,21 @@ export function DataGrid({
   const onRowStatsRef = useRef(onRowStats);
   onRowStatsRef.current = onRowStats;
   const gridScale = useGridScale();
-  const scaledTheme = useMemo(
-    () =>
-      gridTheme.withParams({
-        ...(GRID_SCALE[gridScale] || GRID_SCALE.base),
-        ...(themeParams || {}),
-      }),
-    [gridScale, themeParams]
-  );
+  const scaledTheme = useMemo(() => {
+    const scale = GRID_SCALE[gridScale] || GRID_SCALE.base;
+    const extra = themeParams || {};
+    /* When matchHeaderFontSize, data cells use the same px as headers. */
+    const fontSize =
+      extra.matchHeaderFontSize != null
+        ? (extra.headerFontSize ?? scale.headerFontSize)
+        : extra.fontSize;
+    const { matchHeaderFontSize: _m, ...rest } = extra;
+    return gridTheme.withParams({
+      ...scale,
+      ...rest,
+      ...(fontSize != null ? { fontSize } : {}),
+    });
+  }, [gridScale, themeParams]);
   const iconSize = gridScale === "xl" ? 16 : gridScale === "lg" ? 14 : 12;
 
   const emitRowStats = useCallback((api) => {
