@@ -116,8 +116,8 @@ export default function LoanQc({ onDrillLoan }) {
       {
         field: "nl_description",
         headerName: "Description",
-        flex: 2,
-        minWidth: 220,
+        flex: 4,
+        minWidth: 360,
         pinned: "left",
         lockPinned: true,
       },
