@@ -34,44 +34,11 @@ import {
   CLUSTER_COLORS,
   CLUSTER_FALLBACK_COUNTS,
   CLUSTER_ORDER,
-  HLTV_STRONG_RI,
-  HLTV_WEAK_RI,
-  LLTV_WEAK_RI,
   cohortLabel,
   relabelCohortFields,
   remappedKeyedObject,
 } from "./cohortLabels";
-
-/** Cohort speed schedule (PSA Down/Base/Up · SDA Low/Base/High) — Scenarios wide grid. */
-const COHORT_SPEED_SCHEDULE = [
-  {
-    cohort: HLTV_STRONG_RI,
-    psaDown: 100,
-    psaBase: 150,
-    psaUp: 225,
-    sdaLow: 100,
-    sdaBase: 150,
-    sdaHigh: 300,
-  },
-  {
-    cohort: HLTV_WEAK_RI,
-    psaDown: 50,
-    psaBase: 75,
-    psaUp: 100,
-    sdaLow: 150,
-    sdaBase: 250,
-    sdaHigh: 450,
-  },
-  {
-    cohort: LLTV_WEAK_RI,
-    psaDown: 75,
-    psaBase: 100,
-    psaUp: 125,
-    sdaLow: 25,
-    sdaBase: 75,
-    sdaHigh: 150,
-  },
-];
+import { COHORT_SPEED_SCHEDULE } from "./scenarioSpeeds";
 import LoanLevelCollateral from "./LoanLevelCollateral";
 import LoanQc from "./LoanQc";
 import InvestorAnalysis from "./InvestorAnalysis";
