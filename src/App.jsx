@@ -910,7 +910,7 @@ export default function App() {
   }, [cohortStats, clusterFilter]);
 
   const scenarioColumnDefs = useMemo(() => {
-    const speedCol = (field, headerName, { base = false } = {}) => ({
+    const speedCol = (field, headerName) => ({
       field,
       headerName,
       flex: 1,
@@ -919,8 +919,7 @@ export default function App() {
       filter: false,
       type: "numericColumn",
       valueFormatter: (p) => fmtInt(p.value),
-      cellClass: base ? "cf-num cf-speed-base" : "cf-num",
-      headerClass: base ? "cf-grid-header cf-speed-base-hdr" : "cf-grid-header",
+      cellClass: "cf-num",
     });
 
     return [
@@ -934,10 +933,10 @@ export default function App() {
         valueFormatter: (p) => cohortLabel(p.value) || "",
       },
       speedCol("psaDown", "PSA Down"),
-      speedCol("psaBase", "PSA Base", { base: true }),
+      speedCol("psaBase", "PSA Base"),
       speedCol("psaUp", "PSA Up"),
       speedCol("sdaLow", "SDA Low"),
-      speedCol("sdaBase", "SDA Base", { base: true }),
+      speedCol("sdaBase", "SDA Base"),
       speedCol("sdaHigh", "SDA High"),
       {
         field: "recovery",
@@ -1835,11 +1834,6 @@ export default function App() {
 
           {pane === "scenarios" && (
             <section className="section section-fill section-scenarios">
-              <div className="section-head">
-                <p className="section-meta">
-                  {scenarioRows.length} Cohorts
-                </p>
-              </div>
               <div className="scenario-layout">
                 <DataGrid
                   rowData={scenarioRows}
@@ -1848,7 +1842,10 @@ export default function App() {
                   heightClass="grid-wrap-fill scenario-grid"
                   exportName="scenarios"
                   showToolbar={false}
-                  themeParams={{ headerFontWeight: 300 }}
+                  themeParams={{
+                    headerFontWeight: 300,
+                    headerTextColor: "#FD9D24",
+                  }}
                 />
                 <ScenarioSpeedCharts />
               </div>

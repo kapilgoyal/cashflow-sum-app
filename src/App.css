@@ -305,26 +305,25 @@ body {
   font-weight: 300;
 }
 
-.section-scenarios .ag-theme-cashflow .ag-header-cell,
-.section-scenarios .ag-theme-cashflow .ag-header-cell-text,
-.section-scenarios .ag-theme-cashflow .cf-grid-header,
 .section-scenarios .ag-theme-cashflow .ag-cell,
 .section-scenarios .ag-theme-cashflow .ag-cell-value,
 .section-scenarios .ag-theme-cashflow .ag-spanned-cell,
 .section-scenarios .ag-theme-cashflow .cf-row-span,
 .section-scenarios .ag-theme-cashflow .cf-num {
   font-weight: 300 !important;
-}
-
-/* Base speeds: amber on header only; data stays normal thin text */
-.section-scenarios .ag-theme-cashflow .cf-speed-base {
-  font-weight: 300 !important;
   color: var(--cf-text);
 }
 
-.section-scenarios .ag-theme-cashflow .cf-speed-base-hdr .ag-header-cell-text {
+/* Amber on every column header; data rows stay light text */
+.section-scenarios .ag-theme-cashflow {
+  --ag-header-foreground-color: var(--cf-accent);
+}
+
+.section-scenarios .ag-theme-cashflow .ag-header-cell,
+.section-scenarios .ag-theme-cashflow .ag-header-cell-text,
+.section-scenarios .ag-theme-cashflow .cf-grid-header {
   font-weight: 300 !important;
-  color: var(--cf-accent);
+  color: var(--cf-accent) !important;
 }
 
 .section-scenarios .scenario-speed-title,
