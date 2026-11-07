@@ -79,14 +79,7 @@ const NAV_SHORT = {
 };
 
 function readClusterFilter() {
-  try {
-    const v = localStorage.getItem(LS_CLUSTER_KEY);
-    if (v === "all") return v;
-    const label = cohortLabel(v);
-    if (CLUSTER_ORDER.includes(label)) return label;
-  } catch {
-    /* ignore */
-  }
+  // Always start with every cohort selected (not a single restored filter).
   return "all";
 }
 
@@ -160,7 +153,8 @@ function CustomLegend({ payload, activeCluster, onSelect, counts }) {
       <ul className="scatter-legend">
         {entries.map((entry) => {
           const code = entry.value;
-          const selected = activeCluster === code;
+          const selected =
+            activeCluster === "all" || activeCluster === code;
           const n = counts?.[code] ?? CLUSTER_FALLBACK_COUNTS[code] ?? "?";
           return (
             <li key={code}>
@@ -170,6 +164,7 @@ function CustomLegend({ payload, activeCluster, onSelect, counts }) {
                 style={{ "--cluster-color": entry.color }}
                 onClick={() => onSelect(code)}
                 title={`Filter to ${code}`}
+                aria-pressed={selected}
               >
                 <span className="scatter-legend-swatch" />
                 <span>
@@ -186,6 +181,7 @@ function CustomLegend({ payload, activeCluster, onSelect, counts }) {
               activeCluster === "all" ? " is-active" : ""
             }`}
             onClick={() => onSelect("all")}
+            aria-pressed={activeCluster === "all"}
           >
             All
           </button>
@@ -1042,11 +1038,12 @@ export default function App() {
         valueFormatter: (p) => fmtPct(p.value, 1),
         cellClass: "cf-num",
       },
+      intCol("avg_fico", "Avg FICO", 88),
       {
         field: "avg_refi_incentive",
         headerName: "Avg Refi",
         width: 88,
-        valueFormatter: (p) => fmtNum(p.value, 2),
+        valueFormatter: (p) => fmtNum(p.value, 1),
         cellClass: "cf-num",
       },
       {
@@ -1067,40 +1064,28 @@ export default function App() {
     );
     const loanCount = rows.reduce((s, r) => s + (Number(r.loan_count) || 0), 0);
     const upb = rows.reduce((s, r) => s + (Number(r.upb) || 0), 0);
-    const wac =
-      upb > 0
-        ? rows.reduce(
-            (s, r) =>
-              s + (Number(r.wac ?? r.avg_rate) || 0) * (Number(r.upb) || 0),
-            0
-          ) / upb
-        : null;
-    const wam =
-      upb > 0
-        ? rows.reduce(
-            (s, r) =>
-              s +
-              (Number(r.wam ?? r.avg_remaining_term) || 0) *
-                (Number(r.upb) || 0),
-            0
-          ) / upb
-        : null;
-    const avgLtv =
-      upb > 0
-        ? rows.reduce(
-            (s, r) => s + (Number(r.avg_ltv) || 0) * (Number(r.upb) || 0),
-            0
-          ) / upb
-        : null;
-    const avgRi =
-      upb > 0
-        ? rows.reduce(
-            (s, r) =>
-              s + (Number(r.avg_refi_incentive) || 0) * (Number(r.upb) || 0),
-            0
-          ) / upb
-        : null;
-    return { loanCount, upb, wac, wam, avgLtv, avgRi };
+    const upbWeighted = (getter) => {
+      if (upb <= 0) return null;
+      let num = 0;
+      let den = 0;
+      for (const r of rows) {
+        const w = Number(r.upb) || 0;
+        const v = getter(r);
+        if (!(w > 0) || v == null || Number.isNaN(Number(v))) continue;
+        num += Number(v) * w;
+        den += w;
+      }
+      return den > 0 ? num / den : null;
+    };
+    return {
+      loanCount,
+      upb,
+      wac: upbWeighted((r) => r.wac ?? r.avg_rate),
+      wam: upbWeighted((r) => r.wam ?? r.avg_remaining_term),
+      avgLtv: upbWeighted((r) => r.avg_ltv),
+      avgFico: upbWeighted((r) => r.avg_fico),
+      avgRi: upbWeighted((r) => r.avg_refi_incentive),
+    };
   }, [cohortStats, clusterFilter]);
 
   const scenarioColumnDefs = useMemo(
@@ -1911,85 +1896,32 @@ export default function App() {
 
           {pane === "cohort" && (
             <>
-              <div className="qc-toolbar">
-                <div className="qc-kpi-strip" role="toolbar" aria-label="Cohort KPIs">
-                  <button
-                    type="button"
-                    className={`qc-kpi${clusterFilter === "all" ? " is-active" : ""}`}
-                    aria-label="Total Loans"
-                    onClick={() => selectCluster("all")}
-                  >
-                    <span className="qc-kpi-label">Total Loans</span>
-                    <span className="qc-kpi-value">
-                      {cohortKpis.loanCount
-                        ? fmtInt(cohortKpis.loanCount)
-                        : "—"}
-                    </span>
-                  </button>
-                  <div className="qc-kpi" aria-label="UPB">
-                    <span className="qc-kpi-label">UPB</span>
-                    <span className="qc-kpi-value">
-                      {cohortKpis.upb ? fmtUpbShort(cohortKpis.upb) : "—"}
-                    </span>
-                  </div>
-                  <div className="qc-kpi" aria-label="WAC">
-                    <span className="qc-kpi-label">WAC</span>
-                    <span className="qc-kpi-value">
-                      {cohortKpis.wac != null
-                        ? fmtWac(cohortKpis.wac)
-                        : "—"}
-                    </span>
-                  </div>
-                  <div className="qc-kpi" aria-label="WAM">
-                    <span className="qc-kpi-label">WAM</span>
-                    <span className="qc-kpi-value">
-                      {cohortKpis.wam != null
-                        ? `${fmtInt(cohortKpis.wam)} Mo`
-                        : "—"}
-                    </span>
-                  </div>
-                  <div className="qc-kpi" aria-label="Avg LTV">
-                    <span className="qc-kpi-label">Avg LTV</span>
-                    <span className="qc-kpi-value">
-                      {cohortKpis.avgLtv != null
-                        ? fmtPct(cohortKpis.avgLtv, 1)
-                        : "—"}
-                    </span>
-                  </div>
-                  <div className="qc-kpi" aria-label="Avg RI">
-                    <span className="qc-kpi-label">Avg RI</span>
-                    <span className="qc-kpi-value">
-                      {cohortKpis.avgRi != null
-                        ? fmtNum(cohortKpis.avgRi, 2)
-                        : "—"}
-                    </span>
-                  </div>
-                </div>
-                {clusterFilter !== "all" && (
-                  <button
-                    type="button"
-                    className="linkish"
-                    onClick={() => selectCluster("all")}
-                  >
-                    Clear {clusterFilter}
-                  </button>
-                )}
-              </div>
               <section className="section section-cohort-chart">
                 <div className="section-head">
                   <h2 className="section-title section-title-chart">
                     Original CLTV vs Refinance Incentive
                   </h2>
+                  {clusterFilter !== "all" && (
+                    <div className="section-actions">
+                      <button
+                        type="button"
+                        className="linkish"
+                        onClick={() => selectCluster("all")}
+                      >
+                        Clear {clusterFilter}
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <div className="chart-wrap chart-wrap-scatter">
-                  {tapeLoading ? (
-                    <p className="muted">Loading Cohort Chart…</p>
-                  ) : tapeError ? (
-                    <StatusBanner tone="error">Tape: {tapeError}</StatusBanner>
-                  ) : !loans.length ? (
-                    <p className="muted">No Cohort Points Loaded.</p>
-                  ) : (
-                    <>
+                <div className="cohort-chart-row">
+                  <div className="chart-wrap chart-wrap-scatter">
+                    {tapeLoading ? (
+                      <p className="muted">Loading Cohort Chart…</p>
+                    ) : tapeError ? (
+                      <StatusBanner tone="error">Tape: {tapeError}</StatusBanner>
+                    ) : !loans.length ? (
+                      <p className="muted">No Cohort Points Loaded.</p>
+                    ) : (
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart
                           margin={{ top: 12, right: 16, left: 8, bottom: 28 }}
@@ -2102,8 +2034,75 @@ export default function App() {
                           ))}
                         </ComposedChart>
                       </ResponsiveContainer>
-                    </>
-                  )}
+                    )}
+                  </div>
+                  <aside
+                    className="cohort-kpi-rail"
+                    role="toolbar"
+                    aria-label="Cohort KPIs"
+                  >
+                    <button
+                      type="button"
+                      className={`qc-kpi cohort-kpi${
+                        clusterFilter === "all" ? " is-active" : ""
+                      }`}
+                      aria-label="Total Loans"
+                      onClick={() => selectCluster("all")}
+                    >
+                      <span className="qc-kpi-label">Total Loans</span>
+                      <span className="qc-kpi-value">
+                        {cohortKpis.loanCount
+                          ? fmtInt(cohortKpis.loanCount)
+                          : "—"}
+                      </span>
+                    </button>
+                    <div className="qc-kpi cohort-kpi" aria-label="UPB">
+                      <span className="qc-kpi-label">UPB</span>
+                      <span className="qc-kpi-value">
+                        {cohortKpis.upb ? fmtUpbShort(cohortKpis.upb) : "—"}
+                      </span>
+                    </div>
+                    <div className="qc-kpi cohort-kpi" aria-label="WAC">
+                      <span className="qc-kpi-label">WAC</span>
+                      <span className="qc-kpi-value">
+                        {cohortKpis.wac != null
+                          ? fmtWac(cohortKpis.wac)
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="qc-kpi cohort-kpi" aria-label="WAM">
+                      <span className="qc-kpi-label">WAM</span>
+                      <span className="qc-kpi-value">
+                        {cohortKpis.wam != null
+                          ? `${fmtInt(cohortKpis.wam)} Mo`
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="qc-kpi cohort-kpi" aria-label="Avg LTV">
+                      <span className="qc-kpi-label">Avg LTV</span>
+                      <span className="qc-kpi-value">
+                        {cohortKpis.avgLtv != null
+                          ? fmtPct(cohortKpis.avgLtv, 1)
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="qc-kpi cohort-kpi" aria-label="Avg FICO">
+                      <span className="qc-kpi-label">Avg FICO</span>
+                      <span className="qc-kpi-value">
+                        {cohortKpis.avgFico != null
+                          ? fmtInt(cohortKpis.avgFico)
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="qc-kpi cohort-kpi" aria-label="Avg RI">
+                      <span className="qc-kpi-label">Avg RI</span>
+                      <span className="qc-kpi-value">
+                        {cohortKpis.avgRi != null
+                          ? fmtNum(cohortKpis.avgRi, 1)
+                          : "—"}
+                      </span>
+                    </div>
+                  </aside>
                 </div>
               </section>
 
