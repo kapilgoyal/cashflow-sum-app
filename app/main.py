@@ -38,6 +38,8 @@ app = FastAPI(
     lifespan=lifespan,
     description=(
         "PSA/SDA securitization CF. "
+        "POST /api/run-loan (alias POST /api/cashflows/run-loan) projects one "
+        "tape loan × scenario cell. "
         "POST /api/cashflows/run-month1 runs 27 cohort×PCA×STA workers (month 1). "
         "GET /api/neon/* reads normalized Neon tables + enriched views. "
         "GET /api/assumptions reads data/assumptions.csv (has_mi, severity path, "

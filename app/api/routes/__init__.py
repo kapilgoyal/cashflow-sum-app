@@ -1,4 +1,4 @@
-"""Route modules: health, run-loan stub, scenario-grid, month-1 CF, Neon, ASF, QC, assumptions."""
+"""Route modules: health, run-loan, scenario-grid, month-1 CF, Neon, ASF, QC, assumptions."""
 
 from fastapi import APIRouter
 
