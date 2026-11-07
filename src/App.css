@@ -1122,16 +1122,18 @@ body {
   display: flex;
   flex-direction: row;
   align-items: stretch;
+  justify-content: flex-start;
   gap: 10px;
   min-height: 0;
+  width: 100%;
 }
 
 .chart-wrap-scatter {
   position: relative;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   width: auto;
   min-width: 0;
-  max-width: none;
+  max-width: calc(48vh * 9.5 / 6.5);
   max-height: 48vh;
   height: auto;
   aspect-ratio: 9.5 / 6.5;
@@ -1144,9 +1146,9 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   gap: 4px;
-  flex: 0 0 148px;
-  min-width: 132px;
-  max-width: 168px;
+  flex: 1 1 160px;
+  min-width: 140px;
+  max-width: 220px;
 }
 
 .cohort-kpi-rail .cohort-kpi {
