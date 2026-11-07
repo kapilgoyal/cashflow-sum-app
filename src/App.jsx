@@ -397,7 +397,7 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
   );
 }
 
-function IconExportCsvMini({ size = 14 }) {
+function IconExportCsvMini({ size = 16 }) {
   return (
     <svg
       width={size}
@@ -424,7 +424,7 @@ function IconExportCsvMini({ size = 14 }) {
   );
 }
 
-function IconCopyMini({ size = 14 }) {
+function IconCopyMini({ size = 16 }) {
   return (
     <svg
       width={size}
@@ -1282,6 +1282,12 @@ export default function App() {
 
   const assumptionColumnDefs = useMemo(
     () => [
+      {
+        field: "assumption_id",
+        headerName: "ID",
+        hide: true,
+      },
+      { field: "category", headerName: "Category", width: 120 },
       { field: "name", headerName: "Name", width: 180 },
       { field: "category", headerName: "Category", width: 120 },
       {
@@ -1350,6 +1356,8 @@ export default function App() {
         headerName: "Description",
         flex: 2,
         minWidth: 220,
+        pinned: "left",
+        lockPinned: true,
       },
       {
         field: "status_label",
@@ -1763,26 +1771,16 @@ export default function App() {
       },
       {
         field: "avg_refi_incentive",
-        headerName: "Avg RI",
+        headerName: "Avg Refi",
         width: 88,
         valueFormatter: (p) => fmtNum(p.value, 3),
         cellClass: "cf-num",
       },
       {
-        field: "recovery",
-        headerName: "Recovery",
-        width: 96,
-        valueFormatter: (p) => fmtPct(p.value, 1),
-        cellClass: "cf-num",
-      },
-      {
-        field: "lag",
-        headerName: "Lag",
-        width: 72,
-        valueFormatter: (p) =>
-          p.value == null || Number.isNaN(Number(p.value))
-            ? ""
-            : `${Number(p.value).toFixed(0)} Mo`,
+        field: "avg_remaining_term",
+        headerName: "Avg Rem",
+        width: 88,
+        valueFormatter: (p) => fmtNum(p.value, 0),
         cellClass: "cf-num",
       },
     ],
@@ -1832,6 +1830,51 @@ export default function App() {
     return { loanCount, upb, wac, wam, avgLtv, avgRi };
   }, [cohortStats, clusterFilter]);
 
+  const loanColumnDefs = useMemo(
+    () => [
+      {
+        field: "loanId",
+        headerName: "Loan ID",
+        flex: 1.1,
+        minWidth: 100,
+        cellClass: "cf-id",
+      },
+      intCol("fico", "FICO", 72),
+      {
+        field: "cltv",
+        headerName: "CLTV",
+        width: 90,
+        type: "numericColumn",
+        filter: "agNumberColumnFilter",
+        valueFormatter: (p) => fmtPct(p.value, 1),
+        cellClass: "cf-num",
+      },
+      {
+        field: "documentation",
+        headerName: "Documentation",
+        flex: 1.2,
+        minWidth: 120,
+      },
+      intCol("remainingTerm", "Remaining Term", 110),
+      {
+        field: "refinanceIncentive",
+        headerName: "Refi Incentive",
+        width: 110,
+        type: "numericColumn",
+        filter: "agNumberColumnFilter",
+        valueFormatter: (p) => fmtNum(p.value, 3),
+        cellClass: "cf-num",
+      },
+      {
+        field: "cluster",
+        headerName: "Cohort",
+        flex: 1.6,
+        minWidth: 180,
+      },
+    ],
+    []
+  );
+
   const scenarioColumnDefs = useMemo(
     () => [
       {
@@ -1846,6 +1889,14 @@ export default function App() {
         },
         valueGetter: (p) =>
           p.data?._scenarioSpan === 0 ? "" : p.data?._scenarioLabel || "",
+      },
+      { field: "scenario_id", headerName: "ID", hide: true },
+      {
+        field: "cohort",
+        headerName: "Cohort",
+        flex: 1.8,
+        minWidth: 180,
+        valueFormatter: (p) => cohortLabel(p.value),
       },
       {
         field: "cohort",
@@ -1873,6 +1924,9 @@ export default function App() {
             : `${Number(p.value).toFixed(0)} Mo`,
         cellClass: "cf-num",
       },
+      intCol("recovery_period_months", "Rec Mos", 80),
+      intCol("recovery_lag_months", "Lag Fallback", 96),
+      intCol("avg_used_recovery_lag_months", "Avg Used Lag", 100),
       {
         field: "ran",
         headerName: "Ran",
@@ -1886,11 +1940,12 @@ export default function App() {
 
   const aggColumnDefs = useMemo(
     () => [
+      { field: "scenario_id", headerName: "ID", hide: true },
       {
         field: "cohort",
         headerName: "Cohort",
         flex: 1.6,
-        minWidth: 140,
+        minWidth: 180,
         valueFormatter: (p) => cohortLabel(p.value),
       },
       {
@@ -1918,16 +1973,7 @@ export default function App() {
       moneyCol("realized_loss", "Realized Loss", 100),
       moneyCol("total_cash", "Total Cash", 100),
       moneyCol("ending_balance", "End UPB", 110),
-      {
-        field: "avg_used_recovery_lag_months",
-        headerName: "Lag",
-        width: 72,
-        valueFormatter: (p) =>
-          p.value == null || Number.isNaN(Number(p.value))
-            ? ""
-            : `${Number(p.value).toFixed(0)} Mo`,
-        cellClass: "cf-num",
-      },
+      intCol("avg_used_recovery_lag_months", "Avg Used Lag", 100),
     ],
     []
   );
@@ -1935,11 +1981,12 @@ export default function App() {
   const cfMonth1ColumnDefs = useMemo(
     () => [
       { field: "loan_id", headerName: "Loan", width: 100, cellClass: "cf-id" },
+      { field: "scenario_id", headerName: "ID", hide: true },
       {
         field: "cohort",
         headerName: "Cohort",
         flex: 1.4,
-        minWidth: 140,
+        minWidth: 160,
         valueFormatter: (p) => cohortLabel(p.value),
       },
       {
@@ -1954,16 +2001,7 @@ export default function App() {
         width: 64,
         valueGetter: (p) => staLabel(p.data),
       },
-      {
-        field: "used_recovery_lag_months",
-        headerName: "Lag",
-        width: 72,
-        valueFormatter: (p) =>
-          p.value == null || Number.isNaN(Number(p.value))
-            ? ""
-            : `${Number(p.value).toFixed(0)} Mo`,
-        cellClass: "cf-num",
-      },
+      intCol("used_recovery_lag_months", "Used Lag", 80),
       {
         headerName: "1 · Performing UPB",
         children: [
@@ -2017,22 +2055,17 @@ export default function App() {
 
   const loanMonthColumnDefs = useMemo(
     () => [
+      { field: "scenario_id", headerName: "ID", hide: true },
       { field: "loan_id", headerName: "Loan", width: 100, cellClass: "cf-id" },
+      intCol("used_recovery_lag_months", "Used Lag", 80),
       {
-        field: "used_recovery_lag_months",
-        headerName: "Lag",
+        field: "recovery_rate",
+        headerName: "Rec %",
         width: 72,
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
             ? ""
             : `${Number(p.value).toFixed(0)} Mo`,
-        cellClass: "cf-num",
-      },
-      {
-        field: "recovery_rate",
-        headerName: "Recovery",
-        width: 96,
-        valueFormatter: (p) => fmtPct(p.value, 1),
         cellClass: "cf-num",
       },
       {
@@ -2782,20 +2815,6 @@ export default function App() {
                 <>
                   <div className="strat-charts">
                     {stratDims.map((dim) => {
-                      const chartLabel =
-                        dim.chart === "histogram"
-                          ? "Histogram"
-                          : dim.chart === "hbar"
-                            ? "Bar"
-                            : dim.chart === "pie"
-                              ? "Pie"
-                              : dim.chart === "line"
-                                ? "WAC Trend"
-                                : dim.chart === "map"
-                                  ? "Map"
-                                  : dim.chart === "zip"
-                                    ? "Choropleth"
-                                    : "Bar";
                       const wide =
                         dim.chart === "map" ||
                         dim.chart === "zip" ||
@@ -2809,10 +2828,6 @@ export default function App() {
                         >
                           <div className="strat-chart-head">
                             <h3 className="strat-chart-title">{dim.label}</h3>
-                            <span className="strat-chart-meta">
-                              {(stratByDim[dim.id] || []).length} Buckets ·{" "}
-                              {chartLabel}
-                            </span>
                           </div>
                           <StratDimChart
                             dim={dim}
@@ -2915,9 +2930,6 @@ export default function App() {
                     K-Prototypes (k=3, 4 Features): Original CLTV vs Refinance
                     Incentive
                   </h2>
-                  <p className="scatter-subtitle">
-                    Cohorts: HLTV Strong RI / HLTV Weak RI / LLTV Weak RI
-                  </p>
                 </div>
                 <div className="chart-wrap chart-wrap-scatter">
                   {tapeLoading ? (
@@ -3062,9 +3074,6 @@ export default function App() {
               <section className="section section-cohort-stats section-fill">
                 <div className="section-head">
                   <h2 className="section-title">Cohort Statistics</h2>
-                  <p className="section-meta">
-                    Loans · UPB · WAC · WAM · LTV · RI · Recovery · Lag
-                  </p>
                 </div>
                 {cohortStatsError ? (
                   <StatusBanner tone="muted">
@@ -3083,6 +3092,43 @@ export default function App() {
                   />
                 )}
               </section>
+
+              <section className="section section-fill">
+                <div className="section-head">
+                  <h2 className="section-title">Loans</h2>
+                  <div className="section-actions">
+                    <p className="section-meta">
+                      Filter: {filterLabel}
+                      {clusterFilter !== "all" && (
+                        <>
+                          {" · "}
+                          <button
+                            type="button"
+                            className="linkish"
+                            onClick={() => selectCluster("all")}
+                          >
+                            Clear
+                          </button>
+                        </>
+                      )}
+                      {" · "}
+                      Ran Scenarios: {ranScenarioIds.length}/27
+                    </p>
+                  </div>
+                </div>
+                <DrillTrail crumbs={drillCrumbs} onJump={onDrillJump} />
+                <DataGrid
+                  rowData={filteredLoans}
+                  columnDefs={loanColumnDefs}
+                  getRowId={(p) => String(p.data.loanId)}
+                  onRowDrill={drillLoan}
+                  onGridReady={onGridReady}
+                  scheduleSave={scheduleSave}
+                  persistLayout
+                  heightClass="grid-wrap-fill"
+                  exportName="loans"
+                />
+              </section>
             </>
           )}
 
@@ -3091,10 +3137,8 @@ export default function App() {
               <div className="section-head">
                 <p className="section-meta">
                   {selectedCohort
-                    ? `Cohort Filter: ${cohortLabel(selectedCohort)}`
+                    ? cohortLabel(selectedCohort)
                     : "27 Cells"}
-                  {" · "}
-                  Click Row → All-Loan Month 1 CF
                 </p>
                 <div className="section-actions">
                   {(selectedCohort || selectedLoanId) && (
@@ -3213,15 +3257,6 @@ export default function App() {
                 </div>
               </div>
               <DrillTrail crumbs={drillCrumbs} onJump={onDrillJump} />
-              <p className="section-meta">
-                {cfView === "loanMonth"
-                  ? `${selectedLoanId} · ${scenarioDisplayName(selectedScenarioId)}`
-                  : cfView === "month1"
-                    ? `${scenarioDisplayName(selectedScenarioId)}${
-                        neonMonth1Total ? ` · ${neonMonth1Total} Loans` : ""
-                      } · Click Row → Months`
-                    : `Scenario Aggregates · ${aggregates.length || 0} Cells · Click → Loan-Level`}
-              </p>
               {cfView === "loanMonth" ? (
                 loanMonthLoading ? (
                   <p className="muted">Loading Multi-Month CF…</p>
