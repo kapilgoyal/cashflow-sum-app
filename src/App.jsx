@@ -956,15 +956,15 @@ export default function App() {
       },
       {
         field: "lag",
-        headerName: "Fnma Lag",
-        width: 84,
+        headerName: "FNMA Lag (Mo)",
+        width: 96,
         sortable: false,
         filter: false,
         spanRows: sameCohortSpan,
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
             ? ""
-            : `${Number(p.value).toFixed(0)} Mo`,
+            : `${Number(p.value).toFixed(0)}`,
         cellClass: "cf-num cf-row-span",
       },
       { field: "scenario_id", headerName: "ID", hide: true },
