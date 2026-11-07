@@ -1,6 +1,6 @@
 # Combined image: Vite React UI + FastAPI on one PORT.
 # Runtime stays python:3.12-slim + requirements.txt (pandas included).
-# Azure Container Apps and Railway both inject PORT.
+# Azure Container Apps injects PORT.
 
 FROM node:20-bookworm-slim AS frontend
 WORKDIR /ui

@@ -44,7 +44,7 @@ INSERT_PLACEHOLDERS = ", ".join(f"%s" for _ in ASF_TAPE_COLUMNS)
 
 
 def _pd():
-    """Lazy pandas — keep Railway boot light (Neon paths don't need it)."""
+    """Lazy pandas — keep container boot light (Neon paths don't need it)."""
     import pandas as pd
 
     return pd

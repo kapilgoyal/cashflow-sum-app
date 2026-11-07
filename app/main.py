@@ -43,7 +43,7 @@ def _bootstrap_db() -> None:
     _log.info(bootstrap_status_log_line(status))
 
 
-# Eager bootstrap for always-on uvicorn (Railway) and local dev.
+# Eager bootstrap for always-on uvicorn (Azure container) and local dev.
 _bootstrap_csvs()
 _bootstrap_db()
 

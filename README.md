@@ -50,48 +50,23 @@ The API **defaults to a file SQLite database** so a single container can run wit
 
 On startup the process creates schema (tape, QC, scenarios, CF tables) and **loads the Minimum Case tape + QC** if `asf_tape` is empty.
 
-**Container restart wipes SQLite** unless a volume is mounted at `/data` (Azure Container Apps Consumption and Railway ephemeral disks). For this prototype that is OK — the next boot bootstraps from `data/Minimum_Case.xlsx` again. Mount a volume at `/data` if you need the file to survive revisions.
+**Container restart wipes SQLite** unless a volume is mounted at `/data` (Azure Container Apps Consumption disks are ephemeral). For this prototype that is OK — the next boot bootstraps from `data/Minimum_Case.xlsx` again. Mount a volume at `/data` if you need the file to survive revisions.
 
-To keep using Neon, set `DATABASE_URL` to the pooled postgres URL (and optional `DATABASE_URL_UNPOOLED`) on the service. Do not put credentials in GitHub.
+To keep using Neon, set `DATABASE_URL` to the pooled postgres URL (and optional `DATABASE_URL_UNPOOLED`) on the Container App. Do not put credentials in GitHub.
 
 ## Deploy (durable)
 
-**Current:** Vite UI on Vercel; always-on FastAPI on Railway.  
-**Cutover:** one Azure Container App serves both from the root `Dockerfile` (Vite `dist/` via FastAPI `StaticFiles` + existing `/api` and `/health`). Vercel and Railway are not removed in this change. Portal steps: [deploy/azure.md](deploy/azure.md).
+**Production host:** one Azure Container App serves Vite + FastAPI from the root `Dockerfile` (Vite `dist/` via FastAPI `StaticFiles` + `/api` and `/health`). Portal steps: [deploy/azure.md](deploy/azure.md).
 
-Vercel no longer runs Python serverless (Mangum retired under `deploy/legacy-vercel-mangum/`). That avoided the 225 MB function size ceiling.
+### Azure Container Apps + GHCR
 
-### Railway (FastAPI)
-
-1. Create a Railway project from this repo (Dockerfile / Nixpacks; `railway.toml` watches `app/**`).
-2. Connect GitHub → branch **`master`** with auto-deploy enabled (Railway → Settings → Source).
-3. Env vars on the Railway service (never commit them):
-   - **Prototype (default):** omit `DATABASE_URL` or set `sqlite:////data/cashflow.db`
-   - **Neon:** `DATABASE_URL` — pooled Postgres URL; optional `DATABASE_URL_UNPOOLED`
-4. **CI (kind-emotion only):** ignore crashed Railway projects `beautiful-tranquility` / `patient-illumination` (disconnect them from this GitHub repo).  
-   - Railway → project **`kind-emotion`** → Settings → Tokens → Project Token  
-   - GitHub → Settings → Secrets → Actions → Name (exact): **`RAILWAY_TOKEN`**  
-   - Optional: **`RAILWAY_SERVICE_ID`** for the service behind `cashflow-sum-app-production.up.railway.app`  
-   - Workflow [`.github/workflows/railway-deploy.yml`](.github/workflows/railway-deploy.yml) runs `railway up --ci` on every push to `master`.
-5. Public API: `https://cashflow-sum-app-production.up.railway.app` (service in **kind-emotion**).
-6. Health: `GET /health`. Dockerfile / `railway.toml` start commands use shell form so `${PORT}` expands.
-
-
-### Azure Container Apps (UI + API, cutover)
-
-1. In the Azure portal, create a **Consumption** Container App, **Basic** Container Registry, and GitHub OIDC app registration. Exact clicks and the six GitHub secrets: [deploy/azure.md](deploy/azure.md).
-2. Set `DATABASE_URL` on the Container App (not in GitHub). Leave `VITE_API_BASE_URL` unset in the image so the UI calls same-origin `/api`.
-3. Workflow [`.github/workflows/azure-container-app.yml`](.github/workflows/azure-container-app.yml) builds, pushes to ACR, and deploys on `master` once `AZURE_CLIENT_ID` exists (or **Run workflow**).
-4. Health: `GET /health`. Title Case nav/headers in the UI are unchanged.
+1. In the Azure portal, create a **Consumption** Container App, **Basic** Container Registry, and (optional) GitHub OIDC app registration. Exact clicks and the six GitHub secrets: [deploy/azure.md](deploy/azure.md).
+2. Set `DATABASE_URL` on the Container App (not in GitHub), or omit for the sqlite default. Leave `VITE_API_BASE_URL` unset in the image so the UI calls same-origin `/api`.
+3. **GHCR (active):** [`.github/workflows/azure-proto-ghcr.yml`](.github/workflows/azure-proto-ghcr.yml) builds and pushes `ghcr.io/kapilgoyal/cashflow-sum-app:proto` on every `master` push. Import into ACR and roll the app (see [deploy/azure.md](deploy/azure.md)).
+4. **OIDC → ACR (optional):** [`.github/workflows/azure-container-app.yml`](.github/workflows/azure-container-app.yml) builds, pushes to ACR, and deploys once `AZURE_CLIENT_ID` exists (or **Run workflow**).
+5. Health: `GET /health`.
 
 Estimated cost: **~$15–40/month** (East US, always-on 0.5 vCPU / 1 GiB + ACR Basic). See [deploy/azure.md](deploy/azure.md).
-
-### Vercel (React)
-
-1. Build is Vite → `dist/` (`vercel.json` SPA rewrite only; no `/api` Python).
-2. Set **build** env `VITE_API_BASE_URL` to the Railway origin (no trailing slash), e.g. `https://<service>.up.railway.app`.
-3. Redeploy so the client embeds that base (`src/apiBase.js`).
-4. UI: https://cashflow-sum-app.vercel.app
 
 ### Local
 

@@ -1,9 +1,7 @@
-# Legacy Vercel Python serverless (retired)
+# Legacy serverless entry (retired)
 
-Production no longer runs FastAPI via Mangum on Vercel (225 MB function limit).
+This folder is not part of the active deploy path. Production is a single Azure Container App image from the root `Dockerfile` (UI + FastAPI).
 
-- Always-on API: Railway (`Procfile` / `railway.toml`) — `uvicorn app.main:app`
-- Static UI: Vercel (Vite `dist/`) with `VITE_API_BASE_URL` pointing at the Railway host
+Historical Mangum / Vercel Python entrypoints live under `deploy/legacy-vercel-mangum/` for reference only.
 
-The previous Mangum entrypoints live under `deploy/legacy-vercel-mangum/` for reference only.
-Do **not** add `*.py` files here — Vercel would treat them as serverless functions again.
+Do **not** add `*.py` files here — unused by Azure, and would only confuse old platform scanners.

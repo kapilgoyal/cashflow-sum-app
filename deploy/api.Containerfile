@@ -1,5 +1,5 @@
-# API-only reference image (Railway-era). Production/Azure uses the root Dockerfile
-# (Vite build + FastAPI StaticFiles in one python:3.12-slim image).
+# API-only reference image (not used in production). Production uses the root
+# Dockerfile (Vite build + FastAPI StaticFiles in one python:3.12-slim image).
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -19,6 +19,5 @@ COPY api/README.md ./api/README.md
 # Ephemeral without a volume at /data. Override with postgres:// for Neon.
 RUN mkdir -p /data
 
-# Railway injects PORT
 EXPOSE 8000
 CMD sh -c 'python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}'

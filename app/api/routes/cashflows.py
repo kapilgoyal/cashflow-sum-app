@@ -28,7 +28,7 @@ def _tape_path() -> Path:
 
 
 def _load_cached_aggregates() -> dict | None:
-    """Prefer data/ then public/ cohort-month1 JSON (committed for Vercel)."""
+    """Prefer data/ then public/ cohort-month1 JSON (static fallback)."""
     cf_repo = CashflowRepository(DATA)
     payload = cf_repo.load_aggregates()
     if payload:
@@ -111,12 +111,12 @@ def run_month1(
 ) -> dict:
     """Run all 27 scenario cells for every loan in each cohort (month 1).
 
-    On Vercel, prefer Neon / committed cohort JSON unless ``force=true`` — ProcessPool
-    is unavailable in the serverless runtime. Local/dev still runs the full engine
-    and persists loan-level rows to Neon when DATABASE_URL is set.
+    Prefer Neon / committed cohort JSON unless ``force=true`` when the
+    ``VERCEL`` env is set (legacy constrained runtime). Azure / local still
+    runs the full engine and persists loan-level rows when DATABASE_URL allows.
     """
     load_dotenv()
-    on_vercel = bool(os.environ.get("VERCEL"))
+    constrained = bool(os.environ.get("VERCEL"))
 
     if not force:
         neon = _neon_month1_summary()
@@ -138,7 +138,7 @@ def run_month1(
                 "neon_missing": False,
                 "cached": True,
             }
-        if on_vercel:
+        if constrained:
             cached = _load_cached_aggregates()
             if cached:
                 meta = cached.get("meta") or {}
@@ -169,8 +169,8 @@ def run_month1(
     scenarios = build_scenario_grid()
     ScenarioRepository(DATA / "securitization_scenarios.csv").save_csv(scenarios)
 
-    # Serverless: avoid ProcessPool; use fewer workers. Local keeps 27.
-    max_workers = 2 if on_vercel else 27
+    # Constrained runtime: avoid ProcessPool; use fewer workers. Azure/local keeps 27.
+    max_workers = 2 if constrained else 27
     result = run_month1_parallel(loans, scenarios, max_workers=max_workers)
     cf_repo = CashflowRepository(DATA)
     storage = cf_repo.save(
@@ -183,7 +183,7 @@ def run_month1(
         },
     )
 
-    # Mirror aggregates into public/ for static Vercel fallbacks.
+    # Mirror aggregates into public/ for static UI fallbacks.
     try:
         PUBLIC.mkdir(parents=True, exist_ok=True)
         public_payload = {
