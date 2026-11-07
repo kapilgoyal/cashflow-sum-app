@@ -12,6 +12,7 @@ from app.repositories.cashflow_repository import CashflowRepository
 from app.repositories.env_load import load_dotenv, resolve_pg_url
 from app.repositories.scenario_repository import ScenarioRepository
 from app.repositories.tape_repository import TapeRepository
+from app.services.cohort_labels import relabel_payload
 from app.services.month1_parallel import run_month1_parallel
 from app.services.scenario_grid import build_scenario_grid
 
@@ -40,10 +41,10 @@ def _load_cached_aggregates() -> dict | None:
     cf_repo = CashflowRepository(DATA)
     payload = cf_repo.load_aggregates()
     if payload:
-        return payload
+        return relabel_payload(payload)
     public_path = PUBLIC / "cohort-month1.json"
     if public_path.exists():
-        return json.loads(public_path.read_text(encoding="utf-8"))
+        return relabel_payload(json.loads(public_path.read_text(encoding="utf-8")))
     return None
 
 
@@ -93,14 +94,14 @@ def _neon_month1_summary() -> dict | None:
 @router.get("/scenarios/grid")
 def scenario_grid() -> dict:
     scenarios = [s.model_dump() for s in build_scenario_grid()]
-    return {"n": len(scenarios), "scenarios": scenarios}
+    return relabel_payload({"n": len(scenarios), "scenarios": scenarios})
 
 
 @router.get("/cashflows/month1")
 def get_month1_aggregates() -> dict:
     neon = _neon_month1_summary()
     if neon:
-        return neon
+        return relabel_payload(neon)
     payload = _load_cached_aggregates()
     if not payload:
         raise HTTPException(

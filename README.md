@@ -22,7 +22,7 @@ uvicorn app.main:app --reload
 
 ### Scenario grid
 
-- Cohorts (no "RI" in labels): `high LTV and strong refinance incentive`, `high LTV and weak refinance incentive`, `low LTV and weak refinance incentive`
+- Cohorts: `HLTV Strong RI`, `HLTV Weak RI`, `LLTV Weak RI` (display also accepts `HLTV Moderate RI`, `LLTV Strong RI`, `LLTV Moderate RI`)
 - PSA (PCA) Down/Base/Up: **75 / 100 / 125**
 - SDA (STA) Down/Base/Up: **50 / 100 / 200**
 - Full cross = **27 rows** in `data/securitization_scenarios.csv`

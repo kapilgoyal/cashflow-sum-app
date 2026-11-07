@@ -30,19 +30,19 @@ RANDOM_STATE = 42
 
 CLUSTER_META = {
     0: {
-        "code": "low LTV and weak refinance incentive",
+        "code": "LLTV Weak RI",
         "color": "#1f77b4",
-        "label": "low LTV and weak refinance incentive",
+        "label": "LLTV Weak RI",
     },
     1: {
-        "code": "high LTV and strong refinance incentive",
+        "code": "HLTV Strong RI",
         "color": "#ff7f0e",
-        "label": "high LTV and strong refinance incentive",
+        "label": "HLTV Strong RI",
     },
     2: {
-        "code": "high LTV and weak refinance incentive",
+        "code": "HLTV Weak RI",
         "color": "#2ca02c",
-        "label": "high LTV and weak refinance incentive",
+        "label": "HLTV Weak RI",
     },
 }
 
@@ -176,15 +176,9 @@ def main() -> None:
             "counts": counts,
             "colors": {m["code"]: m["color"] for m in CLUSTER_META.values()},
             "labels": {
-                "high LTV and strong refinance incentive": (
-                    "Orange — high CLTV / high refinance incentive"
-                ),
-                "high LTV and weak refinance incentive": (
-                    "Green — high CLTV / low refinance incentive"
-                ),
-                "low LTV and weak refinance incentive": (
-                    "Blue — low CLTV / low refinance incentive"
-                ),
+                "HLTV Strong RI": "Orange — High CLTV / High Refinance Incentive",
+                "HLTV Weak RI": "Green — High CLTV / Low Refinance Incentive",
+                "LLTV Weak RI": "Blue — Low CLTV / Low Refinance Incentive",
             },
         },
         "hulls": hulls,

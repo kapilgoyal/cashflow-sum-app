@@ -35,6 +35,14 @@ import {
 } from "./cashflowGrid";
 import { apiUrl } from "./apiBase";
 import { StateChoropleth, Zip3Choropleth } from "./UsChoropleth";
+import {
+  CLUSTER_COLORS,
+  CLUSTER_FALLBACK_COUNTS,
+  CLUSTER_ORDER,
+  cohortLabel,
+  relabelCohortFields,
+  remappedKeyedObject,
+} from "./cohortLabels";
 import "./App.css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -442,23 +450,6 @@ function IconCopyMini({ size = 14 }) {
   );
 }
 
-/** Match matplotlib CLUSTER_META order (0→1→2). No "RI" in labels. */
-const CLUSTER_ORDER = [
-  "low LTV and weak refinance incentive",
-  "high LTV and strong refinance incentive",
-  "high LTV and weak refinance incentive",
-];
-const CLUSTER_COLORS = {
-  "low LTV and weak refinance incentive": "#1f77b4",
-  "high LTV and strong refinance incentive": "#ff7f0e",
-  "high LTV and weak refinance incentive": "#2ca02c",
-};
-const CLUSTER_FALLBACK_COUNTS = {
-  "low LTV and weak refinance incentive": 339,
-  "high LTV and strong refinance incentive": 329,
-  "high LTV and weak refinance incentive": 375,
-};
-
 const X_DOMAIN = [0.28, 0.92];
 const Y_DOMAIN = [-2.4, 3.2];
 const X_TICKS = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
@@ -484,7 +475,9 @@ const NAV_SHORT = {
 function readClusterFilter() {
   try {
     const v = localStorage.getItem(LS_CLUSTER_KEY);
-    if (v === "all" || CLUSTER_ORDER.includes(v)) return v;
+    if (v === "all") return v;
+    const label = cohortLabel(v);
+    if (CLUSTER_ORDER.includes(label)) return label;
   } catch {
     /* ignore */
   }
@@ -718,9 +711,11 @@ export default function App() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (cancelled) return;
-        setLoans(Array.isArray(data.loans) ? data.loans : []);
-        setHulls(data.hulls || {});
-        if (data.meta?.counts) setCounts(data.meta.counts);
+        setLoans(
+          (Array.isArray(data.loans) ? data.loans : []).map(relabelCohortFields)
+        );
+        setHulls(remappedKeyedObject(data.hulls || {}));
+        if (data.meta?.counts) setCounts(remappedKeyedObject(data.meta.counts));
       } catch (err) {
         if (!cancelled) {
           setTapeError(err.message || String(err));
@@ -749,7 +744,7 @@ export default function App() {
         }
         const data = await res.json();
         if (cancelled) return;
-        setAsfLoans(data.loans || []);
+        setAsfLoans((data.loans || []).map(relabelCohortFields));
         setAsfTotal(data.total ?? (data.loans || []).length);
       } catch (err) {
         if (!cancelled) {
@@ -885,7 +880,7 @@ export default function App() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!cancelled) {
-          setCohortStats(data.rows || []);
+          setCohortStats((data.rows || []).map(relabelCohortFields));
           setCohortStatsError(null);
         }
       } catch (err) {
@@ -926,13 +921,13 @@ export default function App() {
 
         if (neonScenRes?.ok) {
           const g = await neonScenRes.json();
-          setScenarios(g.scenarios || []);
+          setScenarios((g.scenarios || []).map(relabelCohortFields));
           loadedFromNeon = true;
         } else {
           const gridRes = await fetch(apiUrl("/api/scenarios/grid")).catch(() => null);
           if (gridRes?.ok) {
             const g = await gridRes.json();
-            setScenarios(g.scenarios || []);
+            setScenarios((g.scenarios || []).map(relabelCohortFields));
           }
         }
       } catch {
@@ -943,7 +938,7 @@ export default function App() {
         const monthRes = await fetch(apiUrl("/api/cashflows/month1")).catch(() => null);
         if (!cancelled && monthRes?.ok) {
           const m = await monthRes.json();
-          setAggregates(m.aggregates || []);
+          setAggregates((m.aggregates || []).map(relabelCohortFields));
           if (m.ran_scenario_ids?.length) {
             setRanScenarioIds(m.ran_scenario_ids);
           }
@@ -951,7 +946,7 @@ export default function App() {
           const staticRes = await fetch("/cohort-month1.json");
           if (!cancelled && staticRes.ok) {
             const m = await staticRes.json();
-            setAggregates(m.aggregates || []);
+            setAggregates((m.aggregates || []).map(relabelCohortFields));
             if (!loadedFromNeon) {
               setRanScenarioIds(
                 (m.meta?.ran_scenario_ids || m.aggregates || [])
@@ -962,7 +957,7 @@ export default function App() {
                 setScenarios(
                   m.aggregates.map((a) => ({
                     scenario_id: a.scenario_id,
-                    cohort: a.cohort,
+                    cohort: cohortLabel(a.cohort),
                     psa_multiple: a.psa_multiple,
                     sda_multiple: a.sda_multiple,
                     recovery_rate: a.recovery_rate,
@@ -1007,7 +1002,7 @@ export default function App() {
         if (selectedLoanId) {
           rows = rows.filter((r) => r.loan_id === selectedLoanId);
         }
-        setNeonMonth1Rows(rows);
+        setNeonMonth1Rows(rows.map(relabelCohortFields));
         setNeonMonth1Total(data.total ?? (data.rows || []).length);
       } catch (err) {
         if (!cancelled) {
@@ -1045,7 +1040,7 @@ export default function App() {
         const res = await fetch(apiUrl(`/api/neon/cashflows/loan-month?${qs}`));
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (!cancelled) setLoanMonthRows(data.rows || []);
+        if (!cancelled) setLoanMonthRows((data.rows || []).map(relabelCohortFields));
       } catch {
         if (!cancelled) setLoanMonthRows([]);
       } finally {
@@ -1141,9 +1136,6 @@ export default function App() {
       .filter((r) => r.outcome === "pass" || r.outcome === "fail")
       .map((r) => ({
         ...r,
-        rule_name:
-          r.rule_name ||
-          (r.edit_number != null ? `NQM-${r.edit_number}` : r.check_id),
         status_label:
           r.outcome === "pass" ? "Pass" : r.outcome === "fail" ? "Fail" : "",
       }));
@@ -1179,7 +1171,7 @@ export default function App() {
     () => [
       {
         field: "loan_id",
-        headerName: "Loan Id",
+        headerName: "Loan ID",
         width: 100,
         pinned: "left",
         lockPinned: true,
@@ -1226,7 +1218,13 @@ export default function App() {
         valueFormatter: (p) => fmtNum(p.value, 3),
         cellClass: "cf-num",
       },
-      { field: "cohort", headerName: "Cohort", flex: 1.4, minWidth: 160 },
+      {
+        field: "cohort",
+        headerName: "Cohort",
+        flex: 1.4,
+        minWidth: 160,
+        valueFormatter: (p) => cohortLabel(p.value),
+      },
       {
         field: "has_mi",
         headerName: "Mortgage Insurance",
@@ -1280,14 +1278,8 @@ export default function App() {
 
   const assumptionColumnDefs = useMemo(
     () => [
-      {
-        field: "assumption_id",
-        headerName: "ID",
-        width: 200,
-        cellClass: "cf-id",
-      },
-      { field: "category", headerName: "Category", width: 120 },
       { field: "name", headerName: "Name", width: 180 },
+      { field: "category", headerName: "Category", width: 120 },
       {
         field: "value",
         headerName: "Value",
@@ -1299,13 +1291,13 @@ export default function App() {
       { field: "unit", headerName: "Unit", width: 88 },
       {
         field: "applies_to",
-        headerName: "Applies to",
+        headerName: "Applies To",
         flex: 1,
         minWidth: 140,
       },
       {
         field: "related_data_path",
-        headerName: "Data path",
+        headerName: "Data Path",
         flex: 1.1,
         minWidth: 160,
       },
@@ -1350,14 +1342,6 @@ export default function App() {
   const qcColumnDefs = useMemo(
     () => [
       {
-        field: "rule_name",
-        headerName: "Rule Name",
-        width: 110,
-        pinned: "left",
-        lockPinned: true,
-        cellClass: "cf-id",
-      },
-      {
         field: "nl_description",
         headerName: "Description",
         flex: 2,
@@ -1397,7 +1381,7 @@ export default function App() {
     () => [
       {
         field: "loan_id",
-        headerName: "Loan Id",
+        headerName: "Loan ID",
         width: 100,
         pinned: "left",
         lockPinned: true,
@@ -1437,7 +1421,13 @@ export default function App() {
       { field: "property_type", headerName: "Property Type", width: 110 },
       { field: "occupancy", headerName: "Occupancy", width: 100 },
       { field: "loan_purpose", headerName: "Loan Purpose", width: 110 },
-      { field: "cohort", headerName: "Cohort", flex: 1.2, minWidth: 140 },
+      {
+        field: "cohort",
+        headerName: "Cohort",
+        flex: 1.2,
+        minWidth: 140,
+        valueFormatter: (p) => cohortLabel(p.value),
+      },
     ],
     []
   );
@@ -1500,7 +1490,7 @@ export default function App() {
     return (
       <p className="asf-grid-summary" aria-live="polite">
         <span className="asf-grid-summary-total">
-          {qcSelectedRule.rule_name}
+          {qcSelectedRule.nl_description || qcSelectedRule.check_id}
           {" · "}
           {total.toLocaleString()} {total === 1 ? "Loan" : "Loans"}
         </span>
@@ -1728,9 +1718,31 @@ export default function App() {
 
   const cohortStatsColumnDefs = useMemo(
     () => [
-      { field: "cohort", headerName: "Cohort", flex: 1.8, minWidth: 200 },
+      {
+        field: "cohort",
+        headerName: "Cohort",
+        flex: 1.8,
+        minWidth: 160,
+        valueFormatter: (p) => cohortLabel(p.value),
+      },
       intCol("loan_count", "Loans", 80),
       moneyCol("upb", "UPB", 120),
+      {
+        field: "wac",
+        headerName: "WAC",
+        width: 88,
+        valueGetter: (p) => p.data?.wac ?? p.data?.avg_rate,
+        valueFormatter: (p) => fmtPct(p.value, 2),
+        cellClass: "cf-num",
+      },
+      {
+        field: "wam",
+        headerName: "WAM",
+        width: 88,
+        valueGetter: (p) => p.data?.wam ?? p.data?.avg_remaining_term,
+        valueFormatter: (p) => fmtNum(p.value, 0),
+        cellClass: "cf-num",
+      },
       {
         field: "avg_ltv",
         headerName: "Avg LTV",
@@ -1746,130 +1758,123 @@ export default function App() {
         cellClass: "cf-num",
       },
       {
-        field: "avg_fico",
-        headerName: "Avg FICO",
-        width: 88,
-        valueFormatter: (p) => fmtNum(p.value, 0),
-        cellClass: "cf-num",
-      },
-      {
-        field: "avg_rate",
-        headerName: "Avg Rate",
-        width: 88,
-        valueFormatter: (p) => fmtPct(p.value, 2),
-        cellClass: "cf-num",
-      },
-      {
         field: "avg_refi_incentive",
-        headerName: "Avg refi",
+        headerName: "Avg RI",
         width: 88,
         valueFormatter: (p) => fmtNum(p.value, 3),
         cellClass: "cf-num",
       },
       {
-        field: "avg_remaining_term",
-        headerName: "Avg rem",
-        width: 88,
-        valueFormatter: (p) => fmtNum(p.value, 0),
+        field: "recovery",
+        headerName: "Recovery",
+        width: 96,
+        valueFormatter: (p) => fmtPct(p.value, 1),
+        cellClass: "cf-num",
+      },
+      {
+        field: "lag",
+        headerName: "Lag",
+        width: 72,
+        valueFormatter: (p) =>
+          p.value == null || Number.isNaN(Number(p.value))
+            ? ""
+            : `${Number(p.value).toFixed(0)} Mo`,
         cellClass: "cf-num",
       },
     ],
     []
   );
 
-  const loanColumnDefs = useMemo(
-    () => [
-      {
-        field: "loanId",
-        headerName: "Loan ID",
-        flex: 1.1,
-        minWidth: 100,
-        cellClass: "cf-id",
-      },
-      intCol("fico", "FICO", 72),
-      {
-        field: "cltv",
-        headerName: "CLTV",
-        width: 90,
-        type: "numericColumn",
-        filter: "agNumberColumnFilter",
-        valueFormatter: (p) => fmtPct(p.value, 1),
-        cellClass: "cf-num",
-      },
-      {
-        field: "documentation",
-        headerName: "Documentation",
-        flex: 1.2,
-        minWidth: 120,
-      },
-      intCol("remainingTerm", "Remaining term", 110),
-      {
-        field: "refinanceIncentive",
-        headerName: "Refi incentive",
-        width: 110,
-        type: "numericColumn",
-        filter: "agNumberColumnFilter",
-        valueFormatter: (p) => fmtNum(p.value, 3),
-        cellClass: "cf-num",
-      },
-      {
-        field: "cluster",
-        headerName: "Cohort",
-        flex: 1.6,
-        minWidth: 180,
-      },
-    ],
-    []
-  );
+  const cohortKpis = useMemo(() => {
+    const rows = (cohortStats || []).filter(
+      (r) =>
+        clusterFilter === "all" || cohortLabel(r.cohort) === clusterFilter
+    );
+    const loanCount = rows.reduce((s, r) => s + (Number(r.loan_count) || 0), 0);
+    const upb = rows.reduce((s, r) => s + (Number(r.upb) || 0), 0);
+    const wac =
+      upb > 0
+        ? rows.reduce(
+            (s, r) =>
+              s + (Number(r.wac ?? r.avg_rate) || 0) * (Number(r.upb) || 0),
+            0
+          ) / upb
+        : null;
+    const wam =
+      upb > 0
+        ? rows.reduce(
+            (s, r) =>
+              s +
+              (Number(r.wam ?? r.avg_remaining_term) || 0) *
+                (Number(r.upb) || 0),
+            0
+          ) / upb
+        : null;
+    const avgLtv =
+      upb > 0
+        ? rows.reduce(
+            (s, r) => s + (Number(r.avg_ltv) || 0) * (Number(r.upb) || 0),
+            0
+          ) / upb
+        : null;
+    const avgRi =
+      upb > 0
+        ? rows.reduce(
+            (s, r) =>
+              s + (Number(r.avg_refi_incentive) || 0) * (Number(r.upb) || 0),
+            0
+          ) / upb
+        : null;
+    return { loanCount, upb, wac, wam, avgLtv, avgRi };
+  }, [cohortStats, clusterFilter]);
 
   const scenarioColumnDefs = useMemo(
     () => [
       {
         field: "_scenarioLabel",
         headerName: "Scenario",
-        width: 140,
+        width: 160,
         sortable: false,
         filter: false,
         rowSpan: (p) => Math.max(1, p.data?._scenarioSpan || 1),
         cellClassRules: {
-          "cf-id": () => true,
           "cf-row-span": (p) => (p.data?._scenarioSpan || 0) > 1,
         },
         valueGetter: (p) =>
           p.data?._scenarioSpan === 0 ? "" : p.data?._scenarioLabel || "",
       },
-      { field: "scenario_id", headerName: "ID", width: 64, cellClass: "cf-id" },
-      { field: "cohort", headerName: "Cohort", flex: 1.8, minWidth: 180 },
       {
-        field: "pca_level",
-        headerName: "PCA",
-        width: 70,
-        valueGetter: (p) => pcaLabel(p.data),
+        field: "cohort",
+        headerName: "Cohort",
+        flex: 1.4,
+        minWidth: 140,
+        valueFormatter: (p) => cohortLabel(p.value),
       },
+      intCol("psa_multiple", "PSA", 72),
+      intCol("sda_multiple", "SDA", 72),
       {
-        field: "sta_level",
-        headerName: "STA",
-        width: 70,
-        valueGetter: (p) => staLabel(p.data),
-      },
-      intCol("psa_multiple", "PSA", 64),
-      intCol("sda_multiple", "SDA", 64),
-      {
-        field: "recovery_rate",
-        headerName: "Rec %",
-        width: 72,
-        valueFormatter: (p) => fmtPct(p.value, 0),
+        field: "recovery",
+        headerName: "Recovery",
+        width: 100,
+        valueFormatter: (p) => fmtPct(p.value, 1),
         cellClass: "cf-num",
       },
-      intCol("recovery_period_months", "Rec mos", 80),
-      intCol("recovery_lag_months", "Lag fallback", 96),
-      intCol("avg_used_recovery_lag_months", "Avg used lag", 100),
+      {
+        field: "lag",
+        headerName: "Lag",
+        width: 72,
+        valueFormatter: (p) =>
+          p.value == null || Number.isNaN(Number(p.value))
+            ? ""
+            : `${Number(p.value).toFixed(0)} Mo`,
+        cellClass: "cf-num",
+      },
       {
         field: "ran",
         headerName: "Ran",
         width: 64,
         valueGetter: (p) =>
-          ranScenarioIds.includes(p.data.scenario_id) ? "Y" : "",
+          ranScenarioIds.includes(p.data.scenario_id) ? "Yes" : "",
       },
     ],
     [ranScenarioIds]
@@ -1877,8 +1882,13 @@ export default function App() {
 
   const aggColumnDefs = useMemo(
     () => [
-      { field: "scenario_id", headerName: "ID", width: 72, cellClass: "cf-id" },
-      { field: "cohort", headerName: "Cohort", flex: 1.6, minWidth: 180 },
+      {
+        field: "cohort",
+        headerName: "Cohort",
+        flex: 1.6,
+        minWidth: 140,
+        valueFormatter: (p) => cohortLabel(p.value),
+      },
       {
         field: "pca_level",
         headerName: "PCA",
@@ -1892,19 +1902,28 @@ export default function App() {
         valueGetter: (p) => staLabel(p.data),
       },
       intCol("n_loans", "Loans", 72),
-      moneyCol("beginning_balance", "Begin bal", 110),
+      moneyCol("beginning_balance", "Begin Bal", 110),
       moneyCol("interest", "Interest", 100),
-      moneyCol("scheduled_principal", "Sched prin", 100),
-      moneyCol("default_amt", "New default", 100),
-      moneyCol("default", "New default", 100),
-      moneyCol("new_default", "New default", 100),
+      moneyCol("scheduled_principal", "Sched Prin", 100),
+      moneyCol("default_amt", "New Default", 100),
+      moneyCol("default", "New Default", 100),
+      moneyCol("new_default", "New Default", 100),
       moneyCol("prepay", "Prepay", 90),
-      moneyCol("liquidated_default", "Liq default", 100),
+      moneyCol("liquidated_default", "Liq Default", 100),
       moneyCol("recovery", "Recovery", 90),
-      moneyCol("realized_loss", "Realized loss", 100),
-      moneyCol("total_cash", "Total cash", 100),
+      moneyCol("realized_loss", "Realized Loss", 100),
+      moneyCol("total_cash", "Total Cash", 100),
       moneyCol("ending_balance", "End UPB", 110),
-      intCol("avg_used_recovery_lag_months", "Avg used lag", 100),
+      {
+        field: "avg_used_recovery_lag_months",
+        headerName: "Lag",
+        width: 72,
+        valueFormatter: (p) =>
+          p.value == null || Number.isNaN(Number(p.value))
+            ? ""
+            : `${Number(p.value).toFixed(0)} Mo`,
+        cellClass: "cf-num",
+      },
     ],
     []
   );
@@ -1912,8 +1931,13 @@ export default function App() {
   const cfMonth1ColumnDefs = useMemo(
     () => [
       { field: "loan_id", headerName: "Loan", width: 100, cellClass: "cf-id" },
-      { field: "scenario_id", headerName: "ID", width: 64, cellClass: "cf-id" },
-      { field: "cohort", headerName: "Cohort", flex: 1.4, minWidth: 160 },
+      {
+        field: "cohort",
+        headerName: "Cohort",
+        flex: 1.4,
+        minWidth: 140,
+        valueFormatter: (p) => cohortLabel(p.value),
+      },
       {
         field: "pca_level",
         headerName: "PCA",
@@ -1926,68 +1950,14 @@ export default function App() {
         width: 64,
         valueGetter: (p) => staLabel(p.data),
       },
-      intCol("used_recovery_lag_months", "Used lag", 80),
       {
-        headerName: "1 · Performing UPB",
-        children: [
-          intCol("month", "Mo", 56),
-          moneyCol("beginning_balance", "Beg UPB", 110),
-          moneyCol("interest", "Interest", 100),
-          moneyCol("scheduled_principal", "Sched prin", 100),
-          {
-            field: "cpr",
-            headerName: "CPR",
-            width: 72,
-            valueFormatter: (p) => fmtPct(p.value, 2),
-            cellClass: "cf-num",
-          },
-          {
-            field: "cdr",
-            headerName: "CDR",
-            width: 72,
-            valueFormatter: (p) => fmtPct(p.value, 3),
-            cellClass: "cf-num",
-          },
-          moneyCol("prepay", "Prepay", 90),
-          moneyCol("new_default", "New default", 100),
-          moneyCol("default_amt", "New default", 100),
-          moneyCol("ending_balance", "End UPB", 110),
-        ],
-      },
-      {
-        headerName: "2 · Default roll",
-        children: [
-          moneyCol("beginning_default_balance", "Beg def bal", 110),
-          moneyCol("liquidated_default", "Liq default", 100),
-          moneyCol("recovery", "Recovery", 90),
-          moneyCol("realized_loss", "Realized loss", 100),
-          moneyCol("ending_default_balance", "End def bal", 110),
-        ],
-      },
-      {
-        headerName: "3 · Actual cash (defaults ≠ cash)",
-        children: [
-          moneyCol("interest", "Interest", 100),
-          moneyCol("scheduled_principal", "Sched prin", 100),
-          moneyCol("prepay", "Prepay", 90),
-          moneyCol("recovery", "Recovery", 90),
-          moneyCol("total_cash", "Total cash", 100),
-        ],
-      },
-    ],
-    []
-  );
-
-  const loanMonthColumnDefs = useMemo(
-    () => [
-      { field: "scenario_id", headerName: "ID", width: 64, cellClass: "cf-id" },
-      { field: "loan_id", headerName: "Loan", width: 100, cellClass: "cf-id" },
-      intCol("used_recovery_lag_months", "Used lag", 80),
-      {
-        field: "recovery_rate",
-        headerName: "Rec %",
+        field: "used_recovery_lag_months",
+        headerName: "Lag",
         width: 72,
-        valueFormatter: (p) => fmtPct(p.value, 0),
+        valueFormatter: (p) =>
+          p.value == null || Number.isNaN(Number(p.value))
+            ? ""
+            : `${Number(p.value).toFixed(0)} Mo`,
         cellClass: "cf-num",
       },
       {
@@ -1996,7 +1966,7 @@ export default function App() {
           intCol("month", "Mo", 56),
           moneyCol("beginning_balance", "Beg UPB", 110),
           moneyCol("interest", "Interest", 100),
-          moneyCol("scheduled_principal", "Sched prin", 100),
+          moneyCol("scheduled_principal", "Sched Prin", 100),
           {
             field: "cpr",
             headerName: "CPR",
@@ -2012,30 +1982,101 @@ export default function App() {
             cellClass: "cf-num",
           },
           moneyCol("prepay", "Prepay", 90),
-          moneyCol("new_default", "New default", 100),
-          moneyCol("default_amt", "New default", 100),
+          moneyCol("new_default", "New Default", 100),
+          moneyCol("default_amt", "New Default", 100),
           moneyCol("ending_balance", "End UPB", 110),
         ],
       },
       {
-        headerName: "2 · Default roll",
+        headerName: "2 · Default Roll",
         children: [
-          moneyCol("beginning_default_balance", "Beg def bal", 110),
-          moneyCol("liquidated_default", "Liq default", 100),
+          moneyCol("beginning_default_balance", "Beg Def Bal", 110),
+          moneyCol("liquidated_default", "Liq Default", 100),
           moneyCol("recovery", "Recovery", 90),
-          moneyCol("realized_loss", "Realized loss", 100),
-          moneyCol("loss", "Loss", 90),
-          moneyCol("ending_default_balance", "End def bal", 110),
+          moneyCol("realized_loss", "Realized Loss", 100),
+          moneyCol("ending_default_balance", "End Def Bal", 110),
         ],
       },
       {
-        headerName: "3 · Actual cash (defaults ≠ cash)",
+        headerName: "3 · Actual Cash (Defaults ≠ Cash)",
         children: [
           moneyCol("interest", "Interest", 100),
-          moneyCol("scheduled_principal", "Sched prin", 100),
+          moneyCol("scheduled_principal", "Sched Prin", 100),
           moneyCol("prepay", "Prepay", 90),
           moneyCol("recovery", "Recovery", 90),
-          moneyCol("total_cash", "Total cash", 100),
+          moneyCol("total_cash", "Total Cash", 100),
+        ],
+      },
+    ],
+    []
+  );
+
+  const loanMonthColumnDefs = useMemo(
+    () => [
+      { field: "loan_id", headerName: "Loan", width: 100, cellClass: "cf-id" },
+      {
+        field: "used_recovery_lag_months",
+        headerName: "Lag",
+        width: 72,
+        valueFormatter: (p) =>
+          p.value == null || Number.isNaN(Number(p.value))
+            ? ""
+            : `${Number(p.value).toFixed(0)} Mo`,
+        cellClass: "cf-num",
+      },
+      {
+        field: "recovery_rate",
+        headerName: "Recovery",
+        width: 96,
+        valueFormatter: (p) => fmtPct(p.value, 1),
+        cellClass: "cf-num",
+      },
+      {
+        headerName: "1 · Performing UPB",
+        children: [
+          intCol("month", "Mo", 56),
+          moneyCol("beginning_balance", "Beg UPB", 110),
+          moneyCol("interest", "Interest", 100),
+          moneyCol("scheduled_principal", "Sched Prin", 100),
+          {
+            field: "cpr",
+            headerName: "CPR",
+            width: 72,
+            valueFormatter: (p) => fmtPct(p.value, 2),
+            cellClass: "cf-num",
+          },
+          {
+            field: "cdr",
+            headerName: "CDR",
+            width: 72,
+            valueFormatter: (p) => fmtPct(p.value, 3),
+            cellClass: "cf-num",
+          },
+          moneyCol("prepay", "Prepay", 90),
+          moneyCol("new_default", "New Default", 100),
+          moneyCol("default_amt", "New Default", 100),
+          moneyCol("ending_balance", "End UPB", 110),
+        ],
+      },
+      {
+        headerName: "2 · Default Roll",
+        children: [
+          moneyCol("beginning_default_balance", "Beg Def Bal", 110),
+          moneyCol("liquidated_default", "Liq Default", 100),
+          moneyCol("recovery", "Recovery", 90),
+          moneyCol("realized_loss", "Realized Loss", 100),
+          moneyCol("loss", "Loss", 90),
+          moneyCol("ending_default_balance", "End Def Bal", 110),
+        ],
+      },
+      {
+        headerName: "3 · Actual Cash (Defaults ≠ Cash)",
+        children: [
+          moneyCol("interest", "Interest", 100),
+          moneyCol("scheduled_principal", "Sched Prin", 100),
+          moneyCol("prepay", "Prepay", 90),
+          moneyCol("recovery", "Recovery", 90),
+          moneyCol("total_cash", "Total Cash", 100),
         ],
       },
       {
@@ -2055,29 +2096,42 @@ export default function App() {
   );
 
   const filteredScenarios = useMemo(() => {
-    const base = scenarios.length
-      ? scenarios
-      : aggregates.map((a) => ({
-          scenario_id: a.scenario_id,
-          cohort: a.cohort,
-          psa_multiple: a.psa_multiple,
-          sda_multiple: a.sda_multiple,
-          pca_level: a.pca_level,
-          sta_level: a.sta_level,
-          recovery_rate: a.recovery_rate,
-          recovery_period_months: a.recovery_period_months,
-          recovery_lag_months: a.recovery_lag_months,
-        }));
-    const filtered = selectedCohort
-      ? base.filter((s) => s.cohort === selectedCohort)
-      : base;
+    const byCohort = Object.fromEntries(
+      (cohortStats || []).map((r) => [cohortLabel(r.cohort), r])
+    );
+    const base = (
+      scenarios.length
+        ? scenarios
+        : aggregates.map((a) => ({
+            scenario_id: a.scenario_id,
+            cohort: a.cohort,
+            psa_multiple: a.psa_multiple,
+            sda_multiple: a.sda_multiple,
+            pca_level: a.pca_level,
+            sta_level: a.sta_level,
+            recovery_rate: a.recovery_rate,
+            recovery_period_months: a.recovery_period_months,
+            recovery_lag_months: a.recovery_lag_months,
+            avg_used_recovery_lag_months: a.avg_used_recovery_lag_months,
+          }))
+    ).map((s) => {
+      const stats = byCohort[cohortLabel(s.cohort)] || {};
+      const recovery = stats.recovery ?? s.recovery_rate;
+      const lag =
+        stats.lag ??
+        s.avg_used_recovery_lag_months ??
+        (s.recovery_lag_months ? s.recovery_lag_months : null);
+      return {
+        ...s,
+        cohort: cohortLabel(s.cohort),
+        recovery,
+        lag,
+      };
+    });
+    const want = selectedCohort ? cohortLabel(selectedCohort) : null;
+    const filtered = want ? base.filter((s) => s.cohort === want) : base;
     return withScenarioRowSpans(filtered);
-  }, [scenarios, aggregates, selectedCohort]);
-
-  const filteredLoans = useMemo(() => {
-    if (clusterFilter === "all") return loans;
-    return loans.filter((r) => r.cluster === clusterFilter);
-  }, [loans, clusterFilter]);
+  }, [scenarios, aggregates, selectedCohort, cohortStats]);
 
   const scatterByCluster = useMemo(() => {
     const groups = Object.fromEntries(CLUSTER_ORDER.map((c) => [c, []]));
@@ -2162,7 +2216,7 @@ export default function App() {
 
   const drillLoan = useCallback((row) => {
     const loanId = row.loanId || row.loan_id;
-    const cohort = row.cluster || row.cohort || null;
+    const cohort = cohortLabel(row.cluster || row.cohort || "") || null;
     setSelectedLoanId(loanId || null);
     setSelectedCohort(cohort);
     if (cohort) setClusterFilter(cohort);
@@ -2173,7 +2227,7 @@ export default function App() {
   const drillScenario = useCallback((row) => {
     if (!row?.scenario_id) return;
     setSelectedScenarioId(row.scenario_id);
-    if (row.cohort) setSelectedCohort(row.cohort);
+    if (row.cohort) setSelectedCohort(cohortLabel(row.cohort));
     setSelectedLoanId(null);
     setCfView("month1");
     setPane("cashflow");
@@ -2182,7 +2236,7 @@ export default function App() {
   const drillAggScenario = useCallback((row) => {
     if (!row?.scenario_id) return;
     setSelectedScenarioId(row.scenario_id);
-    if (row.cohort) setSelectedCohort(row.cohort);
+    if (row.cohort) setSelectedCohort(cohortLabel(row.cohort));
     setSelectedLoanId(null);
     setCfView("month1");
   }, []);
@@ -2191,7 +2245,7 @@ export default function App() {
     if (!row?.loan_id || !row?.scenario_id) return;
     setSelectedLoanId(row.loan_id);
     setSelectedScenarioId(row.scenario_id);
-    if (row.cohort) setSelectedCohort(row.cohort);
+    if (row.cohort) setSelectedCohort(cohortLabel(row.cohort));
     setCfView("loanMonth");
   }, []);
 
@@ -2233,12 +2287,12 @@ export default function App() {
     if (selectedCohort) {
       crumbs.push({
         id: "cohort",
-        label: selectedCohort,
+        label: cohortLabel(selectedCohort),
         jumpable: false,
       });
     }
     crumbs.push({ id: "scenarios", label: "Scenarios", jumpable: true });
-    crumbs.push({ id: "agg", label: "CF aggregates", jumpable: cfView !== "agg" });
+    crumbs.push({ id: "agg", label: "CF Aggregates", jumpable: cfView !== "agg" });
     if (selectedScenarioId && cfView !== "agg") {
       crumbs.push({
         id: "scenario",
@@ -2249,7 +2303,7 @@ export default function App() {
     if (cfView === "month1" || cfView === "loanMonth") {
       crumbs.push({
         id: "month1",
-        label: "All loans · month 1",
+        label: "All Loans · Month 1",
         jumpable: cfView === "loanMonth",
       });
     }
@@ -2281,7 +2335,7 @@ export default function App() {
         throw new Error(`HTTP ${res.status}: ${detail}`);
       }
       const data = await res.json();
-      setAggregates(data.aggregates || []);
+      setAggregates((data.aggregates || []).map(relabelCohortFields));
       setRanScenarioIds(data.ran_scenario_ids || []);
       setRunMeta(data.parallelism || null);
       setNeonNote(
@@ -2295,7 +2349,7 @@ export default function App() {
         setScenarios(
           data.aggregates.map((a) => ({
             scenario_id: a.scenario_id,
-            cohort: a.cohort,
+            cohort: cohortLabel(a.cohort),
             psa_multiple: a.psa_multiple,
             sda_multiple: a.sda_multiple,
             recovery_rate: a.recovery_rate,
@@ -2319,8 +2373,16 @@ export default function App() {
     fontFamily: FONT,
   };
 
-  const filterLabel =
-    clusterFilter === "all" ? "All Cohorts" : clusterFilter;
+  const scenarioDisplayName = useCallback(
+    (id) => {
+      const row =
+        (scenarios || []).find((s) => s.scenario_id === id) ||
+        (aggregates || []).find((s) => s.scenario_id === id);
+      if (!row) return "";
+      return `${cohortLabel(row.cohort)} PSA ${row.psa_multiple} / SDA ${row.sda_multiple}`;
+    },
+    [scenarios, aggregates]
+  );
 
   const scenarioOptions = useMemo(() => {
     const ids = (
@@ -2329,10 +2391,12 @@ export default function App() {
         : aggregates.map((a) => ({
             scenario_id: a.scenario_id,
             cohort: a.cohort,
+            psa_multiple: a.psa_multiple,
+            sda_multiple: a.sda_multiple,
           }))
     ).map((s) => ({
       id: s.scenario_id,
-      label: `${s.scenario_id}${s.cohort ? ` · ${s.cohort}` : ""}`,
+      label: `${cohortLabel(s.cohort)} PSA ${s.psa_multiple} / SDA ${s.sda_multiple}`,
     }));
     return ids;
   }, [scenarios, aggregates]);
@@ -2789,6 +2853,56 @@ export default function App() {
 
           {pane === "cohort" && (
             <>
+              <div className="qc-toolbar">
+                <div className="qc-kpi-strip" role="toolbar" aria-label="Cohort KPIs">
+                  <div className="qc-kpi is-active" aria-label="Total Loans">
+                    <span className="qc-kpi-label">Total Loans</span>
+                    <span className="qc-kpi-value">
+                      {cohortKpis.loanCount
+                        ? cohortKpis.loanCount.toLocaleString()
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="qc-kpi" aria-label="UPB">
+                    <span className="qc-kpi-label">UPB</span>
+                    <span className="qc-kpi-value">
+                      {cohortKpis.upb ? fmtUpbShort(cohortKpis.upb) : "—"}
+                    </span>
+                  </div>
+                  <div className="qc-kpi" aria-label="WAC">
+                    <span className="qc-kpi-label">WAC</span>
+                    <span className="qc-kpi-value">
+                      {cohortKpis.wac != null
+                        ? `${(Number(cohortKpis.wac) * 100).toFixed(2)}%`
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="qc-kpi" aria-label="WAM">
+                    <span className="qc-kpi-label">WAM</span>
+                    <span className="qc-kpi-value">
+                      {cohortKpis.wam != null
+                        ? `${Number(cohortKpis.wam).toFixed(0)} Mo`
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="qc-kpi" aria-label="Avg LTV">
+                    <span className="qc-kpi-label">Avg LTV</span>
+                    <span className="qc-kpi-value">
+                      {cohortKpis.avgLtv != null
+                        ? `${(Number(cohortKpis.avgLtv) * 100).toFixed(1)}%`
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="qc-kpi" aria-label="Avg RI">
+                    <span className="qc-kpi-label">Avg RI</span>
+                    <span className="qc-kpi-value">
+                      {cohortKpis.avgRi != null
+                        ? Number(cohortKpis.avgRi).toFixed(2)
+                        : "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
               <section className="section section-cohort-chart">
                 <div className="section-head section-head-stack">
                   <h2 className="section-title section-title-chart">
@@ -2796,8 +2910,7 @@ export default function App() {
                     Incentive
                   </h2>
                   <p className="scatter-subtitle">
-                    Cohorts: high LTV + strong / high LTV + weak / low LTV +
-                    weak refinance incentive
+                    Cohorts: HLTV Strong RI / HLTV Weak RI / LLTV Weak RI
                   </p>
                 </div>
                 <div className="chart-wrap chart-wrap-scatter">
@@ -2921,7 +3034,7 @@ export default function App() {
                       </ResponsiveContainer>
                       <aside
                         className="scatter-offaxis-note"
-                        aria-label="Off-axis clustering features"
+                        aria-label="Off-Axis Clustering Features"
                       >
                         <span
                           className="scatter-offaxis-mark"
@@ -2940,65 +3053,29 @@ export default function App() {
                 </div>
               </section>
 
-              <section className="section section-cohort-stats">
+              <section className="section section-cohort-stats section-fill">
                 <div className="section-head">
-                  <h2 className="section-title">Cohort statistics</h2>
+                  <h2 className="section-title">Cohort Statistics</h2>
                   <p className="section-meta">
-                    Per-cohort count · UPB · avg LTV/CLTV/FICO
+                    Loans · UPB · WAC · WAM · LTV · RI · Recovery · Lag
                   </p>
                 </div>
                 {cohortStatsError ? (
                   <StatusBanner tone="muted">
-                    Cohort stats: {cohortStatsError}
+                    Cohort Stats: {cohortStatsError}
                   </StatusBanner>
                 ) : (
                   <DataGrid
                     rowData={cohortStats}
                     columnDefs={cohortStatsColumnDefs}
                     getRowId={(p) => String(p.data.cohort)}
+                    onRowDrill={(row) =>
+                      selectCluster(cohortLabel(row.cohort) || "all")
+                    }
                     heightClass="grid-wrap-cohort-stats"
                     exportName="cohort-stats"
                   />
                 )}
-              </section>
-
-              <section className="section section-fill">
-                <div className="section-head">
-                  <h2 className="section-title">Loans</h2>
-                  <div className="section-actions">
-                    <p className="section-meta">
-                      Filter: {filterLabel}
-                      {clusterFilter !== "all" && (
-                        <>
-                          {" · "}
-                          <button
-                            type="button"
-                            className="linkish"
-                            onClick={() => selectCluster("all")}
-                          >
-                            Clear
-                          </button>
-                        </>
-                      )}
-                      {" · "}
-                      Ran scenarios: {ranScenarioIds.length}/27
-                      {" · "}
-                      Click row → cohort scenarios
-                    </p>
-                  </div>
-                </div>
-                <DrillTrail crumbs={drillCrumbs} onJump={onDrillJump} />
-                <DataGrid
-                  rowData={filteredLoans}
-                  columnDefs={loanColumnDefs}
-                  getRowId={(p) => String(p.data.loanId)}
-                  onRowDrill={drillLoan}
-                  onGridReady={onGridReady}
-                  scheduleSave={scheduleSave}
-                  persistLayout
-                  heightClass="grid-wrap-fill"
-                  exportName="loans"
-                />
               </section>
             </>
           )}
@@ -3007,14 +3084,11 @@ export default function App() {
             <section className="section section-fill">
               <div className="section-head">
                 <p className="section-meta">
-                  Neon securitization_scenarios
                   {selectedCohort
-                    ? ` · cohort filter: ${selectedCohort}`
-                    : " · 27 cells"}
+                    ? `Cohort Filter: ${cohortLabel(selectedCohort)}`
+                    : "27 Cells"}
                   {" · "}
-                  Scenario col merges PSA×SDA across cohorts
-                  {" · "}
-                  Click row → all-loan month-1 CF
+                  Click Row → All-Loan Month 1 CF
                 </p>
                 <div className="section-actions">
                   {(selectedCohort || selectedLoanId) && (
@@ -3023,7 +3097,7 @@ export default function App() {
                       className="linkish"
                       onClick={clearDrill}
                     >
-                      Clear drill
+                      Clear Drill
                     </button>
                   )}
                   <button
@@ -3068,10 +3142,10 @@ export default function App() {
               <div className="section-head">
                 <p className="section-meta">
                   {cfView === "loanMonth"
-                    ? "Multi-month loan path"
+                    ? "Multi-Month Loan Path"
                     : cfView === "month1"
-                      ? "All loans · month 1"
-                      : "Scenario aggregates"}
+                      ? "All Loans · Month 1"
+                      : "Scenario Aggregates"}
                 </p>
                 <div className="section-actions">
                   <label className="field-inline">
@@ -3110,7 +3184,7 @@ export default function App() {
                       setSelectedLoanId(null);
                     }}
                   >
-                    All loans
+                    All Loans
                   </button>
                   {cfView === "loanMonth" && (
                     <button
@@ -3118,7 +3192,7 @@ export default function App() {
                       className="linkish"
                       onClick={() => setCfView("month1")}
                     >
-                      Back to loans
+                      Back To Loans
                     </button>
                   )}
                   {(selectedLoanId || selectedCohort) && (
@@ -3127,7 +3201,7 @@ export default function App() {
                       className="linkish"
                       onClick={clearDrill}
                     >
-                      Clear drill
+                      Clear Drill
                     </button>
                   )}
                 </div>
@@ -3135,22 +3209,23 @@ export default function App() {
               <DrillTrail crumbs={drillCrumbs} onJump={onDrillJump} />
               <p className="section-meta">
                 {cfView === "loanMonth"
-                  ? `Neon loan_month_cf_enriched · ${selectedLoanId} · ${selectedScenarioId}`
+                  ? `${selectedLoanId} · ${scenarioDisplayName(selectedScenarioId)}`
                   : cfView === "month1"
-                    ? `Neon loan_cashflows_month1_enriched · ${selectedScenarioId}${
-                        neonMonth1Total ? ` · ${neonMonth1Total} loans` : ""
-                      } · click row → months`
-                    : `Scenario aggregates (all loans) · ${aggregates.length || 0} cells · click → loan-level`}
+                    ? `${scenarioDisplayName(selectedScenarioId)}${
+                        neonMonth1Total ? ` · ${neonMonth1Total} Loans` : ""
+                      } · Click Row → Months`
+                    : `Scenario Aggregates · ${aggregates.length || 0} Cells · Click → Loan-Level`}
               </p>
               {cfView === "loanMonth" ? (
                 loanMonthLoading ? (
-                  <p className="muted">Loading multi-month CF…</p>
+                  <p className="muted">Loading Multi-Month CF…</p>
                 ) : !loanMonthRows.length ? (
                   <p className="muted">
-                    No multi-month rows for {selectedLoanId} /{" "}
-                    {selectedScenarioId}. Run{" "}
-                    <code>scripts/run_one_loan_cohort_axis.py</code> for this
-                    loan×cohort axis.
+                    No Multi-Month Rows For {selectedLoanId}
+                    {selectedScenarioId
+                      ? ` / ${scenarioDisplayName(selectedScenarioId)}`
+                      : ""}
+                    .
                   </p>
                 ) : (
                   <DataGrid
@@ -3165,12 +3240,12 @@ export default function App() {
                 )
               ) : cfView === "month1" ? (
                 neonCfLoading ? (
-                  <p className="muted">Loading all-loan month-1 CF…</p>
+                  <p className="muted">Loading All-Loan Month 1 CF…</p>
                 ) : !neonMonth1Rows.length ? (
                   <StatusBanner tone="muted">
-                    No Neon month-1 rows for {selectedScenarioId}
+                    No Month 1 Rows For {scenarioDisplayName(selectedScenarioId)}
                     {selectedLoanId ? ` / ${selectedLoanId}` : ""}. Open
-                    Scenarios and Run month 1 (persists loan-level to Neon).
+                    Scenarios And Run Month 1.
                   </StatusBanner>
                 ) : (
                   <DataGrid
@@ -3186,7 +3261,7 @@ export default function App() {
                 )
               ) : !aggregates.length ? (
                 <StatusBanner tone="muted">
-                  No scenario aggregates yet. Open Scenarios and Run month 1.
+                  No Scenario Aggregates Yet. Open Scenarios And Run Month 1.
                 </StatusBanner>
               ) : (
                 <DataGrid
@@ -3220,7 +3295,7 @@ export default function App() {
                   Assumptions: {assumptionError}
                 </StatusBanner>
               ) : !assumptionRows.length ? (
-                <p className="muted">No assumptions loaded.</p>
+                <p className="muted">No Assumptions Loaded.</p>
               ) : (
                 <DataGrid
                   rowData={assumptionRows}

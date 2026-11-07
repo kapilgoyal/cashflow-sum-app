@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.repositories.tape_repository import TapeRepository
 from app.services.cashflow_engine import project_loan_cashflows
+from app.services.cohort_labels import relabel_payload
 from app.services.scenario_grid import base_case_scenario, build_scenario_grid
 
 router = APIRouter(tags=["scenarios"])
@@ -17,7 +18,7 @@ router = APIRouter(tags=["scenarios"])
 
 @router.get("/scenarios")
 def scenarios() -> list[dict]:
-    return [s.model_dump() for s in build_scenario_grid()]
+    return relabel_payload([s.model_dump() for s in build_scenario_grid()])
 
 
 @router.get("/cashflows/sample")
@@ -32,8 +33,10 @@ def sample_cashflow(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     scenario = base_case_scenario()
     rows = project_loan_cashflows(loan, scenario, months=months)
-    return {
-        "loan": loan.model_dump(),
-        "scenario": scenario.model_dump(),
-        "rows": [r.model_dump() for r in rows],
-    }
+    return relabel_payload(
+        {
+            "loan": loan.model_dump(),
+            "scenario": scenario.model_dump(),
+            "rows": [r.model_dump() for r in rows],
+        }
+    )

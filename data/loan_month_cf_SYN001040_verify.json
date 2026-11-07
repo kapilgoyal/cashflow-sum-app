@@ -1,6 +1,6 @@
 {
   "loan_id": "SYN001040",
-  "cohort": "low LTV and weak refinance incentive",
+  "cohort": "LLTV Weak RI",
   "scenario_ids": [
     "S01",
     "S02",

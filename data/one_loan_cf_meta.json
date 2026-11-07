@@ -12,13 +12,13 @@
   },
   "scenario": {
     "scenario_id": "S05",
-    "cohort": "low LTV and weak refinance incentive",
+    "cohort": "LLTV Weak RI",
     "psa_multiple": 100,
     "sda_multiple": 100,
     "recovery_period_months": 9,
     "recovery_lag_months": 0,
     "recovery_rate": 0.75,
-    "note": "low LTV and weak refinance incentive PSA100/SDA100; PCA=Base STA=Base; BASE CASE (100 PSA / 100 SDA); low LTV and weak refinance incentive prepay-leaning cell; recovery 75%/9mo lag=0; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now",
+    "note": "LLTV Weak RI PSA100/SDA100; PCA=Base STA=Base; BASE CASE (100 PSA / 100 SDA); LLTV Weak RI prepay-leaning cell; recovery 75%/9mo lag=0; TODO: state-varying foreclosure/REO lag not implemented; recovery_period/lag are pool constants for now",
     "state_varying_recovery_todo": true
   },
   "n_months": 360,
