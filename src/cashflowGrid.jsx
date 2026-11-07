@@ -90,22 +90,58 @@ export const gridTheme = themeQuartz.withParams({
   browserColorScheme: "light",
 });
 
+/** Whole-dollar money for analysis dashboards (no cents). */
 export function fmtMoney(v) {
   if (v == null || Number.isNaN(Number(v))) return "";
-  return Number(v).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+  return Math.round(Number(v)).toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   });
 }
 
-export function fmtPct(v, digits = 1) {
+/** Compact UPB for KPI chips / chart tips. */
+export function fmtUpbShort(v) {
   if (v == null || Number.isNaN(Number(v))) return "";
-  return `${(Number(v) * 100).toFixed(digits)}%`;
+  const n = Math.round(Number(v));
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (abs >= 1e3) return `$${(n / 1e3).toFixed(0)}k`;
+  return `$${n.toLocaleString()}`;
 }
 
-export function fmtNum(v, digits = 3) {
+/** Integer counts (loans, months, FICO). */
+export function fmtInt(v) {
   if (v == null || Number.isNaN(Number(v))) return "";
-  return Number(v).toFixed(digits);
+  return Math.round(Number(v)).toLocaleString();
+}
+
+/**
+ * Fraction → percent. Default 1 decimal (LTV/DTI/rates).
+ * Pass digits=2 for WAC; digits=0 for whole %.
+ */
+export function fmtPct(v, digits = 1) {
+  if (v == null || Number.isNaN(Number(v))) return "";
+  const pct = Number(v) * 100;
+  if (digits <= 0) return `${Math.round(pct)}%`;
+  const fixed = pct.toFixed(digits);
+  // Drop trailing zeros: 80.0% → 80%, 6.50% → 6.5%
+  const trimmed = fixed.replace(/\.?0+$/, "");
+  return `${trimmed}%`;
+}
+
+/** WAC / coupon rates — keep 2 meaningful decimals. */
+export function fmtWac(v) {
+  if (v == null || Number.isNaN(Number(v))) return "";
+  return `${(Number(v) * 100).toFixed(2)}%`;
+}
+
+/** General numeric; trims trailing zeros. */
+export function fmtNum(v, digits = 2) {
+  if (v == null || Number.isNaN(Number(v))) return "";
+  if (digits <= 0) return fmtInt(v);
+  const fixed = Number(v).toFixed(digits);
+  return fixed.replace(/\.?0+$/, "");
 }
 
 const PCA = { 75: "Down", 100: "Base", 125: "Up" };
@@ -223,6 +259,7 @@ export function intCol(field, headerName, width = 72) {
     width,
     type: "numericColumn",
     filter: "agNumberColumnFilter",
+    valueFormatter: (p) => fmtInt(p.value),
     cellClass: "cf-num",
   };
 }

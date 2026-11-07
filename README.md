@@ -104,7 +104,7 @@ uvicorn app.main:app --reload --port 8000
 npm install && npm run dev
 ```
 
-Left nav: **Investor Tape** · **Loan QC** · **Stratification** · **Cohort** · **Scenarios** · **Cash Flow** · **Assumptions**.  
+Left nav: **Investor Tape** · **Loan QC** · **Collateral** · **Cohort** · **Scenarios** · **Cash Flow** · **Assumptions**.  
 **Run month 1** → `POST /api/cashflows/run-month1` (writes to SQLite by default, or Neon when `DATABASE_URL` is postgres).
 
 ## Local frontend

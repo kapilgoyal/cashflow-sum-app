@@ -808,9 +808,7 @@ body {
   height: min(420px, 55vh);
 }
 
-/* 3 cohort rows + denser header ≈ 22 + 3×20 + toolbar; Loans keeps remaining space */
-.grid-wrap-mid,
-.grid-wrap-cohort-stats {
+.grid-wrap-mid {
   height: var(--cf-grid-mid-h);
   max-height: calc(var(--cf-grid-mid-h) + 18px);
   min-height: var(--cf-grid-mid-h);
@@ -1118,11 +1116,11 @@ body {
   height: min(380px, 48vh);
 }
 
-/* Shrink scatter so Cohort stats + Loans fit without overlap */
+/* Cohort scatter + stats (no loan grid) */
 .chart-wrap-scatter {
   position: relative;
-  width: min(100%, calc(36vh * 9.5 / 6.5));
-  max-height: 36vh;
+  width: min(100%, calc(48vh * 9.5 / 6.5));
+  max-height: 48vh;
   height: auto;
   aspect-ratio: 9.5 / 6.5;
   padding-top: 0;
@@ -1130,9 +1128,20 @@ body {
   flex: 0 0 auto;
 }
 
-.section-cohort-chart,
-.section-cohort-stats {
+.section-cohort-chart {
   flex: 0 0 auto;
+}
+
+.section-cohort-stats {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.grid-wrap-cohort-stats {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: var(--cf-grid-mid-h);
+  max-height: none;
 }
 
 .ag-theme-cashflow {
@@ -1807,18 +1816,6 @@ body {
 .grid-wrap-collateral {
   min-height: 320px;
   height: min(48vh, 420px);
-}
-
-.collat-missing-list {
-  margin: 0;
-  padding-left: 18px;
-  color: var(--cf-muted);
-  font-size: 11px;
-}
-
-.collat-missing-list strong {
-  color: var(--cf-text);
-  font-weight: 600;
 }
 
 @media (max-width: 900px) {
