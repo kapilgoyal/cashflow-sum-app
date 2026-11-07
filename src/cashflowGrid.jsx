@@ -7,7 +7,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz } from "ag-grid-community";
 
-export const FONT = '"Source Sans 3", "Segoe UI", system-ui, sans-serif';
+export const FONT =
+  '"IBM Plex Mono", "Roboto Mono", ui-monospace, Menlo, monospace';
 
 const GRID_SCALE = {
   base: {
@@ -60,18 +61,18 @@ function useGridScale() {
 }
 
 export const gridTheme = themeQuartz.withParams({
-  backgroundColor: "#FFFFFF",
-  foregroundColor: "#001A41",
-  headerBackgroundColor: "#F4F6F9",
-  headerTextColor: "#4A5F7A",
-  oddRowBackgroundColor: "#F7F9FC",
-  rowHoverColor: "#EEF2F7",
-  selectedRowBackgroundColor: "#E8F0FE",
-  borderColor: "#D0D7E2",
+  backgroundColor: "#000000",
+  foregroundColor: "#FCFCFC",
+  headerBackgroundColor: "#0C0C0C",
+  headerTextColor: "#808080",
+  oddRowBackgroundColor: "#121212",
+  rowHoverColor: "#1A1A1A",
+  selectedRowBackgroundColor: "#2A2418",
+  borderColor: "#323232",
   /* No heavy outer frame — maximize usable area; keep light cell hairlines. */
   wrapperBorder: false,
-  rowBorder: { style: "solid", width: 1, color: "#D0D7E2" },
-  columnBorder: { style: "solid", width: 1, color: "#E4E9F0" },
+  rowBorder: { style: "solid", width: 1, color: "#323232" },
+  columnBorder: { style: "solid", width: 1, color: "#2A2A2A" },
   headerColumnBorder: false,
   fontFamily: FONT,
   fontSize: 11,
@@ -86,8 +87,8 @@ export const gridTheme = themeQuartz.withParams({
   rangeSelectionBorderColor: "#FD9D24",
   iconSize: 12,
   headerColumnResizeHandleWidth: 2,
-  /* Light OS/chrome scrollbars; App.css overrides WebKit thumb/track. */
-  browserColorScheme: "light",
+  /* Dark OS/chrome scrollbars; App.css overrides WebKit thumb/track. */
+  browserColorScheme: "dark",
 });
 
 export function fmtMoney(v) {

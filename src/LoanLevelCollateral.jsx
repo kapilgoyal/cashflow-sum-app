@@ -17,9 +17,12 @@ import { apiUrl } from "./apiBase";
 import { DataGrid, FONT, StatusBanner, fmtNum, fmtPct, moneyCol, intCol } from "./cashflowGrid";
 import { StateChoropleth } from "./UsChoropleth";
 
-const NAVY = "#001A41";
+const BAR = "#C8C8C8";
 const AMBER = "#FD9D24";
-const MUTED = "#4A5F7A";
+const MUTED = "#808080";
+const TEXT = "#FCFCFC";
+const GRID = "#323232";
+const EMPTY = "#121212";
 
 const FICO_ORDER = ["<660", "660-699", "700-739", "740-779", "780+", "missing"];
 const LTV_ORDER = ["<60", "60-70", "70-80", "80-90", "90+", "missing"];
@@ -271,7 +274,7 @@ function DistBar({
         layout={horizontal ? "vertical" : "horizontal"}
         margin={{ top: 8, right: 8, left: horizontal ? 8 : 0, bottom: 4 }}
       >
-        <CartesianGrid stroke="#D0D7E2" strokeDasharray="2 4" />
+        <CartesianGrid stroke={GRID} strokeDasharray="2 4" />
         {horizontal ? (
           <>
             <XAxis
@@ -306,7 +309,14 @@ function DistBar({
           formatter={(v) =>
             metric === "loan_count" ? Number(v).toLocaleString() : fmtUpbShort(v)
           }
-          labelStyle={{ color: NAVY }}
+          labelStyle={{ color: TEXT }}
+          contentStyle={{
+            background: "#212026",
+            border: "1px solid #323232",
+            borderRadius: 0,
+            color: TEXT,
+            fontFamily: FONT,
+          }}
         />
         <Bar
           dataKey={valueKey}
@@ -316,7 +326,7 @@ function DistBar({
           {data.map((row) => (
             <Cell
               key={row.bucket}
-              fill={selected?.includes(row.bucket) ? AMBER : NAVY}
+              fill={selected?.includes(row.bucket) ? AMBER : BAR}
             />
           ))}
         </Bar>
@@ -364,8 +374,8 @@ function Heatmap({ cells, onSelectFico, onSelectLtv, selectedFico, selectedLtv }
             const t = cell.upb / max;
             const bg =
               cell.upb > 0
-                ? `rgba(0, 26, 65, ${0.12 + t * 0.88})`
-                : "#F3F5F8";
+                ? `rgba(253, 157, 36, ${0.12 + t * 0.88})`
+                : EMPTY;
             const active =
               selectedFico?.includes(cell.fico) && selectedLtv?.includes(cell.ltv);
             return (
@@ -373,7 +383,7 @@ function Heatmap({ cells, onSelectFico, onSelectLtv, selectedFico, selectedLtv }
                 key={`${cell.fico}-${cell.ltv}`}
                 type="button"
                 className={`collat-heatmap-cell${active ? " is-active" : ""}`}
-                style={{ background: bg, color: t > 0.55 ? "#fff" : NAVY }}
+                style={{ background: bg, color: t > 0.45 ? "#000000" : TEXT }}
                 title={`FICO ${cell.fico} × LTV ${cell.ltv}: ${fmtUpbShort(cell.upb)} · ${cell.loan_count} Loans`}
                 onClick={() => {
                   onSelectFico?.(cell.fico);

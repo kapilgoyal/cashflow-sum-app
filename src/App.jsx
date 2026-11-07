@@ -75,17 +75,22 @@ const STRAT_DIMS_BASE = [
   { id: "property_type", label: "Property Type", chart: "hbar" },
 ];
 
-const STRAT_BAR_COLOR = "#001A41";
+const STRAT_BAR_COLOR = "#C8C8C8";
 const STRAT_PIE_COLORS = [
-  "#001A41",
   "#FD9D24",
-  "#4A5F7A",
-  "#1F8A44",
-  "#8A9BB0",
+  "#C8C8C8",
+  "#808080",
+  "#43BC67",
+  "#464646",
   "#C51D46",
-  "#0B4F9C",
-  "#6B7C93",
+  "#FCA024",
+  "#A0A0A0",
 ];
+const CHART_AXIS = "#808080";
+const CHART_GRID = "#323232";
+const CHART_LABEL = "#FCFCFC";
+const CHART_TIP_BG = "#212026";
+const CHART_HIST = "#FD9D24";
 
 function fmtUpbShort(v) {
   if (v == null || Number.isNaN(Number(v))) return "";
@@ -99,7 +104,7 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
   const data = rows || [];
   const valueKey = metric === "loans" ? "loan_count" : "upb";
   const tick = {
-    fill: "#4A5F7A",
+    fill: CHART_AXIS,
     fontSize: 10,
     fontFamily: FONT,
   };
@@ -155,7 +160,7 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
           data={lineData}
           margin={{ top: 8, right: 12, left: 0, bottom: 28 }}
         >
-          <CartesianGrid stroke="#D0D7E2" strokeDasharray="2 4" vertical={false} />
+          <CartesianGrid stroke={CHART_GRID} strokeDasharray="2 4" vertical={false} />
           <XAxis
             dataKey="bucket"
             tick={tick}
@@ -163,16 +168,16 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
             angle={lineData.length > 6 ? -30 : 0}
             textAnchor={lineData.length > 6 ? "end" : "middle"}
             height={lineData.length > 6 ? 48 : 28}
-            axisLine={{ stroke: "#8A9BB0" }}
-            tickLine={{ stroke: "#8A9BB0" }}
+            axisLine={{ stroke: CHART_AXIS }}
+            tickLine={{ stroke: CHART_AXIS }}
           />
           <YAxis
             yAxisId="upb"
             tick={tick}
             tickFormatter={tipFmt}
             width={48}
-            axisLine={{ stroke: "#8A9BB0" }}
-            tickLine={{ stroke: "#8A9BB0" }}
+            axisLine={{ stroke: CHART_AXIS }}
+            tickLine={{ stroke: CHART_AXIS }}
           />
           <YAxis
             yAxisId="wac"
@@ -180,8 +185,8 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
             tick={tick}
             tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
             width={40}
-            axisLine={{ stroke: "#8A9BB0" }}
-            tickLine={{ stroke: "#8A9BB0" }}
+            axisLine={{ stroke: CHART_AXIS }}
+            tickLine={{ stroke: CHART_AXIS }}
           />
           <Tooltip
             formatter={(v, name) => {
@@ -192,7 +197,7 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
             contentStyle={{
               fontSize: 11,
               fontFamily: FONT,
-              border: "1px solid #D0D7E2",
+              border: "1px solid #323232",
             }}
           />
           <Legend
@@ -202,7 +207,7 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
           <Bar
             yAxisId="upb"
             dataKey={valueKey}
-            fill="#8A9BB0"
+            fill={CHART_AXIS}
             name={metricLabel}
             radius={[1, 1, 0, 0]}
             cursor="pointer"
@@ -264,7 +269,7 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
             contentStyle={{
               fontSize: 11,
               fontFamily: FONT,
-              border: "1px solid #D0D7E2",
+              border: "1px solid #323232",
             }}
           />
           <Legend
@@ -286,7 +291,7 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
           margin={{ top: 4, right: 12, left: 4, bottom: 4 }}
         >
           <CartesianGrid
-            stroke="#D0D7E2"
+            stroke={CHART_GRID}
             strokeDasharray="2 4"
             horizontal={false}
           />
@@ -294,15 +299,15 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
             type="number"
             tick={tick}
             tickFormatter={tipFmt}
-            axisLine={{ stroke: "#8A9BB0" }}
-            tickLine={{ stroke: "#8A9BB0" }}
+            axisLine={{ stroke: CHART_AXIS }}
+            tickLine={{ stroke: CHART_AXIS }}
           />
           <YAxis
             type="category"
             dataKey="bucket"
             width={92}
             tick={tick}
-            axisLine={{ stroke: "#8A9BB0" }}
+            axisLine={{ stroke: CHART_AXIS }}
             tickLine={false}
           />
           <Tooltip
@@ -311,7 +316,7 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
             contentStyle={{
               fontSize: 11,
               fontFamily: FONT,
-              border: "1px solid #D0D7E2",
+              border: "1px solid #323232",
             }}
           />
           <Bar
@@ -344,7 +349,7 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
         margin={{ top: 8, right: 8, left: 0, bottom: 28 }}
         barCategoryGap={isHistogram ? "8%" : "20%"}
       >
-        <CartesianGrid stroke="#D0D7E2" strokeDasharray="2 4" vertical={false} />
+        <CartesianGrid stroke={CHART_GRID} strokeDasharray="2 4" vertical={false} />
         <XAxis
           dataKey="bucket"
           tick={tick}
@@ -352,15 +357,15 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
           angle={data.length > 6 ? -30 : 0}
           textAnchor={data.length > 6 ? "end" : "middle"}
           height={data.length > 6 ? 48 : 28}
-          axisLine={{ stroke: "#8A9BB0" }}
-          tickLine={{ stroke: "#8A9BB0" }}
+          axisLine={{ stroke: CHART_AXIS }}
+          tickLine={{ stroke: CHART_AXIS }}
         />
         <YAxis
           tick={tick}
           tickFormatter={tipFmt}
           width={48}
-          axisLine={{ stroke: "#8A9BB0" }}
-          tickLine={{ stroke: "#8A9BB0" }}
+          axisLine={{ stroke: CHART_AXIS }}
+          tickLine={{ stroke: CHART_AXIS }}
         />
         <Tooltip
           formatter={(v) => tipFmt(v)}
@@ -368,12 +373,12 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
           contentStyle={{
             fontSize: 11,
             fontFamily: FONT,
-            border: "1px solid #D0D7E2",
+            border: "1px solid #323232",
           }}
         />
         <Bar
           dataKey={valueKey}
-          fill={isHistogram ? "#0B4F9C" : STRAT_BAR_COLOR}
+          fill={isHistogram ? CHART_HIST : STRAT_BAR_COLOR}
           name={metricLabel}
           radius={isHistogram ? [0, 0, 0, 0] : [1, 1, 0, 0]}
           cursor="pointer"
@@ -386,7 +391,7 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
                 selectedBucket === row.bucket
                   ? "#FD9D24"
                   : isHistogram
-                    ? "#0B4F9C"
+                    ? CHART_HIST
                     : STRAT_BAR_COLOR
               }
             />
@@ -465,16 +470,87 @@ const LS_GRID_KEY = "cashflow.agGridState";
 const LS_NAV_KEY = "cashflow.navPane";
 const LS_NAV_COLLAPSE_KEY = "cashflow.navCollapsed";
 
-const NAV_SHORT = {
-  asf: "Tape",
-  qc: "QC",
-  strat: "Strat",
-  collateral: "Collat",
-  cohort: "Cohort",
-  scenarios: "Scen",
-  cashflow: "CF",
-  assumptions: "Asm",
-};
+/** Compact stroke icons for sidenav (collapsed = icon only). */
+function NavIcon({ id }) {
+  const common = {
+    width: 16,
+    height: 16,
+    viewBox: "0 0 16 16",
+    fill: "none",
+    "aria-hidden": "true",
+    focusable: "false",
+  };
+  const stroke = {
+    stroke: "currentColor",
+    strokeWidth: 1.5,
+    strokeLinecap: "square",
+    strokeLinejoin: "miter",
+  };
+  switch (id) {
+    case "asf":
+      return (
+        <svg {...common}>
+          <path d="M2.5 3.5h11v9h-11z" {...stroke} />
+          <path d="M2.5 6.5h11M5.5 3.5v9M8.5 6.5v6" {...stroke} />
+        </svg>
+      );
+    case "qc":
+      return (
+        <svg {...common}>
+          <path d="M3 8.2 6.2 11.5 13 4.5" {...stroke} />
+        </svg>
+      );
+    case "strat":
+      return (
+        <svg {...common}>
+          <path d="M3 12.5V7.5M7 12.5V3.5M11 12.5V5.5" {...stroke} />
+          <path d="M2 12.5h12" {...stroke} />
+        </svg>
+      );
+    case "collateral":
+      return (
+        <svg {...common}>
+          <path d="M2.5 11.5 8 3.5l5.5 8H2.5z" {...stroke} />
+          <path d="M5 11.5h6" {...stroke} />
+        </svg>
+      );
+    case "cohort":
+      return (
+        <svg {...common}>
+          <circle cx="5" cy="6" r="1.4" stroke="currentColor" strokeWidth="1.4" />
+          <circle cx="11" cy="5" r="1.4" stroke="currentColor" strokeWidth="1.4" />
+          <circle cx="8" cy="11" r="1.4" stroke="currentColor" strokeWidth="1.4" />
+          <path d="M6.2 6.8 7.2 9.6M9.8 6.2 8.8 9.5" {...stroke} />
+        </svg>
+      );
+    case "scenarios":
+      return (
+        <svg {...common}>
+          <path d="M3 3.5h3.5V7H3zM9.5 3.5H13V7H9.5zM3 9h3.5v3.5H3zM9.5 9H13v3.5H9.5z" {...stroke} />
+        </svg>
+      );
+    case "cashflow":
+      return (
+        <svg {...common}>
+          <path d="M2.5 11.5 6 6.5l2.5 3 4.5-6" {...stroke} />
+          <path d="M11 3.5h2.5V6" {...stroke} />
+        </svg>
+      );
+    case "assumptions":
+      return (
+        <svg {...common}>
+          <path d="M3.5 2.5h9v11h-9z" {...stroke} />
+          <path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" {...stroke} />
+        </svg>
+      );
+    default:
+      return (
+        <svg {...common}>
+          <path d="M3 8h10" {...stroke} />
+        </svg>
+      );
+  }
+}
 
 function readClusterFilter() {
   try {
@@ -1165,7 +1241,7 @@ export default function App() {
 
   const qcChartData = useMemo(
     () => [
-      { name: "Pass", value: qcSummary.pass, fill: "#1F8A44" },
+      { name: "Pass", value: qcSummary.pass, fill: "#43BC67" },
       { name: "Fail", value: qcSummary.fail, fill: "#C62828" },
     ],
     [qcSummary.pass, qcSummary.fail]
@@ -1330,7 +1406,7 @@ export default function App() {
               href={url}
               target="_blank"
               rel="noreferrer"
-              style={{ color: "#0B4F9C" }}
+              style={{ color: "var(--cf-accent)" }}
             >
               {url}
             </a>
@@ -2405,7 +2481,7 @@ export default function App() {
   }
 
   const axisTick = {
-    fill: "#4A5F7A",
+    fill: CHART_AXIS,
     fontSize: 10,
     fontFamily: FONT,
   };
@@ -2549,10 +2625,10 @@ export default function App() {
               title={item.label}
               aria-label={item.label}
             >
-              <span className="sidenav-label-full">{item.label}</span>
-              <span className="sidenav-label-short" aria-hidden="true">
-                {NAV_SHORT[item.id] || item.label.slice(0, 3)}
+              <span className="sidenav-icon">
+                <NavIcon id={item.id} />
               </span>
+              <span className="sidenav-label-full">{item.label}</span>
             </button>
           ))}
         </nav>
@@ -2943,7 +3019,7 @@ export default function App() {
                           margin={{ top: 12, right: 16, left: 8, bottom: 28 }}
                         >
                           <CartesianGrid
-                            stroke="#D0D7E2"
+                            stroke={CHART_GRID}
                             strokeDasharray="2 4"
                             strokeOpacity={0.9}
                           />
@@ -2953,8 +3029,8 @@ export default function App() {
                             name="Original CLTV"
                             tick={axisTick}
                             ticks={X_TICKS}
-                            axisLine={{ stroke: "#8A9BB0" }}
-                            tickLine={{ stroke: "#8A9BB0" }}
+                            axisLine={{ stroke: CHART_AXIS }}
+                            tickLine={{ stroke: CHART_AXIS }}
                             tickFormatter={(v) => Number(v).toFixed(1)}
                             domain={X_DOMAIN}
                             allowDataOverflow
@@ -2962,7 +3038,7 @@ export default function App() {
                               value: "Original CLTV",
                               position: "insideBottom",
                               offset: -14,
-                              fill: "#001A41",
+                              fill: CHART_LABEL,
                               fontSize: 11,
                               fontFamily: FONT,
                               fontWeight: 600,
@@ -2974,8 +3050,8 @@ export default function App() {
                             name="Refinance Incentive"
                             tick={axisTick}
                             ticks={Y_TICKS}
-                            axisLine={{ stroke: "#8A9BB0" }}
-                            tickLine={{ stroke: "#8A9BB0" }}
+                            axisLine={{ stroke: CHART_AXIS }}
+                            tickLine={{ stroke: CHART_AXIS }}
                             domain={Y_DOMAIN}
                             allowDataOverflow
                             width={44}
@@ -2984,7 +3060,7 @@ export default function App() {
                               angle: -90,
                               position: "insideLeft",
                               offset: 8,
-                              fill: "#001A41",
+                              fill: CHART_LABEL,
                               fontSize: 11,
                               fontFamily: FONT,
                               fontWeight: 600,
@@ -2994,17 +3070,17 @@ export default function App() {
                           <Tooltip
                             cursor={{
                               strokeDasharray: "3 3",
-                              stroke: "#8A9BB0",
+                              stroke: CHART_AXIS,
                             }}
                             contentStyle={{
-                              background: "#FFFFFF",
-                              border: "1px solid #D0D7E2",
+                              background: CHART_TIP_BG,
+                              border: "1px solid #323232",
                               borderRadius: 0,
                               fontSize: 11,
-                              color: "#001A41",
+                              color: CHART_LABEL,
                               fontFamily: FONT,
                             }}
-                            labelStyle={{ color: "#4A5F7A" }}
+                            labelStyle={{ color: CHART_AXIS }}
                           />
                           <Legend
                             verticalAlign="top"
