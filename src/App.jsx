@@ -35,6 +35,7 @@ import {
 } from "./cashflowGrid";
 import { apiUrl } from "./apiBase";
 import { StateChoropleth, Zip3Choropleth } from "./UsChoropleth";
+import LoanLevelCollateral from "./LoanLevelCollateral";
 import "./App.css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -43,6 +44,7 @@ const NAV = [
   { id: "asf", label: "Investor Tape" },
   { id: "qc", label: "Loan QC" },
   { id: "strat", label: "Stratification" },
+  { id: "collateral", label: "Collateral" },
   { id: "cohort", label: "Cohort" },
   { id: "scenarios", label: "Scenarios" },
   { id: "cashflow", label: "Cash Flow" },
@@ -475,6 +477,7 @@ const NAV_SHORT = {
   asf: "Tape",
   qc: "QC",
   strat: "Strat",
+  collateral: "Collat",
   cohort: "Cohort",
   scenarios: "Scen",
   cashflow: "CF",
@@ -2597,6 +2600,8 @@ export default function App() {
               )}
             </section>
           )}
+
+          {pane === "collateral" && <LoanLevelCollateral />}
 
           {pane === "strat" && (
             <section className="section section-fill section-strat">
