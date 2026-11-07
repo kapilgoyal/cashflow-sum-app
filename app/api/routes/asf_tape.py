@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query
 
 from app.repositories.asf_tape_repository import AsfTapeRepository
+from app.repositories.connect import source_label
 from app.repositories.env_load import load_dotenv
 
 router = APIRouter(prefix="/api/asf", tags=["asf-tape"])
@@ -29,7 +30,7 @@ def asf_tape(
             except Exception:  # noqa: BLE001
                 pass
             rows, total = repo.list_loans(limit=limit, offset=offset)
-            source = "neon.asf_tape"
+            source = source_label("asf_tape", repo.url)
         else:
             rows, total = repo.list_loans_from_excel(limit=limit)
             source = "excel.Minimum_Case"
@@ -63,7 +64,7 @@ def asf_stratification(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    payload["source"] = "neon.asf_tape"
+    payload["source"] = source_label("asf_tape", repo.url)
     return payload
 
 
@@ -93,7 +94,7 @@ def asf_stratification_loans(
         "ok": True,
         "n": len(loans),
         "total": total,
-        "source": "neon.asf_tape",
+        "source": source_label("asf_tape", repo.url),
         "loans": loans,
         **meta,
     }
@@ -110,6 +111,6 @@ def asf_cohort_stats() -> dict:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {
         "n": len(rows),
-        "source": "neon.asf_tape",
+        "source": source_label("asf_tape", repo.url),
         "rows": rows,
     }

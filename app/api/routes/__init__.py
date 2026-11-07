@@ -1,4 +1,4 @@
-"""Route modules: health, run-loan stub, scenario-grid, month-1 CF, Neon, ASF, QC, assumptions."""
+"""Route modules: health, run-loan, scenario-grid, month-1 CF, Neon, ASF, QC, assumptions."""
 
 from fastapi import APIRouter
 
@@ -6,6 +6,7 @@ from app.api.routes import (
     asf_tape,
     assumptions,
     cashflows,
+    collateral,
     health,
     neon_data,
     qc,
@@ -20,6 +21,7 @@ api_router.include_router(scenarios.router)
 api_router.include_router(cashflows.router)
 api_router.include_router(neon_data.router)
 api_router.include_router(asf_tape.router)
+api_router.include_router(collateral.router)
 api_router.include_router(qc.router)
 api_router.include_router(assumptions.router)
 

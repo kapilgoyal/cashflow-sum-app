@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, Query
 from app.repositories.cashflow_repository import CashflowRepository
 from app.repositories.env_load import load_dotenv, resolve_pg_url
 from app.repositories.scenario_repository import ScenarioRepository
-from app.repositories.tape_repository import TapeRepository
+from app.repositories.tape_repository import TapeRepository, resolve_default_tape_path
 from app.services.cohort_labels import relabel_payload
 from app.services.month1_parallel import run_month1_parallel
 from app.services.scenario_grid import build_scenario_grid
@@ -19,21 +19,12 @@ from app.services.scenario_grid import build_scenario_grid
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DATA = REPO_ROOT / "data"
 PUBLIC = REPO_ROOT / "public"
-STORE_TAPE = Path(
-    r"C:\Users\kgoya\AppData\Local\Cursor\AgentStores\cursor_agent_stores"
-    r"\bc-b8a045d3-83c0-4a57-9767-2701e9c67b11\files\docs\data\Minimum_Case.xlsx"
-)
 
 router = APIRouter(prefix="/api", tags=["cashflows-month1"])
 
 
 def _tape_path() -> Path:
-    local = DATA / "Minimum_Case.xlsx"
-    docs = REPO_ROOT / "docs" / "data" / "Minimum_Case.xlsx"
-    for p in (docs, local, STORE_TAPE):
-        if p.exists():
-            return p
-    return docs if docs.exists() else STORE_TAPE
+    return resolve_default_tape_path()
 
 
 def _load_cached_aggregates() -> dict | None:
@@ -54,9 +45,9 @@ def _neon_month1_summary() -> dict | None:
     if not url:
         return None
     try:
-        import psycopg
+        from app.repositories.connect import connect, source_label
 
-        with psycopg.connect(url, connect_timeout=30) as conn:
+        with connect(url, connect_timeout=30) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
@@ -85,7 +76,7 @@ def _neon_month1_summary() -> dict | None:
         return {
             "aggregates": rows,
             "ran_scenario_ids": ids,
-            "source": "neon.loan_cashflows_month1_enriched",
+            "source": source_label("loan_cashflows_month1_enriched", url),
         }
     except Exception:  # noqa: BLE001
         return None

@@ -93,7 +93,7 @@ class RunLoanRequest(BaseModel):
     loan_id: str
     scenario_id: str | None = Field(
         default=None,
-        description="Grid cell id (e.g. S05); optional if scenario payload supplied",
+        description="Grid cell id (e.g. S05); omit to use loan cohort × PSA/SDA",
     )
     psa_multiple: int | None = Field(default=None, description="Override PSA multiple")
     sda_multiple: int | None = Field(default=None, description="Override SDA multiple")
@@ -101,14 +101,14 @@ class RunLoanRequest(BaseModel):
 
 
 class RunLoanResponse(BaseModel):
-    """Documented CF response. Scaffold returns empty cash_flows."""
+    """Loan × scenario projection. ``cash_flows`` are engine ``CashFlowRow``s."""
 
     loan_id: str
     scenario_id: str | None = None
     months: int = 360
-    status: str = Field(default="stub", description="'stub' until engine is wired")
-    message: str = "placeholder — cash-flow engine not invoked"
+    status: str = Field(default="ok", description="'ok' when the engine projected rows")
+    message: str = ""
     cash_flows: list[CashFlowRow] = Field(
         default_factory=list,
-        description="Empty in scaffold; length==months when engine runs",
+        description="One CashFlowRow per projected month (existing engine fields only)",
     )

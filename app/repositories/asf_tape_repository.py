@@ -10,8 +10,6 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-import psycopg
-
 from app.repositories.asf_qc_checks import (
     ALL_CHECKS,
     CHECKS_BY_ID,
@@ -28,6 +26,9 @@ from app.repositories.asf_tape_schema import (
     QC_RESULTS_TABLE_SQL,
 )
 from app.services.assumptions import default_has_mi
+from app.repositories.connect import connect
+from app.repositories.env_load import load_dotenv, resolve_pg_url
+from app.repositories.tape_repository import DEFAULT_TAPE
 from app.services.cohort_labels import (
     canonical_cohort_label,
     cohort_match_values,
@@ -36,8 +37,7 @@ from app.services.cohort_labels import (
 from app.services.recovery import recovery_lag_months_for_state
 from app.services.scenario_grid import recovery_for_cohort
 from app.services.severity import resolve_loan_recovery_rate
-from app.repositories.env_load import load_dotenv, resolve_pg_url
-from app.repositories.tape_repository import DEFAULT_TAPE
+
 
 INSERT_COLS = ", ".join(ASF_TAPE_COLUMNS)
 INSERT_PLACEHOLDERS = ", ".join(f"%s" for _ in ASF_TAPE_COLUMNS)
@@ -79,7 +79,7 @@ class AsfTapeRepository:
         return self.url
 
     def ensure_schema(self) -> None:
-        with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
+        with connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
                 cur.execute(ASF_TAPE_TABLE_SQL)
                 cur.execute(ASF_TAPE_HAS_MI_ALTER_SQL)
@@ -98,7 +98,7 @@ class AsfTapeRepository:
 
     def ensure_has_mi_column(self) -> bool:
         """Add + backfill has_mi DEFAULT true NOT NULL. Returns True if present."""
-        with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
+        with connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
                 cur.execute(ASF_TAPE_HAS_MI_ALTER_SQL)
                 cur.execute(ASF_TAPE_HAS_MI_BACKFILL_SQL)
@@ -116,10 +116,14 @@ class AsfTapeRepository:
         pd = _pd()
         tape_path = Path(path) if path else DEFAULT_TAPE
         if not tape_path.exists():
-            # Repo-bundled copy used when Agent Store path is unavailable.
-            alt = Path(__file__).resolve().parents[2] / "docs" / "data" / "Minimum_Case.xlsx"
-            if alt.exists():
-                tape_path = alt
+            repo = Path(__file__).resolve().parents[2]
+            for alt in (
+                repo / "data" / "Minimum_Case.xlsx",
+                repo / "docs" / "data" / "Minimum_Case.xlsx",
+            ):
+                if alt.exists():
+                    tape_path = alt
+                    break
             else:
                 raise FileNotFoundError(f"Loan tape not found: {tape_path}")
         df = pd.read_excel(tape_path, sheet_name="Loan Tape")
@@ -148,7 +152,7 @@ class AsfTapeRepository:
         rows: list[tuple[Any, ...]] = []
         for _, r in df.iterrows():
             rows.append(tuple(_to_py(r.get(c)) for c in ASF_TAPE_COLUMNS))
-        with psycopg.connect(self.require_url(), connect_timeout=120) as conn:
+        with connect(self.require_url(), connect_timeout=120) as conn:
             with conn.cursor() as cur:
                 cur.execute(ASF_TAPE_TABLE_SQL)
                 cur.execute(ASF_TAPE_HAS_MI_ALTER_SQL)
@@ -167,13 +171,13 @@ class AsfTapeRepository:
         return len(rows)
 
     def count_tape(self) -> int:
-        with psycopg.connect(self.require_url(), connect_timeout=30) as conn:
+        with connect(self.require_url(), connect_timeout=30) as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT COUNT(*) FROM public.asf_tape")
                 return int(cur.fetchone()[0])
 
     def tape_columns(self) -> set[str]:
-        with psycopg.connect(self.require_url(), connect_timeout=30) as conn:
+        with connect(self.require_url(), connect_timeout=30) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
@@ -206,7 +210,7 @@ class AsfTapeRepository:
                 skip_reason = EXCLUDED.skip_reason,
                 updated_at = now()
         """
-        with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
+        with connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
                 cur.execute(QC_CHECKS_TABLE_SQL)
                 for row in rows:
@@ -232,7 +236,7 @@ class AsfTapeRepository:
         tape_n = self.count_tape()
         results: list[dict[str, Any]] = []
 
-        with psycopg.connect(self.require_url(), connect_timeout=120) as conn:
+        with connect(self.require_url(), connect_timeout=120) as conn:
             with conn.cursor() as cur:
                 cur.execute(QC_RESULTS_TABLE_SQL)
                 for check in ALL_CHECKS:
@@ -334,7 +338,7 @@ class AsfTapeRepository:
                 c.edit_number NULLS FIRST,
                 c.check_id
         """
-        with psycopg.connect(self.require_url(), connect_timeout=30) as conn:
+        with connect(self.require_url(), connect_timeout=30) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql)
                 cols = [d.name for d in cur.description]
@@ -409,7 +413,7 @@ class AsfTapeRepository:
             f"SELECT {col_sql} FROM public.asf_tape "
             f"WHERE {where} ORDER BY loan_id LIMIT %s"
         )
-        with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
+        with connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
                 cur.execute(count_sql)
                 total = int(cur.fetchone()[0])
@@ -452,7 +456,7 @@ class AsfTapeRepository:
         select_cols = cols if has_mi_col else tuple(c for c in cols if c != "has_mi")
         col_sql = ", ".join(select_cols)
         default_mi = bool(default_has_mi())
-        with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
+        with connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT COUNT(*) FROM public.asf_tape")
                 total = int(cur.fetchone()[0])
@@ -787,7 +791,7 @@ class AsfTapeRepository:
             FROM public.asf_tape
             {where_sql}
         """
-        with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
+        with connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, where_params)
                 cols = [d.name for d in cur.description]
@@ -867,7 +871,7 @@ class AsfTapeRepository:
             "bucket": bucket_value,
             "cohort": cohort_filter or "all",
         }
-        with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
+        with connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
                 cur.execute(count_sql, params)
                 total = int(cur.fetchone()[0])
@@ -902,7 +906,7 @@ class AsfTapeRepository:
             GROUP BY 1
             ORDER BY upb DESC
         """
-        with psycopg.connect(self.require_url(), connect_timeout=60) as conn:
+        with connect(self.require_url(), connect_timeout=60) as conn:
             with conn.cursor() as cur:
                 cur.execute(sql)
                 cols = [d.name for d in cur.description]

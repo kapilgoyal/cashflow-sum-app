@@ -1,0 +1,137 @@
+# Build the combined Vite + FastAPI image and deploy to Azure Container Apps.
+# Does not remove Railway or Vercel; this is the cutover path.
+#
+# Required GitHub Actions secrets (OIDC — no Azure password in GitHub):
+#   AZURE_CLIENT_ID          Entra app registration Application (client) ID
+#   AZURE_TENANT_ID          Entra Directory (tenant) ID
+#   AZURE_SUBSCRIPTION_ID    Azure subscription ID
+#   AZURE_ACR_NAME           Container registry name (short name, not *.azurecr.io)
+#   AZURE_RESOURCE_GROUP     Resource group that holds the Container App + ACR
+#   AZURE_CONTAINER_APP_NAME Container App name
+#
+# Set DATABASE_URL on the Container App in Azure Portal (not in this workflow).
+# Portal steps: deploy/azure.md
+name: Azure Container App
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: azure-container-app
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: build-push-deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Push to master is a no-op until OIDC secrets exist (keeps Railway/Vercel green).
+    # workflow_dispatch always runs so a missing secret fails with a clear error.
+    if: ${{ github.event_name == 'workflow_dispatch' || secrets.AZURE_CLIENT_ID != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require Azure secrets
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_ACR_NAME: ${{ secrets.AZURE_ACR_NAME }}
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          AZURE_CONTAINER_APP_NAME: ${{ secrets.AZURE_CONTAINER_APP_NAME }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID AZURE_ACR_NAME AZURE_RESOURCE_GROUP AZURE_CONTAINER_APP_NAME; do
+            eval "val=\${$name}"
+            if [ -z "${val}" ]; then
+              echo "::error::Missing GitHub Actions secret ${name}. See deploy/azure.md — do not invent Azure credentials."
+              missing=1
+            fi
+          done
+          if [ "${missing}" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Log in to Azure Container Registry
+        env:
+          AZURE_ACR_NAME: ${{ secrets.AZURE_ACR_NAME }}
+        run: az acr login --name "${AZURE_ACR_NAME}"
+
+      - name: Build and push image
+        env:
+          AZURE_ACR_NAME: ${{ secrets.AZURE_ACR_NAME }}
+        run: |
+          set -euo pipefail
+          IMAGE="${AZURE_ACR_NAME}.azurecr.io/cashflow-sum-app:${GITHUB_SHA}"
+          docker build -t "${IMAGE}" -t "${AZURE_ACR_NAME}.azurecr.io/cashflow-sum-app:latest" .
+          docker push "${IMAGE}"
+          docker push "${AZURE_ACR_NAME}.azurecr.io/cashflow-sum-app:latest"
+          echo "IMAGE=${IMAGE}" >> "${GITHUB_ENV}"
+
+      - name: Deploy to Azure Container Apps
+        env:
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          AZURE_CONTAINER_APP_NAME: ${{ secrets.AZURE_CONTAINER_APP_NAME }}
+          AZURE_ACR_NAME: ${{ secrets.AZURE_ACR_NAME }}
+        run: |
+          set -euo pipefail
+          APP="${AZURE_CONTAINER_APP_NAME}"
+          RG="${AZURE_RESOURCE_GROUP}"
+          ACR="${AZURE_ACR_NAME}"
+          SERVER="${ACR}.azurecr.io"
+
+          az containerapp identity assign --name "${APP}" --resource-group "${RG}" --system-assigned
+
+          # Prefer system identity (portal: grant the app AcrPull). Else ACR admin user.
+          if ! az containerapp registry set --name "${APP}" --resource-group "${RG}" --server "${SERVER}" --identity system; then
+            echo "System identity pull not ready; using ACR admin user (portal: Access Keys → Admin User)."
+            ACR_USER="$(az acr credential show --name "${ACR}" --query username -o tsv)"
+            ACR_PASS="$(az acr credential show --name "${ACR}" --query "passwords[0].value" -o tsv)"
+            az containerapp registry set \
+              --name "${APP}" \
+              --resource-group "${RG}" \
+              --server "${SERVER}" \
+              --username "${ACR_USER}" \
+              --password "${ACR_PASS}"
+          fi
+
+          az containerapp update \
+            --name "${APP}" \
+            --resource-group "${RG}" \
+            --image "${IMAGE}" \
+            --cpu 0.5 \
+            --memory 1.0Gi \
+            --min-replicas 1 \
+            --max-replicas 2 \
+            --set-env-vars "PORT=8000"
+
+          if ! az containerapp ingress update --name "${APP}" --resource-group "${RG}" --target-port 8000; then
+            az containerapp ingress enable \
+              --name "${APP}" \
+              --resource-group "${RG}" \
+              --type external \
+              --target-port 8000 \
+              --transport auto
+          fi
+
+          FQDN="$(az containerapp show --name "${APP}" --resource-group "${RG}" --query properties.configuration.ingress.fqdn -o tsv)"
+          echo "Deployed https://${FQDN}"
+          echo "### Azure Container App" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- Image: \`${IMAGE}\`" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- URL: https://${FQDN}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- Health: https://${FQDN}/health" >> "${GITHUB_STEP_SUMMARY}"

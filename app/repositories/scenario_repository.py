@@ -49,12 +49,12 @@ class ScenarioRepository:
 
         scenarios = scenarios or build_scenario_grid()
         try:
-            import psycopg
-        except ImportError:
-            return "skipped: psycopg not installed"
+            from app.repositories.connect import connect
+        except Exception as exc:  # noqa: BLE001
+            return f"skipped: connect helper ({type(exc).__name__}: {exc})"
 
         try:
-            with psycopg.connect(url, connect_timeout=5) as conn:
+            with connect(url, connect_timeout=5) as conn:
                 with conn.cursor() as cur:
                     cur.execute(CREATE_SQL)
                     cur.execute("DELETE FROM securitization_scenarios")
