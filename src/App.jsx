@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
   Cell,
   ComposedChart,
   Legend,
-  Line,
   Pie,
   PieChart,
   Polygon,
@@ -25,8 +22,11 @@ import {
   DrillTrail,
   FONT,
   StatusBanner,
+  fmtInt,
   fmtNum,
   fmtPct,
+  fmtUpbShort,
+  fmtWac,
   intCol,
   moneyCol,
   pcaLabel,
@@ -34,7 +34,6 @@ import {
   withScenarioRowSpans,
 } from "./cashflowGrid";
 import { apiUrl } from "./apiBase";
-import { StateChoropleth, Zip3Choropleth } from "./UsChoropleth";
 import {
   CLUSTER_COLORS,
   CLUSTER_FALLBACK_COUNTS,
@@ -52,7 +51,6 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 const NAV = [
   { id: "asf", label: "Investor Tape" },
   { id: "qc", label: "Loan QC" },
-  { id: "strat", label: "Stratification" },
   { id: "collateral", label: "Collateral" },
   { id: "cohort", label: "Cohort" },
   { id: "scenarios", label: "Scenarios" },
@@ -60,406 +58,11 @@ const NAV = [
   { id: "assumptions", label: "Assumptions" },
 ];
 
-/** Standard mortgage strat cuts. chart: bar | hbar | pie | histogram | line | map | zip */
-const STRAT_DIMS_BASE = [
-  { id: "ltv_bucket", label: "LTV", chart: "histogram" },
-  { id: "cltv_bucket", label: "CLTV", chart: "histogram" },
-  { id: "fico_band", label: "FICO", chart: "histogram" },
-  { id: "balance_band", label: "Balance", chart: "histogram" },
-  { id: "orig_year", label: "Origination Year", chart: "line" },
-  { id: "state", label: "State", chart: "map" },
-  { id: "zip3", label: "ZIP3", chart: "zip" },
-  { id: "documentation_type", label: "Documentation Type", chart: "hbar" },
-  { id: "occupancy", label: "Occupancy", chart: "pie" },
-  { id: "loan_purpose", label: "Loan Purpose", chart: "pie" },
-  { id: "property_type", label: "Property Type", chart: "hbar" },
-];
-
-const STRAT_BAR_COLOR = "#001A41";
-const STRAT_PIE_COLORS = [
-  "#001A41",
-  "#FD9D24",
-  "#4A5F7A",
-  "#1F8A44",
-  "#8A9BB0",
-  "#C51D46",
-  "#0B4F9C",
-  "#6B7C93",
-];
-
-function fmtUpbShort(v) {
-  if (v == null || Number.isNaN(Number(v))) return "";
-  const n = Number(v);
-  if (Math.abs(n) >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
-  if (Math.abs(n) >= 1e3) return `$${(n / 1e3).toFixed(0)}k`;
-  return `$${n.toFixed(0)}`;
-}
-
-function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
-  const data = rows || [];
-  const valueKey = metric === "loans" ? "loan_count" : "upb";
-  const tick = {
-    fill: "#4A5F7A",
-    fontSize: 10,
-    fontFamily: FONT,
-  };
-  const tipFmt = (v) =>
-    metric === "loans" ? Number(v).toLocaleString() : fmtUpbShort(v);
-  const metricLabel = metric === "loans" ? "Loans" : "UPB";
-  const fireClick = (bucket) => {
-    if (bucket == null || !onBucketClick) return;
-    onBucketClick(String(bucket));
-  };
-
-  if (!data.length) {
-    return <p className="muted strat-chart-empty">No Buckets</p>;
-  }
-
-  if (dim.chart === "map") {
-    return (
-      <StateChoropleth
-        rows={data}
-        metric={metric}
-        selected={selectedBucket}
-        onSelect={(abbr) => fireClick(abbr)}
-        fmtTip={tipFmt}
-      />
-    );
-  }
-
-  if (dim.chart === "zip") {
-    return (
-      <Zip3Choropleth
-        rows={data}
-        metric={metric}
-        selected={selectedBucket}
-        onSelect={(z) => fireClick(z)}
-        fmtTip={tipFmt}
-      />
-    );
-  }
-
-  if (dim.chart === "line") {
-    const lineData = data.map((row) => ({
-      ...row,
-      wac_pct:
-        row.wac != null && !Number.isNaN(Number(row.wac))
-          ? Number(row.wac) * 100
-          : row.avg_rate != null && !Number.isNaN(Number(row.avg_rate))
-            ? Number(row.avg_rate) * 100
-            : null,
-    }));
-    return (
-      <ResponsiveContainer width="100%" height={220}>
-        <ComposedChart
-          data={lineData}
-          margin={{ top: 8, right: 12, left: 0, bottom: 28 }}
-        >
-          <CartesianGrid stroke="#D0D7E2" strokeDasharray="2 4" vertical={false} />
-          <XAxis
-            dataKey="bucket"
-            tick={tick}
-            interval={0}
-            angle={lineData.length > 6 ? -30 : 0}
-            textAnchor={lineData.length > 6 ? "end" : "middle"}
-            height={lineData.length > 6 ? 48 : 28}
-            axisLine={{ stroke: "#8A9BB0" }}
-            tickLine={{ stroke: "#8A9BB0" }}
-          />
-          <YAxis
-            yAxisId="upb"
-            tick={tick}
-            tickFormatter={tipFmt}
-            width={48}
-            axisLine={{ stroke: "#8A9BB0" }}
-            tickLine={{ stroke: "#8A9BB0" }}
-          />
-          <YAxis
-            yAxisId="wac"
-            orientation="right"
-            tick={tick}
-            tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
-            width={40}
-            axisLine={{ stroke: "#8A9BB0" }}
-            tickLine={{ stroke: "#8A9BB0" }}
-          />
-          <Tooltip
-            formatter={(v, name) => {
-              if (name === "WAC") return [`${Number(v).toFixed(2)}%`, "WAC"];
-              return [tipFmt(v), metricLabel];
-            }}
-            labelFormatter={(l) => String(l)}
-            contentStyle={{
-              fontSize: 11,
-              fontFamily: FONT,
-              border: "1px solid #D0D7E2",
-            }}
-          />
-          <Legend
-            wrapperStyle={{ fontSize: 10, fontFamily: FONT }}
-            iconSize={8}
-          />
-          <Bar
-            yAxisId="upb"
-            dataKey={valueKey}
-            fill="#8A9BB0"
-            name={metricLabel}
-            radius={[1, 1, 0, 0]}
-            cursor="pointer"
-            onClick={(pt) => fireClick(pt?.bucket)}
-          />
-          <Line
-            yAxisId="wac"
-            type="monotone"
-            dataKey="wac_pct"
-            name="WAC"
-            stroke="#FD9D24"
-            strokeWidth={2}
-            dot={{
-              r: 3,
-              fill: "#FD9D24",
-              cursor: "pointer",
-              onClick: (_e, payload) =>
-                fireClick(payload?.payload?.bucket ?? payload?.bucket),
-            }}
-            activeDot={{
-              r: 5,
-              cursor: "pointer",
-              onClick: (_e, payload) =>
-                fireClick(payload?.payload?.bucket ?? payload?.bucket),
-            }}
-          />
-        </ComposedChart>
-      </ResponsiveContainer>
-    );
-  }
-
-  if (dim.chart === "pie") {
-    return (
-      <ResponsiveContainer width="100%" height={200}>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey={valueKey}
-            nameKey="bucket"
-            cx="50%"
-            cy="50%"
-            innerRadius={42}
-            outerRadius={72}
-            paddingAngle={1}
-            cursor="pointer"
-            onClick={(_, idx) => fireClick(data[idx]?.bucket)}
-          >
-            {data.map((row, i) => (
-              <Cell
-                key={row.bucket}
-                fill={STRAT_PIE_COLORS[i % STRAT_PIE_COLORS.length]}
-                stroke={selectedBucket === row.bucket ? "#FD9D24" : undefined}
-                strokeWidth={selectedBucket === row.bucket ? 2 : 0}
-              />
-            ))}
-          </Pie>
-          <Tooltip
-            formatter={(v) => tipFmt(v)}
-            contentStyle={{
-              fontSize: 11,
-              fontFamily: FONT,
-              border: "1px solid #D0D7E2",
-            }}
-          />
-          <Legend
-            wrapperStyle={{ fontSize: 10, fontFamily: FONT }}
-            iconSize={8}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-    );
-  }
-
-  if (dim.chart === "hbar") {
-    const h = Math.min(280, Math.max(140, data.length * 22 + 28));
-    return (
-      <ResponsiveContainer width="100%" height={h}>
-        <BarChart
-          layout="vertical"
-          data={data}
-          margin={{ top: 4, right: 12, left: 4, bottom: 4 }}
-        >
-          <CartesianGrid
-            stroke="#D0D7E2"
-            strokeDasharray="2 4"
-            horizontal={false}
-          />
-          <XAxis
-            type="number"
-            tick={tick}
-            tickFormatter={tipFmt}
-            axisLine={{ stroke: "#8A9BB0" }}
-            tickLine={{ stroke: "#8A9BB0" }}
-          />
-          <YAxis
-            type="category"
-            dataKey="bucket"
-            width={92}
-            tick={tick}
-            axisLine={{ stroke: "#8A9BB0" }}
-            tickLine={false}
-          />
-          <Tooltip
-            formatter={(v) => tipFmt(v)}
-            labelFormatter={(l) => String(l)}
-            contentStyle={{
-              fontSize: 11,
-              fontFamily: FONT,
-              border: "1px solid #D0D7E2",
-            }}
-          />
-          <Bar
-            dataKey={valueKey}
-            fill={STRAT_BAR_COLOR}
-            name={metricLabel}
-            radius={[0, 1, 1, 0]}
-            cursor="pointer"
-            onClick={(pt) => fireClick(pt?.bucket)}
-          >
-            {data.map((row) => (
-              <Cell
-                key={row.bucket}
-                fill={
-                  selectedBucket === row.bucket ? "#FD9D24" : STRAT_BAR_COLOR
-                }
-              />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    );
-  }
-
-  const isHistogram = dim.chart === "histogram";
-  return (
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart
-        data={data}
-        margin={{ top: 8, right: 8, left: 0, bottom: 28 }}
-        barCategoryGap={isHistogram ? "8%" : "20%"}
-      >
-        <CartesianGrid stroke="#D0D7E2" strokeDasharray="2 4" vertical={false} />
-        <XAxis
-          dataKey="bucket"
-          tick={tick}
-          interval={0}
-          angle={data.length > 6 ? -30 : 0}
-          textAnchor={data.length > 6 ? "end" : "middle"}
-          height={data.length > 6 ? 48 : 28}
-          axisLine={{ stroke: "#8A9BB0" }}
-          tickLine={{ stroke: "#8A9BB0" }}
-        />
-        <YAxis
-          tick={tick}
-          tickFormatter={tipFmt}
-          width={48}
-          axisLine={{ stroke: "#8A9BB0" }}
-          tickLine={{ stroke: "#8A9BB0" }}
-        />
-        <Tooltip
-          formatter={(v) => tipFmt(v)}
-          labelFormatter={(l) => String(l)}
-          contentStyle={{
-            fontSize: 11,
-            fontFamily: FONT,
-            border: "1px solid #D0D7E2",
-          }}
-        />
-        <Bar
-          dataKey={valueKey}
-          fill={isHistogram ? "#0B4F9C" : STRAT_BAR_COLOR}
-          name={metricLabel}
-          radius={isHistogram ? [0, 0, 0, 0] : [1, 1, 0, 0]}
-          cursor="pointer"
-          onClick={(pt) => fireClick(pt?.bucket)}
-        >
-          {data.map((row) => (
-            <Cell
-              key={row.bucket}
-              fill={
-                selectedBucket === row.bucket
-                  ? "#FD9D24"
-                  : isHistogram
-                    ? "#0B4F9C"
-                    : STRAT_BAR_COLOR
-              }
-            />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  );
-}
-
-function IconExportCsvMini({ size = 16 }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        d="M8 2v8.5M5.5 8.5 8 11l2.5-2.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M3 13.5h10"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function IconCopyMini({ size = 16 }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <rect
-        x="5.25"
-        y="5.25"
-        width="7.5"
-        height="8.5"
-        rx="1"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M10.75 5.25V3.75A1.5 1.5 0 0 0 9.25 2.25H3.75A1.5 1.5 0 0 0 2.25 3.75v7.5A1.5 1.5 0 0 0 3.75 12.75h1.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
 const X_DOMAIN = [0.28, 0.92];
 const Y_DOMAIN = [-2.4, 3.2];
 const X_TICKS = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
 const Y_TICKS = [-2, -1, 0, 1, 2, 3];
 const POINT_SIZE = 28;
-const OFF_AXIS_FEATURES = ["Documentation", "Remaining Term"];
-
 const LS_CLUSTER_KEY = "cashflow.clusterFilter";
 const LS_GRID_KEY = "cashflow.agGridState";
 const LS_NAV_KEY = "cashflow.navPane";
@@ -468,7 +71,6 @@ const LS_NAV_COLLAPSE_KEY = "cashflow.navCollapsed";
 const NAV_SHORT = {
   asf: "Tape",
   qc: "QC",
-  strat: "Strat",
   collateral: "Collat",
   cohort: "Cohort",
   scenarios: "Scen",
@@ -509,6 +111,7 @@ function readNavCollapsed() {
 function readNav() {
   try {
     const v = localStorage.getItem(LS_NAV_KEY);
+    if (v === "strat") return "collateral";
     if (NAV.some((n) => n.id === v)) return v;
     if (v === "loan") return "cohort";
   } catch {
@@ -566,7 +169,7 @@ function CustomLegend({ payload, activeCluster, onSelect, counts }) {
                 className={`scatter-legend-btn${selected ? " is-active" : ""}`}
                 style={{ "--cluster-color": entry.color }}
                 onClick={() => onSelect(code)}
-                title={`Filter grid to ${code}`}
+                title={`Filter to ${code}`}
               >
                 <span className="scatter-legend-swatch" />
                 <span>
@@ -639,19 +242,6 @@ export default function App() {
   const [asfError, setAsfError] = useState(null);
   const [asfVisible, setAsfVisible] = useState(null);
 
-  const [stratRows, setStratRows] = useState([]);
-  const [stratMeta, setStratMeta] = useState(null);
-  const [stratLoading, setStratLoading] = useState(false);
-  const [stratError, setStratError] = useState(null);
-  const [stratMetric, setStratMetric] = useState("upb");
-  const [stratCohort, setStratCohort] = useState("all");
-  const [stratHasPostal, setStratHasPostal] = useState(false);
-  const [stratDrill, setStratDrill] = useState(null);
-  const [stratDrillLoans, setStratDrillLoans] = useState([]);
-  const [stratDrillTotal, setStratDrillTotal] = useState(0);
-  const [stratDrillVisible, setStratDrillVisible] = useState(null);
-  const [stratDrillLoading, setStratDrillLoading] = useState(false);
-  const [stratDrillError, setStratDrillError] = useState(null);
 
   const [cohortStats, setCohortStats] = useState([]);
   const [cohortStatsError, setCohortStatsError] = useState(null);
@@ -660,7 +250,6 @@ export default function App() {
   const [aggregates, setAggregates] = useState([]);
   const [ranScenarioIds, setRanScenarioIds] = useState([]);
   const [runMeta, setRunMeta] = useState(null);
-  const [neonNote, setNeonNote] = useState(null);
   const [neonStatus, setNeonStatus] = useState(null);
   const [neonMonth1Rows, setNeonMonth1Rows] = useState([]);
   const [neonMonth1Total, setNeonMonth1Total] = useState(0);
@@ -764,117 +353,6 @@ export default function App() {
     };
   }, []);
 
-  // Stratification — fetch ALL dimensions so every cut is visible.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setStratLoading(true);
-      setStratError(null);
-      setStratDrill(null);
-      setStratDrillLoans([]);
-      setStratDrillTotal(0);
-      setStratDrillError(null);
-      try {
-        const cohortQs =
-          stratCohort && stratCohort !== "all"
-            ? `&cohort=${encodeURIComponent(stratCohort)}`
-            : "";
-        // Probe state first for KPIs + postal flag, then fetch remaining dims.
-        const probeRes = await fetch(
-          apiUrl(
-            `/api/asf/stratification?by=${encodeURIComponent("state")}${cohortQs}`
-          )
-        );
-        if (!probeRes.ok) {
-          const detail = await probeRes.text();
-          throw new Error(`State: HTTP ${probeRes.status}: ${detail}`);
-        }
-        const probe = await probeRes.json();
-        const hasPostal = Boolean(probe.has_postal_code);
-        if (cancelled) return;
-        setStratHasPostal(hasPostal);
-
-        const dims = STRAT_DIMS_BASE.filter(
-          (d) => d.id !== "zip3" || hasPostal
-        );
-        const rest = dims.filter((d) => d.id !== "state");
-        const restResults = await Promise.all(
-          rest.map(async (dim) => {
-            const res = await fetch(
-              apiUrl(
-                `/api/asf/stratification?by=${encodeURIComponent(dim.id)}${cohortQs}`
-              )
-            );
-            if (!res.ok) {
-              const detail = await res.text();
-              throw new Error(`${dim.label}: HTTP ${res.status}: ${detail}`);
-            }
-            const data = await res.json();
-            return { dim, data };
-          })
-        );
-        if (cancelled) return;
-        const results = [
-          { dim: dims.find((d) => d.id === "state"), data: probe },
-          ...restResults,
-        ];
-        const combined = [];
-        let tape_row_count = probe.tape_row_count ?? null;
-        let tape_upb = probe.tape_upb ?? null;
-        let wac = probe.wac ?? null;
-        let wam = probe.wam ?? null;
-        let seasoned_wac = probe.seasoned_wac ?? null;
-        for (const { dim, data } of results) {
-          if (!dim) continue;
-          if (tape_row_count == null && data.tape_row_count != null) {
-            tape_row_count = data.tape_row_count;
-          }
-          if (tape_upb == null && data.tape_upb != null) {
-            tape_upb = data.tape_upb;
-          }
-          if (wac == null && data.wac != null) wac = data.wac;
-          if (wam == null && data.wam != null) wam = data.wam;
-          if (seasoned_wac == null && data.seasoned_wac != null) {
-            seasoned_wac = data.seasoned_wac;
-          }
-          if (data.has_postal_code) setStratHasPostal(true);
-          for (const row of data.rows || []) {
-            combined.push({
-              ...row,
-              dimension: dim.label,
-              dimension_id: dim.id,
-              row_key: `${dim.id}::${row.bucket}`,
-            });
-          }
-        }
-        setStratRows(combined);
-        setStratMeta({
-          n_dimensions: dims.length,
-          n_buckets: combined.length,
-          tape_row_count,
-          tape_upb,
-          wac,
-          wam,
-          seasoned_wac,
-          has_postal_code: hasPostal,
-          cohort: stratCohort,
-        });
-      } catch (err) {
-        if (!cancelled) {
-          setStratError(err.message || String(err));
-          setStratRows([]);
-          setStratMeta(null);
-          setStratHasPostal(false);
-        }
-      } finally {
-        if (!cancelled) setStratLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [stratCohort]);
-
   // Cohort pool stats from Neon asf_tape.
   useEffect(() => {
     let cancelled = false;
@@ -915,12 +393,8 @@ export default function App() {
           const st = await neonStatusRes.json();
           setNeonStatus(st);
           setRanScenarioIds(st.month1_scenario_ids || []);
-          setNeonNote(
-            `Neon · scenarios=${st.scenarios} · month1=${st.loan_cashflows_month1} · orphans=${st.orphans}`
-          );
           loadedFromNeon = true;
         } else if (neonStatusRes && !neonStatusRes.ok) {
-          setNeonNote(null);
         }
 
         if (neonScenRes?.ok) {
@@ -1186,7 +660,7 @@ export default function App() {
         field: "current_interest_rate",
         headerName: "Interest Rate",
         width: 96,
-        valueFormatter: (p) => fmtPct(p.value, 2),
+        valueFormatter: (p) => fmtWac(p.value),
         cellClass: "cf-num",
       },
       intCol("original_fico", "FICO", 72),
@@ -1219,7 +693,7 @@ export default function App() {
         field: "refinance_incentive",
         headerName: "Refinance Incentive",
         width: 130,
-        valueFormatter: (p) => fmtNum(p.value, 3),
+        valueFormatter: (p) => fmtNum(p.value, 2),
         cellClass: "cf-num",
       },
       {
@@ -1258,7 +732,7 @@ export default function App() {
     return (
       <p className="asf-grid-summary" aria-live="polite">
         <span className="asf-grid-summary-total">
-          {total.toLocaleString()} {total === 1 ? "Loan" : "Loans"}
+          {fmtInt(total)} {total === 1 ? "Loan" : "Loans"}
         </span>
         {shown != null ? (
           <span
@@ -1269,7 +743,7 @@ export default function App() {
             }
           >
             {" · "}
-            {shown.toLocaleString()} Shown
+            {fmtInt(shown)} Shown
           </span>
         ) : null}
       </p>
@@ -1289,7 +763,6 @@ export default function App() {
       },
       { field: "category", headerName: "Category", width: 120 },
       { field: "name", headerName: "Name", width: 180 },
-      { field: "category", headerName: "Category", width: 120 },
       {
         field: "value",
         headerName: "Value",
@@ -1404,7 +877,7 @@ export default function App() {
         field: "current_interest_rate",
         headerName: "Interest Rate",
         width: 96,
-        valueFormatter: (p) => fmtPct(p.value, 2),
+        valueFormatter: (p) => fmtWac(p.value),
         cellClass: "cf-num",
       },
       intCol("original_fico", "FICO", 72),
@@ -1504,7 +977,7 @@ export default function App() {
         <span className="asf-grid-summary-total">
           {qcSelectedRule.nl_description || qcSelectedRule.check_id}
           {" · "}
-          {total.toLocaleString()} {total === 1 ? "Loan" : "Loans"}
+          {fmtInt(total)} {total === 1 ? "Loan" : "Loans"}
         </span>
         {shown != null ? (
           <span
@@ -1515,7 +988,7 @@ export default function App() {
             }
           >
             {" · "}
-            {shown.toLocaleString()} Shown
+            {fmtInt(shown)} Shown
           </span>
         ) : null}
       </p>
@@ -1527,206 +1000,6 @@ export default function App() {
     qcDrillVisible,
     qcDrillLoading,
   ]);
-
-  const stratDims = useMemo(
-    () =>
-      STRAT_DIMS_BASE.filter(
-        (d) => d.id !== "zip3" || stratHasPostal || stratMeta?.has_postal_code
-      ),
-    [stratHasPostal, stratMeta?.has_postal_code]
-  );
-
-  const stratByDim = useMemo(() => {
-    const map = {};
-    for (const dim of stratDims) map[dim.id] = [];
-    for (const row of stratRows) {
-      if (!map[row.dimension_id]) map[row.dimension_id] = [];
-      map[row.dimension_id].push(row);
-    }
-    return map;
-  }, [stratRows, stratDims]);
-
-  const loadStratDrillLoans = useCallback(
-    async (dimId, bucket) => {
-      const dim = STRAT_DIMS_BASE.find((d) => d.id === dimId);
-      if (!dimId || bucket == null || bucket === "") {
-        setStratDrill(null);
-        setStratDrillLoans([]);
-        setStratDrillTotal(0);
-        setStratDrillError(null);
-        return;
-      }
-      setStratDrill({
-        dimension: dimId,
-        label: dim?.label || dimId,
-        bucket: String(bucket),
-      });
-      setStratDrillLoading(true);
-      setStratDrillError(null);
-      setStratDrillVisible(null);
-      try {
-        const qs = new URLSearchParams({
-          by: dimId,
-          bucket: String(bucket),
-          limit: "2000",
-        });
-        if (stratCohort && stratCohort !== "all") {
-          qs.set("cohort", stratCohort);
-        }
-        const res = await fetch(
-          apiUrl(`/api/asf/stratification/loans?${qs.toString()}`)
-        );
-        if (!res.ok) {
-          const detail = await res.text();
-          throw new Error(`HTTP ${res.status}: ${detail}`);
-        }
-        const data = await res.json();
-        setStratDrillLoans(Array.isArray(data.loans) ? data.loans : []);
-        setStratDrillTotal(data.total ?? (data.loans || []).length);
-      } catch (err) {
-        setStratDrillError(err.message || String(err));
-        setStratDrillLoans([]);
-        setStratDrillTotal(0);
-      } finally {
-        setStratDrillLoading(false);
-      }
-    },
-    [stratCohort]
-  );
-
-  const onStratBucketClick = useCallback(
-    (dimId, bucket) => {
-      loadStratDrillLoans(dimId, bucket);
-    },
-    [loadStratDrillLoans]
-  );
-
-  const onStratDrillRowStats = useCallback((stats) => {
-    if (stats?.visible != null) setStratDrillVisible(stats.visible);
-  }, []);
-
-  const clearStratDrill = useCallback(() => {
-    setStratDrill(null);
-    setStratDrillLoans([]);
-    setStratDrillTotal(0);
-    setStratDrillError(null);
-    setStratDrillVisible(null);
-  }, []);
-
-  const stratDrillToolbarStart = useMemo(() => {
-    if (!stratDrill) return null;
-    const total = stratDrillTotal || stratDrillLoans.length || 0;
-    const shown =
-      stratDrillVisible != null
-        ? stratDrillVisible
-        : stratDrillLoading
-          ? null
-          : stratDrillLoans.length;
-    return (
-      <p className="asf-grid-summary" aria-live="polite">
-        <span className="asf-grid-summary-total">
-          {stratDrill.label}: {stratDrill.bucket}
-          {" · "}
-          {total.toLocaleString()} {total === 1 ? "Loan" : "Loans"}
-        </span>
-        {shown != null ? (
-          <span
-            className={
-              shown !== total
-                ? "asf-grid-summary-filter is-filtered"
-                : "asf-grid-summary-filter"
-            }
-          >
-            {" · "}
-            {shown.toLocaleString()} Shown
-          </span>
-        ) : null}
-        <button
-          type="button"
-          className="linkish strat-drill-clear"
-          onClick={clearStratDrill}
-        >
-          Clear Drill
-        </button>
-      </p>
-    );
-  }, [
-    stratDrill,
-    stratDrillTotal,
-    stratDrillLoans.length,
-    stratDrillVisible,
-    stratDrillLoading,
-    clearStratDrill,
-  ]);
-
-  const exportStratCsv = useCallback(() => {
-    const headers = [
-      "dimension",
-      "bucket",
-      "loan_count",
-      "upb",
-      "avg_ltv",
-      "avg_cltv",
-      "avg_fico",
-      "avg_rate",
-      "wac",
-      "avg_refi_incentive",
-    ];
-    const lines = [headers.join(",")];
-    for (const row of stratRows) {
-      lines.push(
-        headers
-          .map((h) => {
-            const v = row[h];
-            if (v == null) return "";
-            const s = String(v);
-            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-          })
-          .join(",")
-      );
-    }
-    const blob = new Blob([lines.join("\n")], {
-      type: "text/csv;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "stratification.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [stratRows]);
-
-  const copyStratRows = useCallback(async () => {
-    const headers = [
-      "dimension",
-      "bucket",
-      "loan_count",
-      "upb",
-      "avg_ltv",
-      "avg_cltv",
-      "avg_fico",
-      "avg_rate",
-      "wac",
-      "avg_refi_incentive",
-    ];
-    const lines = [headers.join("\t")];
-    for (const row of stratRows) {
-      lines.push(headers.map((h) => (row[h] == null ? "" : String(row[h]))).join("\t"));
-    }
-    const tsv = lines.join("\n");
-    try {
-      await navigator.clipboard.writeText(tsv);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = tsv;
-      ta.style.position = "fixed";
-      ta.style.left = "-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-    }
-  }, [stratRows]);
 
   const cohortStatsColumnDefs = useMemo(
     () => [
@@ -1744,7 +1017,7 @@ export default function App() {
         headerName: "WAC",
         width: 88,
         valueGetter: (p) => p.data?.wac ?? p.data?.avg_rate,
-        valueFormatter: (p) => fmtPct(p.value, 2),
+        valueFormatter: (p) => fmtWac(p.value),
         cellClass: "cf-num",
       },
       {
@@ -1752,7 +1025,7 @@ export default function App() {
         headerName: "WAM",
         width: 88,
         valueGetter: (p) => p.data?.wam ?? p.data?.avg_remaining_term,
-        valueFormatter: (p) => fmtNum(p.value, 0),
+        valueFormatter: (p) => fmtInt(p.value),
         cellClass: "cf-num",
       },
       {
@@ -1773,14 +1046,14 @@ export default function App() {
         field: "avg_refi_incentive",
         headerName: "Avg Refi",
         width: 88,
-        valueFormatter: (p) => fmtNum(p.value, 3),
+        valueFormatter: (p) => fmtNum(p.value, 2),
         cellClass: "cf-num",
       },
       {
         field: "avg_remaining_term",
         headerName: "Avg Rem",
         width: 88,
-        valueFormatter: (p) => fmtNum(p.value, 0),
+        valueFormatter: (p) => fmtInt(p.value),
         cellClass: "cf-num",
       },
     ],
@@ -1830,51 +1103,6 @@ export default function App() {
     return { loanCount, upb, wac, wam, avgLtv, avgRi };
   }, [cohortStats, clusterFilter]);
 
-  const loanColumnDefs = useMemo(
-    () => [
-      {
-        field: "loanId",
-        headerName: "Loan ID",
-        flex: 1.1,
-        minWidth: 100,
-        cellClass: "cf-id",
-      },
-      intCol("fico", "FICO", 72),
-      {
-        field: "cltv",
-        headerName: "CLTV",
-        width: 90,
-        type: "numericColumn",
-        filter: "agNumberColumnFilter",
-        valueFormatter: (p) => fmtPct(p.value, 1),
-        cellClass: "cf-num",
-      },
-      {
-        field: "documentation",
-        headerName: "Documentation",
-        flex: 1.2,
-        minWidth: 120,
-      },
-      intCol("remainingTerm", "Remaining Term", 110),
-      {
-        field: "refinanceIncentive",
-        headerName: "Refi Incentive",
-        width: 110,
-        type: "numericColumn",
-        filter: "agNumberColumnFilter",
-        valueFormatter: (p) => fmtNum(p.value, 3),
-        cellClass: "cf-num",
-      },
-      {
-        field: "cluster",
-        headerName: "Cohort",
-        flex: 1.6,
-        minWidth: 180,
-      },
-    ],
-    []
-  );
-
   const scenarioColumnDefs = useMemo(
     () => [
       {
@@ -1895,14 +1123,7 @@ export default function App() {
         field: "cohort",
         headerName: "Cohort",
         flex: 1.8,
-        minWidth: 180,
-        valueFormatter: (p) => cohortLabel(p.value),
-      },
-      {
-        field: "cohort",
-        headerName: "Cohort",
-        flex: 1.4,
-        minWidth: 140,
+        minWidth: 160,
         valueFormatter: (p) => cohortLabel(p.value),
       },
       intCol("psa_multiple", "PSA", 72),
@@ -1924,9 +1145,6 @@ export default function App() {
             : `${Number(p.value).toFixed(0)} Mo`,
         cellClass: "cf-num",
       },
-      intCol("recovery_period_months", "Rec Mos", 80),
-      intCol("recovery_lag_months", "Lag Fallback", 96),
-      intCol("avg_used_recovery_lag_months", "Avg Used Lag", 100),
       {
         field: "ran",
         headerName: "Ran",
@@ -2013,14 +1231,14 @@ export default function App() {
             field: "cpr",
             headerName: "CPR",
             width: 72,
-            valueFormatter: (p) => fmtPct(p.value, 2),
+            valueFormatter: (p) => fmtPct(p.value, 1),
             cellClass: "cf-num",
           },
           {
             field: "cdr",
             headerName: "CDR",
             width: 72,
-            valueFormatter: (p) => fmtPct(p.value, 3),
+            valueFormatter: (p) => fmtPct(p.value, 2),
             cellClass: "cf-num",
           },
           moneyCol("prepay", "Prepay", 90),
@@ -2062,10 +1280,7 @@ export default function App() {
         field: "recovery_rate",
         headerName: "Rec %",
         width: 72,
-        valueFormatter: (p) =>
-          p.value == null || Number.isNaN(Number(p.value))
-            ? ""
-            : `${Number(p.value).toFixed(0)} Mo`,
+        valueFormatter: (p) => fmtPct(p.value, 1),
         cellClass: "cf-num",
       },
       {
@@ -2079,14 +1294,14 @@ export default function App() {
             field: "cpr",
             headerName: "CPR",
             width: 72,
-            valueFormatter: (p) => fmtPct(p.value, 2),
+            valueFormatter: (p) => fmtPct(p.value, 1),
             cellClass: "cf-num",
           },
           {
             field: "cdr",
             headerName: "CDR",
             width: 72,
-            valueFormatter: (p) => fmtPct(p.value, 3),
+            valueFormatter: (p) => fmtPct(p.value, 2),
             cellClass: "cf-num",
           },
           moneyCol("prepay", "Prepay", 90),
@@ -2375,13 +1590,6 @@ export default function App() {
       setAggregates((data.aggregates || []).map(relabelCohortFields));
       setRanScenarioIds(data.ran_scenario_ids || []);
       setRunMeta(data.parallelism || null);
-      setNeonNote(
-        data.neon_missing
-          ? "DATABASE_URL not set — loan-level CF persisted locally under data/"
-          : data.cached
-            ? `Loaded ${data.storage?.neon || data.storage?.json || "cache"} · loan-level on Neon`
-            : data.storage?.neon || "Run complete · loan-level persisted"
-      );
       if (data.aggregates?.length && !scenarios.length) {
         setScenarios(
           data.aggregates.map((a) => ({
@@ -2701,189 +1909,23 @@ export default function App() {
 
           {pane === "collateral" && <LoanLevelCollateral />}
 
-          {pane === "strat" && (
-            <section className="section section-fill section-strat">
-              <div className="qc-toolbar strat-topbar">
-                <div className="qc-kpi-strip" role="toolbar" aria-label="Stratification KPIs">
-                  <div className="qc-kpi is-active" aria-label="Total Loans">
-                    <span className="qc-kpi-label">Total Loans</span>
-                    <span className="qc-kpi-value">
-                      {stratMeta?.tape_row_count != null
-                        ? Number(stratMeta.tape_row_count).toLocaleString()
-                        : "—"}
-                    </span>
-                  </div>
-                  <div className="qc-kpi" aria-label="UPB">
-                    <span className="qc-kpi-label">UPB</span>
-                    <span className="qc-kpi-value">
-                      {stratMeta?.tape_upb != null
-                        ? fmtUpbShort(stratMeta.tape_upb)
-                        : "—"}
-                    </span>
-                  </div>
-                  <div className="qc-kpi" aria-label="WAC" title="Weighted Average Coupon">
-                    <span className="qc-kpi-label">WAC</span>
-                    <span className="qc-kpi-value">
-                      {stratMeta?.wac != null
-                        ? `${(Number(stratMeta.wac) * 100).toFixed(2)}%`
-                        : "—"}
-                    </span>
-                  </div>
-                  <div className="qc-kpi" aria-label="WAM" title="Weighted Average Maturity (Months)">
-                    <span className="qc-kpi-label">WAM</span>
-                    <span className="qc-kpi-value">
-                      {stratMeta?.wam != null
-                        ? `${Number(stratMeta.wam).toFixed(0)} Mo`
-                        : "—"}
-                    </span>
-                  </div>
-                  <div
-                    className="qc-kpi"
-                    aria-label="Seasoned WAC"
-                    title="UPB-Weighted Rate For Loans Aged 12+ Months (Seasoned Proxy; Dying WAC Not On Tape)"
-                  >
-                    <span className="qc-kpi-label">Seasoned WAC</span>
-                    <span className="qc-kpi-value">
-                      {stratMeta?.seasoned_wac != null
-                        ? `${(Number(stratMeta.seasoned_wac) * 100).toFixed(2)}%`
-                        : "—"}
-                    </span>
-                  </div>
-                </div>
-                <div
-                  className="cf-grid-toolbar-actions strat-toolbar"
-                  role="toolbar"
-                  aria-label="Stratification Actions"
-                >
-                  <label className="field-inline strat-cohort-filter">
-                    <span>Cohort</span>
-                    <select
-                      className="select"
-                      value={stratCohort}
-                      onChange={(e) => setStratCohort(e.target.value)}
-                      aria-label="Cohort Filter"
-                    >
-                      <option value="all">All</option>
-                      {(cohortStats || []).map((c) => (
-                        <option key={c.cohort} value={c.cohort}>
-                          {c.cohort}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    type="button"
-                    className={`linkish${stratMetric === "upb" ? " is-active" : ""}`}
-                    onClick={() => setStratMetric("upb")}
-                  >
-                    UPB
-                  </button>
-                  <button
-                    type="button"
-                    className={`linkish${stratMetric === "loans" ? " is-active" : ""}`}
-                    onClick={() => setStratMetric("loans")}
-                  >
-                    Loans
-                  </button>
-                  <button
-                    type="button"
-                    className="cf-grid-icon-btn"
-                    onClick={exportStratCsv}
-                    title="Export CSV"
-                    aria-label="Export CSV"
-                    disabled={!stratRows.length}
-                  >
-                    <IconExportCsvMini />
-                  </button>
-                  <button
-                    type="button"
-                    className="cf-grid-icon-btn"
-                    onClick={copyStratRows}
-                    title="Copy"
-                    aria-label="Copy Rows To Clipboard"
-                    disabled={!stratRows.length}
-                  >
-                    <IconCopyMini />
-                  </button>
-                </div>
-              </div>
-              {stratLoading ? (
-                <p className="muted">Loading Stratification…</p>
-              ) : stratError ? (
-                <StatusBanner tone="error">Stratification: {stratError}</StatusBanner>
-              ) : (
-                <>
-                  <div className="strat-charts">
-                    {stratDims.map((dim) => {
-                      const wide =
-                        dim.chart === "map" ||
-                        dim.chart === "zip" ||
-                        dim.chart === "line";
-                      return (
-                        <div
-                          key={dim.id}
-                          className={`strat-chart-panel${
-                            wide ? " strat-chart-panel-wide" : ""
-                          }`}
-                        >
-                          <div className="strat-chart-head">
-                            <h3 className="strat-chart-title">{dim.label}</h3>
-                          </div>
-                          <StratDimChart
-                            dim={dim}
-                            rows={stratByDim[dim.id] || []}
-                            metric={stratMetric}
-                            selectedBucket={
-                              stratDrill?.dimension === dim.id
-                                ? stratDrill.bucket
-                                : null
-                            }
-                            onBucketClick={(bucket) =>
-                              onStratBucketClick(dim.id, bucket)
-                            }
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {stratDrill && (
-                    <div className="strat-drill qc-drill">
-                      {stratDrillLoading ? (
-                        <p className="muted">Loading Loans…</p>
-                      ) : stratDrillError ? (
-                        <StatusBanner tone="error">
-                          Stratification Drill: {stratDrillError}
-                        </StatusBanner>
-                      ) : (
-                        <DataGrid
-                          rowData={stratDrillLoans}
-                          columnDefs={qcDrillColumnDefs}
-                          getRowId={(p) => String(p.data.loan_id)}
-                          onRowDrill={drillLoan}
-                          onRowStats={onStratDrillRowStats}
-                          toolbarStart={stratDrillToolbarStart}
-                          heightClass="grid-wrap-qc-drill"
-                        />
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </section>
-          )}
-
           {pane === "cohort" && (
             <>
               <div className="qc-toolbar">
                 <div className="qc-kpi-strip" role="toolbar" aria-label="Cohort KPIs">
-                  <div className="qc-kpi is-active" aria-label="Total Loans">
+                  <button
+                    type="button"
+                    className={`qc-kpi${clusterFilter === "all" ? " is-active" : ""}`}
+                    aria-label="Total Loans"
+                    onClick={() => selectCluster("all")}
+                  >
                     <span className="qc-kpi-label">Total Loans</span>
                     <span className="qc-kpi-value">
                       {cohortKpis.loanCount
-                        ? cohortKpis.loanCount.toLocaleString()
+                        ? fmtInt(cohortKpis.loanCount)
                         : "—"}
                     </span>
-                  </div>
+                  </button>
                   <div className="qc-kpi" aria-label="UPB">
                     <span className="qc-kpi-label">UPB</span>
                     <span className="qc-kpi-value">
@@ -2894,7 +1936,7 @@ export default function App() {
                     <span className="qc-kpi-label">WAC</span>
                     <span className="qc-kpi-value">
                       {cohortKpis.wac != null
-                        ? `${(Number(cohortKpis.wac) * 100).toFixed(2)}%`
+                        ? fmtWac(cohortKpis.wac)
                         : "—"}
                     </span>
                   </div>
@@ -2902,7 +1944,7 @@ export default function App() {
                     <span className="qc-kpi-label">WAM</span>
                     <span className="qc-kpi-value">
                       {cohortKpis.wam != null
-                        ? `${Number(cohortKpis.wam).toFixed(0)} Mo`
+                        ? `${fmtInt(cohortKpis.wam)} Mo`
                         : "—"}
                     </span>
                   </div>
@@ -2910,7 +1952,7 @@ export default function App() {
                     <span className="qc-kpi-label">Avg LTV</span>
                     <span className="qc-kpi-value">
                       {cohortKpis.avgLtv != null
-                        ? `${(Number(cohortKpis.avgLtv) * 100).toFixed(1)}%`
+                        ? fmtPct(cohortKpis.avgLtv, 1)
                         : "—"}
                     </span>
                   </div>
@@ -2918,24 +1960,34 @@ export default function App() {
                     <span className="qc-kpi-label">Avg RI</span>
                     <span className="qc-kpi-value">
                       {cohortKpis.avgRi != null
-                        ? Number(cohortKpis.avgRi).toFixed(2)
+                        ? fmtNum(cohortKpis.avgRi, 2)
                         : "—"}
                     </span>
                   </div>
                 </div>
+                {clusterFilter !== "all" && (
+                  <button
+                    type="button"
+                    className="linkish"
+                    onClick={() => selectCluster("all")}
+                  >
+                    Clear {clusterFilter}
+                  </button>
+                )}
               </div>
               <section className="section section-cohort-chart">
-                <div className="section-head section-head-stack">
+                <div className="section-head">
                   <h2 className="section-title section-title-chart">
-                    K-Prototypes (k=3, 4 Features): Original CLTV vs Refinance
-                    Incentive
+                    Original CLTV vs Refinance Incentive
                   </h2>
                 </div>
                 <div className="chart-wrap chart-wrap-scatter">
                   {tapeLoading ? (
-                    <p className="muted">Loading Tape…</p>
+                    <p className="muted">Loading Cohort Chart…</p>
                   ) : tapeError ? (
                     <StatusBanner tone="error">Tape: {tapeError}</StatusBanner>
+                  ) : !loans.length ? (
+                    <p className="muted">No Cohort Points Loaded.</p>
                   ) : (
                     <>
                       <ResponsiveContainer width="100%" height="100%">
@@ -3050,22 +2102,6 @@ export default function App() {
                           ))}
                         </ComposedChart>
                       </ResponsiveContainer>
-                      <aside
-                        className="scatter-offaxis-note"
-                        aria-label="Off-Axis Clustering Features"
-                      >
-                        <span
-                          className="scatter-offaxis-mark"
-                          aria-hidden="true"
-                        >
-                          ★
-                        </span>
-                        <ul>
-                          {OFF_AXIS_FEATURES.map((f) => (
-                            <li key={f}>• {f}</li>
-                          ))}
-                        </ul>
-                      </aside>
                     </>
                   )}
                 </div>
@@ -3076,12 +2112,20 @@ export default function App() {
                   <h2 className="section-title">Cohort Statistics</h2>
                 </div>
                 {cohortStatsError ? (
-                  <StatusBanner tone="muted">
+                  <StatusBanner tone="error">
                     Cohort Stats: {cohortStatsError}
                   </StatusBanner>
+                ) : !cohortStats.length ? (
+                  <p className="muted">No Cohort Statistics Loaded.</p>
                 ) : (
                   <DataGrid
-                    rowData={cohortStats}
+                    rowData={
+                      clusterFilter === "all"
+                        ? cohortStats
+                        : cohortStats.filter(
+                            (r) => cohortLabel(r.cohort) === clusterFilter
+                          )
+                    }
                     columnDefs={cohortStatsColumnDefs}
                     getRowId={(p) => String(p.data.cohort)}
                     onRowDrill={(row) =>
@@ -3091,43 +2135,6 @@ export default function App() {
                     exportName="cohort-stats"
                   />
                 )}
-              </section>
-
-              <section className="section section-fill">
-                <div className="section-head">
-                  <h2 className="section-title">Loans</h2>
-                  <div className="section-actions">
-                    <p className="section-meta">
-                      Filter: {filterLabel}
-                      {clusterFilter !== "all" && (
-                        <>
-                          {" · "}
-                          <button
-                            type="button"
-                            className="linkish"
-                            onClick={() => selectCluster("all")}
-                          >
-                            Clear
-                          </button>
-                        </>
-                      )}
-                      {" · "}
-                      Ran Scenarios: {ranScenarioIds.length}/27
-                    </p>
-                  </div>
-                </div>
-                <DrillTrail crumbs={drillCrumbs} onJump={onDrillJump} />
-                <DataGrid
-                  rowData={filteredLoans}
-                  columnDefs={loanColumnDefs}
-                  getRowId={(p) => String(p.data.loanId)}
-                  onRowDrill={drillLoan}
-                  onGridReady={onGridReady}
-                  scheduleSave={scheduleSave}
-                  persistLayout
-                  heightClass="grid-wrap-fill"
-                  exportName="loans"
-                />
               </section>
             </>
           )}
@@ -3164,15 +2171,9 @@ export default function App() {
               {runError && (
                 <StatusBanner tone="error">Run: {runError}</StatusBanner>
               )}
-              {neonNote && (
-                <StatusBanner tone="muted">{neonNote}</StatusBanner>
-              )}
               {runMeta && (
                 <p className="section-meta">
-                  Last {runMeta.executor || "run"} · wall{" "}
-                  {Number(runMeta.wall_ms || 0).toFixed(0)} ms · ok=
-                  {runMeta.ok}/{runMeta.n_tasks} · loan rows=
-                  {runMeta.n_loan_rows ?? "—"}
+                  Ran {runMeta.ok}/{runMeta.n_tasks}
                 </p>
               )}
               <DataGrid
@@ -3321,12 +2322,7 @@ export default function App() {
             <section className="section section-fill">
               <div className="section-head">
                 <p className="section-meta">
-                  {assumptionMeta?.source || "data/assumptions.csv"}
-                  {assumptionMeta?.n != null ? ` · ${assumptionMeta.n} rows` : ""}
-                  {assumptionMeta?.bootstrap?.has_mi_all != null
-                    ? ` · has_mi_all=${assumptionMeta.bootstrap.has_mi_all}`
-                    : ""}
-                  {" · CSV not DB"}
+                  Assumptions
                 </p>
               </div>
               {assumptionLoading ? (

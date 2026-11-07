@@ -46,6 +46,7 @@ Height **36px** default, **44px** from 1280px, **52px** from 1600px (**44px** on
 - AG Grid light Quartz params; compact `rowHeight`/`headerHeight` **20/22** by default, **28/32** at 1280px, **34/38** at 1600px. Square corners.
 - No heavy outer grid/section frame (`wrapperBorder: false`); light row/column hairlines only.
 - KPI strip: navy `#001A41` chips, white type, amber underline when active.
-- Responsive: strat charts stack; touch-sized export/copy icons; mobile hamburger drawer.
+- Responsive: collateral charts stack; touch-sized export/copy icons; mobile hamburger drawer.
+- Money whole dollars; counts/FICO integers; LTV/DTI ~1 decimal; WAC 2 decimals.
 - Field labels muted navy Title Case.
 - Buttons square, navy text on amber.
