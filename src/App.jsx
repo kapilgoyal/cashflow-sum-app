@@ -921,8 +921,9 @@ export default function App() {
       {
         field: "cohort",
         headerName: "Cohort Name",
-        flex: 1.6,
-        minWidth: 132,
+        width: 118,
+        maxWidth: 130,
+        flex: 0,
         sortable: false,
         filter: false,
         /* AG Grid 36+: enableCellSpan + spanRows (legacy rowSpan blanks only). */
