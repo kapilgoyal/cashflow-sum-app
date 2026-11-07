@@ -290,6 +290,32 @@ body {
   min-height: 0;
 }
 
+/* Scenarios only: thinner type (rest of app unchanged for now) */
+.section-scenarios {
+  font-weight: 400;
+}
+
+.section-scenarios .section-meta {
+  font-weight: 400;
+  color: var(--cf-muted);
+}
+
+.section-scenarios .ag-theme-cashflow .ag-header-cell-text,
+.section-scenarios .ag-theme-cashflow .cf-grid-header,
+.section-scenarios .ag-theme-cashflow .ag-cell,
+.section-scenarios .ag-theme-cashflow .ag-spanned-cell {
+  font-weight: 400;
+}
+
+.section-scenarios .ag-theme-cashflow .cf-row-span,
+.section-scenarios .ag-theme-cashflow .ag-spanned-cell.cf-row-span {
+  font-weight: 500;
+}
+
+.section-scenarios .scenario-speed-title {
+  font-weight: 500;
+}
+
 /* Scenarios: dense grid + PSA/SDA speed rail */
 .scenario-layout {
   display: flex;

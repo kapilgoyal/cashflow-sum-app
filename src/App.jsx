@@ -1864,7 +1864,7 @@ export default function App() {
           )}
 
           {pane === "scenarios" && (
-            <section className="section section-fill">
+            <section className="section section-fill section-scenarios">
               <div className="section-head">
                 <p className="section-meta">
                   {scenarioRows.length} Scenarios
