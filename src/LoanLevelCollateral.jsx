@@ -8,6 +8,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -23,6 +25,7 @@ const MUTED = "#808080";
 const TEXT = "#FCFCFC";
 const GRID = "#323232";
 const EMPTY = "#121212";
+const NAVY = BAR; // bar fill alias for shared chart helpers
 
 const FICO_ORDER = ["<660", "660-699", "700-739", "740-779", "780+", "missing"];
 const LTV_ORDER = ["<60", "60-70", "70-80", "80-90", "90+", "missing"];
@@ -54,7 +57,7 @@ function Observation({ text }) {
   return <p className="collat-observation">{text}</p>;
 }
 
-function SectionHead({ title, refsKey, sectionRefs, meta }) {
+function SectionHead({ title, refsKey, sectionRefs, hint }) {
   const refs = sectionRefs?.[refsKey];
   return (
     <div className="collat-section-head">
@@ -62,7 +65,7 @@ function SectionHead({ title, refsKey, sectionRefs, meta }) {
         {title}
         {refs ? <InfoIcon title={refs.title || title} refs={refs.refs} /> : null}
       </h3>
-      {meta ? <span className="collat-section-meta">{meta}</span> : null}
+      {hint ? <span className="collat-section-hint">{hint}</span> : null}
     </div>
   );
 }
@@ -82,6 +85,11 @@ function emptyFilters() {
     occupancies: [],
     purposes: [],
     propertyTypes: [],
+    dtiBands: [],
+    dscrBands: [],
+    ageBands: [],
+    couponBands: [],
+    riBands: [],
     riskOnly: false,
   };
 }
@@ -109,6 +117,35 @@ function applyFilters(loans, filters, ltvMode) {
       !filters.propertyTypes.includes(loan.property_type)
     )
       return false;
+    if (filters.dtiBands.length && !filters.dtiBands.includes(loan.dti_band))
+      return false;
+    if (filters.dscrBands.length && !filters.dscrBands.includes(loan.dscr_band))
+      return false;
+    if (filters.ageBands.length && !filters.ageBands.includes(loan.age_band))
+      return false;
+    if (filters.couponBands.length) {
+      const r = Number(loan.current_interest_rate);
+      let band = "missing";
+      if (Number.isFinite(r)) {
+        if (r < 0.06) band = "<6%";
+        else if (r < 0.07) band = "6-7%";
+        else if (r < 0.08) band = "7-8%";
+        else if (r < 0.09) band = "8-9%";
+        else band = "9%+";
+      }
+      if (!filters.couponBands.includes(band)) return false;
+    }
+    if (filters.riBands.length) {
+      const r = Number(loan.refinance_incentive);
+      let band = "missing";
+      if (Number.isFinite(r)) {
+        if (r < 0) band = "<0";
+        else if (r < 1) band = "0-1";
+        else if (r < 2) band = "1-2";
+        else band = "2+";
+      }
+      if (!filters.riBands.includes(band)) return false;
+    }
     if (filters.riskOnly && !(loan.risk_flags || []).length) return false;
     return true;
   });
@@ -127,11 +164,12 @@ function upbWeightedMean(loans, field) {
   return den > 0 ? num / den : null;
 }
 
-function aggregate(loans, field, order) {
+function aggregate(loans, field, order, { hideMissing = false } = {}) {
   const map = new Map();
   for (const loan of loans) {
     const raw = loan[field];
     const key = raw == null || raw === "" ? "missing" : String(raw);
+    if (hideMissing && key === "missing") continue;
     const slot = map.get(key) || { bucket: key, loan_count: 0, upb: 0 };
     slot.loan_count += 1;
     slot.upb += Number(loan.current_loan_amount) || 0;
@@ -310,13 +348,6 @@ function DistBar({
             metric === "loan_count" ? Number(v).toLocaleString() : fmtUpbShort(v)
           }
           labelStyle={{ color: TEXT }}
-          contentStyle={{
-            background: "#212026",
-            border: "1px solid #323232",
-            borderRadius: 0,
-            color: TEXT,
-            fontFamily: FONT,
-          }}
         />
         <Bar
           dataKey={valueKey}
@@ -326,17 +357,94 @@ function DistBar({
           {data.map((row) => (
             <Cell
               key={row.bucket}
-              fill={selected?.includes(row.bucket) ? AMBER : BAR}
+              fill={selected?.includes(row.bucket) ? AMBER : NAVY}
             />
           ))}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
-  return <div className="collat-chart">{Chart}</div>;
+  return (
+    <div className="collat-chart-wrap">
+      <div className="collat-chart">{Chart}</div>
+    </div>
+  );
 }
 
-function Heatmap({ cells, onSelectFico, onSelectLtv, selectedFico, selectedLtv }) {
+/** UPB bars + WAC line — click age band to cross-filter. */
+function AgeWacChart({ rows, selected, onSelect }) {
+  const data = rows || [];
+  if (!data.length) return <p className="muted collat-empty">No Buckets</p>;
+  return (
+    <div className="collat-chart-wrap">
+      <div className="collat-chart">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={data}
+            margin={{ top: 8, right: 12, left: 0, bottom: 4 }}
+          >
+            <CartesianGrid stroke={GRID} strokeDasharray="2 4" />
+            <XAxis
+              dataKey="bucket"
+              tick={{ fill: MUTED, fontSize: 10, fontFamily: FONT }}
+            />
+            <YAxis
+              yAxisId="upb"
+              tick={{ fill: MUTED, fontSize: 10, fontFamily: FONT }}
+              tickFormatter={(v) => fmtUpbShort(v)}
+            />
+            <YAxis
+              yAxisId="wac"
+              orientation="right"
+              tick={{ fill: MUTED, fontSize: 10, fontFamily: FONT }}
+              tickFormatter={(v) => `${(Number(v) * 100).toFixed(1)}%`}
+            />
+            <Tooltip
+              formatter={(v, name) =>
+                name === "wac"
+                  ? `${(Number(v) * 100).toFixed(2)}%`
+                  : fmtUpbShort(v)
+              }
+              labelStyle={{ color: TEXT }}
+            />
+            <Bar
+              yAxisId="upb"
+              dataKey="upb"
+              name="UPB"
+              cursor="pointer"
+              onClick={(d) => d?.bucket != null && onSelect?.(d.bucket)}
+            >
+              {data.map((row) => (
+                <Cell
+                  key={row.bucket}
+                  fill={selected?.includes(row.bucket) ? AMBER : NAVY}
+                />
+              ))}
+            </Bar>
+            <Line
+              yAxisId="wac"
+              type="monotone"
+              dataKey="wac"
+              name="WAC"
+              stroke={AMBER}
+              strokeWidth={2}
+              dot={{ r: 3, fill: AMBER }}
+              activeDot={{
+                r: 5,
+                onClick: (_e, payload) => {
+                  const b = payload?.payload?.bucket;
+                  if (b != null) onSelect?.(b);
+                },
+              }}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+function Heatmap({ cells, onSelectCell, onSelectFico, onSelectLtv, selectedFico, selectedLtv }) {
   const max = Math.max(1, ...cells.map((c) => c.upb || 0));
   const ficoLabels = FICO_ORDER.filter((f) => f !== "missing");
   const ltvLabels = LTV_ORDER.filter((l) => l !== "missing");
@@ -374,21 +482,21 @@ function Heatmap({ cells, onSelectFico, onSelectLtv, selectedFico, selectedLtv }
             const t = cell.upb / max;
             const bg =
               cell.upb > 0
-                ? `rgba(253, 157, 36, ${0.12 + t * 0.88})`
+                ? `rgba(253, 157, 36, ${0.18 + t * 0.82})`
                 : EMPTY;
             const active =
-              selectedFico?.includes(cell.fico) && selectedLtv?.includes(cell.ltv);
+              selectedFico?.length === 1 &&
+              selectedLtv?.length === 1 &&
+              selectedFico[0] === cell.fico &&
+              selectedLtv[0] === cell.ltv;
             return (
               <button
                 key={`${cell.fico}-${cell.ltv}`}
                 type="button"
                 className={`collat-heatmap-cell${active ? " is-active" : ""}`}
-                style={{ background: bg, color: t > 0.45 ? "#000000" : TEXT }}
+                style={{ background: bg, color: t > 0.45 ? "#111" : TEXT }}
                 title={`FICO ${cell.fico} × LTV ${cell.ltv}: ${fmtUpbShort(cell.upb)} · ${cell.loan_count} Loans`}
-                onClick={() => {
-                  onSelectFico?.(cell.fico);
-                  onSelectLtv?.(cell.ltv);
-                }}
+                onClick={() => onSelectCell?.(cell.fico, cell.ltv)}
               >
                 {cell.loan_count ? cell.loan_count : ""}
               </button>
@@ -476,8 +584,6 @@ export default function LoanLevelCollateral() {
   const [loans, setLoans] = useState([]);
   const [cohortsMeta, setCohortsMeta] = useState([]);
   const [sectionRefs, setSectionRefs] = useState({});
-  const [inventory, setInventory] = useState(null);
-  const [source, setSource] = useState("");
   const [filters, setFilters] = useState(emptyFilters);
   const [ltvMode, setLtvMode] = useState("original");
   const [metric, setMetric] = useState("upb");
@@ -495,8 +601,6 @@ export default function LoanLevelCollateral() {
         setLoans(data.loans || []);
         setCohortsMeta(data.cohorts || []);
         setSectionRefs(data.section_refs || {});
-        setInventory(data.field_inventory || null);
-        setSource(data.source || "");
       } catch (err) {
         if (!cancelled) setError(err.message || String(err));
       } finally {
@@ -544,8 +648,14 @@ export default function LoanLevelCollateral() {
     () => aggregate(filtered, ltvField, LTV_ORDER),
     [filtered, ltvField]
   );
-  const dtiRows = useMemo(() => aggregate(filtered, "dti_band"), [filtered]);
-  const dscrRows = useMemo(() => aggregate(filtered, "dscr_band"), [filtered]);
+  const dtiRows = useMemo(
+    () => aggregate(filtered, "dti_band", null, { hideMissing: true }),
+    [filtered]
+  );
+  const dscrRows = useMemo(
+    () => aggregate(filtered, "dscr_band", null, { hideMissing: true }),
+    [filtered]
+  );
   const docRows = useMemo(
     () => aggregate(filtered, "documentation_type"),
     [filtered]
@@ -559,7 +669,14 @@ export default function LoanLevelCollateral() {
     () => aggregate(filtered, "property_type"),
     [filtered]
   );
-  const ageRows = useMemo(() => aggregate(filtered, "age_band"), [filtered]);
+  const ageRows = useMemo(() => {
+    const AGE_ORDER = ["0-6", "7-12", "13-24", "25+", "missing"];
+    const base = aggregate(filtered, "age_band", AGE_ORDER);
+    return base.map((row) => {
+      const inBand = filtered.filter((l) => (l.age_band || "missing") === row.bucket);
+      return { ...row, wac: upbWeightedMean(inBand, "current_interest_rate") };
+    });
+  }, [filtered]);
   const stateRows = useMemo(() => aggregate(filtered, "state"), [filtered]);
   const heatCells = useMemo(
     () => buildHeatmap(filtered, ltvMode),
@@ -622,109 +739,169 @@ export default function LoanLevelCollateral() {
     filters.occupancies.length +
     filters.purposes.length +
     filters.propertyTypes.length +
+    filters.dtiBands.length +
+    filters.dscrBands.length +
+    filters.ageBands.length +
+    filters.couponBands.length +
+    filters.riBands.length +
     (filters.riskOnly ? 1 : 0);
 
   const resetFilters = useCallback(() => setFilters(emptyFilters()), []);
+
+  const activeChips = useMemo(() => {
+    const chips = [];
+    const cohortLabel = Object.fromEntries(
+      (cohortsMeta || []).map((c) => [c.id, c.label])
+    );
+    for (const id of filters.cohorts) {
+      chips.push({
+        key: `cohort:${id}`,
+        label: cohortLabel[id] || id,
+        clear: () =>
+          setFilters((f) => ({
+            ...f,
+            cohorts: f.cohorts.filter((x) => x !== id),
+          })),
+      });
+    }
+    const add = (arr, prefix, clearKey) => {
+      for (const v of arr) {
+        chips.push({
+          key: `${prefix}:${v}`,
+          label: `${prefix} ${v}`,
+          clear: () =>
+            setFilters((f) => ({
+              ...f,
+              [clearKey]: f[clearKey].filter((x) => x !== v),
+            })),
+        });
+      }
+    };
+    add(filters.ficoBands, "FICO", "ficoBands");
+    add(filters.ltvBands, "LTV", "ltvBands");
+    add(filters.states, "State", "states");
+    add(filters.documentationTypes, "Doc", "documentationTypes");
+    add(filters.occupancies, "Occ", "occupancies");
+    add(filters.purposes, "Purpose", "purposes");
+    add(filters.propertyTypes, "Prop", "propertyTypes");
+    add(filters.dtiBands, "DTI", "dtiBands");
+    add(filters.dscrBands, "DSCR", "dscrBands");
+    add(filters.ageBands, "Age", "ageBands");
+    add(filters.couponBands, "Coupon", "couponBands");
+    add(filters.riBands, "RI", "riBands");
+    if (filters.riskOnly) {
+      chips.push({
+        key: "risk",
+        label: "Flagged Only",
+        clear: () => setFilters((f) => ({ ...f, riskOnly: false })),
+      });
+    }
+    return chips;
+  }, [filters, cohortsMeta]);
 
   if (loading) return <p className="muted">Loading Collateral Analysis…</p>;
   if (error)
     return <StatusBanner tone="error">Collateral: {error}</StatusBanner>;
 
   const metricKey = metric === "loans" ? "loan_count" : "upb";
+  const cohortOptions = cohortsMeta.length
+    ? cohortsMeta
+    : [
+        { id: "low LTV and weak refinance incentive", label: "LLTV Weak RI" },
+        { id: "high LTV and strong refinance incentive", label: "HLTV Strong RI" },
+        { id: "high LTV and weak refinance incentive", label: "HLTV Weak RI" },
+      ];
 
   return (
     <section className="section section-fill section-collateral">
-      <div className="qc-toolbar strat-topbar collat-topbar">
-        <div className="qc-kpi-strip" role="toolbar" aria-label="Collateral KPIs">
-          <div className="qc-kpi is-active" aria-label="Selected Loans">
-            <span className="qc-kpi-label">Selected Loans</span>
-            <span className="qc-kpi-value">
-              {kpis.loan_count.toLocaleString()}
-            </span>
-          </div>
-          <div className="qc-kpi" aria-label="Selected UPB">
-            <span className="qc-kpi-label">Selected UPB</span>
-            <span className="qc-kpi-value">{fmtUpbShort(kpis.upb)}</span>
-          </div>
-          <div className="qc-kpi" aria-label="WAC" title="UPB-Weighted Average Coupon">
-            <span className="qc-kpi-label">WAC</span>
-            <span className="qc-kpi-value">
-              {kpis.wac != null ? `${(kpis.wac * 100).toFixed(2)}%` : "—"}
-            </span>
-          </div>
-          <div className="qc-kpi" aria-label="WA FICO">
-            <span className="qc-kpi-label">WA FICO</span>
-            <span className="qc-kpi-value">
-              {kpis.wa_fico != null ? kpis.wa_fico.toFixed(0) : "—"}
-            </span>
-          </div>
-          <div className="qc-kpi" aria-label="WA LTV">
-            <span className="qc-kpi-label">
-              {ltvMode === "current" ? "WA Curr LTV" : "WA Orig LTV"}
-            </span>
-            <span className="qc-kpi-value">
-              {ltvMode === "current"
-                ? kpis.wa_current_ltv != null
-                  ? `${(kpis.wa_current_ltv * 100).toFixed(1)}%`
-                  : "—"
-                : kpis.wa_ltv != null
-                  ? `${(kpis.wa_ltv * 100).toFixed(1)}%`
-                  : "—"}
-            </span>
-          </div>
-          <div className="qc-kpi" aria-label="Flagged Loans">
-            <span className="qc-kpi-label">Flagged</span>
-            <span className="qc-kpi-value">
-              {kpis.flagged_loan_count.toLocaleString()}
-            </span>
-          </div>
-          <InfoIcon
-            title={sectionRefs.kpis?.title || "Collateral KPIs"}
-            refs={sectionRefs.kpis?.refs}
-          />
-        </div>
-        <div
-          className="cf-grid-toolbar-actions strat-toolbar collat-toolbar"
-          role="toolbar"
-          aria-label="Collateral Filters"
+      <div className="collat-kpi-row" role="toolbar" aria-label="Collateral KPIs">
+        <button
+          type="button"
+          className="collat-kpi is-active"
+          aria-label="Selected Loans"
+          onClick={resetFilters}
+          title="Reset Filters"
         >
-          <div className="collat-cohort-chips" role="group" aria-label="Cohort Filter">
+          <span className="collat-kpi-label">Selected Loans</span>
+          <span className="collat-kpi-value">
+            {kpis.loan_count.toLocaleString()}
+          </span>
+        </button>
+        <div className="collat-kpi" aria-label="Selected UPB">
+          <span className="collat-kpi-label">Selected UPB</span>
+          <span className="collat-kpi-value">{fmtUpbShort(kpis.upb)}</span>
+        </div>
+        <div className="collat-kpi" aria-label="WAC" title="UPB-Weighted Average Coupon">
+          <span className="collat-kpi-label">WAC</span>
+          <span className="collat-kpi-value">
+            {kpis.wac != null ? `${(kpis.wac * 100).toFixed(2)}%` : "—"}
+          </span>
+        </div>
+        <div className="collat-kpi" aria-label="WA FICO">
+          <span className="collat-kpi-label">WA FICO</span>
+          <span className="collat-kpi-value">
+            {kpis.wa_fico != null ? kpis.wa_fico.toFixed(0) : "—"}
+          </span>
+        </div>
+        <div className="collat-kpi" aria-label="WA LTV">
+          <span className="collat-kpi-label">
+            {ltvMode === "current" ? "WA Curr LTV" : "WA Orig LTV"}
+          </span>
+          <span className="collat-kpi-value">
+            {ltvMode === "current"
+              ? kpis.wa_current_ltv != null
+                ? `${(kpis.wa_current_ltv * 100).toFixed(1)}%`
+                : "—"
+              : kpis.wa_ltv != null
+                ? `${(kpis.wa_ltv * 100).toFixed(1)}%`
+                : "—"}
+          </span>
+        </div>
+        <button
+          type="button"
+          className={`collat-kpi${filters.riskOnly ? " is-active" : ""}`}
+          aria-label="Flagged Loans"
+          title="Toggle Flagged Only"
+          onClick={() =>
+            setFilters((f) => ({ ...f, riskOnly: !f.riskOnly }))
+          }
+        >
+          <span className="collat-kpi-label">Flagged</span>
+          <span className="collat-kpi-value">
+            {kpis.flagged_loan_count.toLocaleString()}
+          </span>
+        </button>
+      </div>
+
+      <div className="collat-filter-row" role="toolbar" aria-label="Collateral Filters">
+        <div className="collat-cohort-chips" role="group" aria-label="Cohort Filter">
+          <button
+            type="button"
+            className={`collat-chip${!filters.cohorts.length ? " is-active" : ""}`}
+            onClick={() => setFilters((f) => ({ ...f, cohorts: [] }))}
+          >
+            All Cohorts
+          </button>
+          {cohortOptions.map((c) => (
             <button
+              key={c.id}
               type="button"
-              className={`linkish${!filters.cohorts.length ? " is-active" : ""}`}
-              onClick={() => setFilters((f) => ({ ...f, cohorts: [] }))}
+              className={`collat-chip${
+                filters.cohorts.includes(c.id) ? " is-active" : ""
+              }`}
+              onClick={() =>
+                setFilters((f) => ({
+                  ...f,
+                  cohorts: toggleInList(f.cohorts, c.id),
+                }))
+              }
             >
-              All Cohorts
+              {c.label}
             </button>
-            {(cohortsMeta.length
-              ? cohortsMeta
-              : [
-                  { id: "low LTV and weak refinance incentive", label: "LLTV Weak RI" },
-                  {
-                    id: "high LTV and strong refinance incentive",
-                    label: "HLTV Strong RI",
-                  },
-                  { id: "high LTV and weak refinance incentive", label: "HLTV Weak RI" },
-                ]
-            ).map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                className={`linkish${
-                  filters.cohorts.includes(c.id) ? " is-active" : ""
-                }`}
-                onClick={() =>
-                  setFilters((f) => ({
-                    ...f,
-                    cohorts: toggleInList(f.cohorts, c.id),
-                  }))
-                }
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-          <label className="field-inline">
+          ))}
+        </div>
+        <div className="collat-filter-actions">
+          <label className="field-inline collat-ltv-mode">
             <span>LTV</span>
             <select
               className="select"
@@ -736,32 +913,25 @@ export default function LoanLevelCollateral() {
               <option value="current">Current (Derived)</option>
             </select>
           </label>
+          <div className="collat-toggle" role="group" aria-label="Metric">
+            <button
+              type="button"
+              className={`collat-chip${metric === "upb" ? " is-active" : ""}`}
+              onClick={() => setMetric("upb")}
+            >
+              UPB
+            </button>
+            <button
+              type="button"
+              className={`collat-chip${metric === "loans" ? " is-active" : ""}`}
+              onClick={() => setMetric("loans")}
+            >
+              Loans
+            </button>
+          </div>
           <button
             type="button"
-            className={`linkish${metric === "upb" ? " is-active" : ""}`}
-            onClick={() => setMetric("upb")}
-          >
-            UPB
-          </button>
-          <button
-            type="button"
-            className={`linkish${metric === "loans" ? " is-active" : ""}`}
-            onClick={() => setMetric("loans")}
-          >
-            Loans
-          </button>
-          <button
-            type="button"
-            className={`linkish${filters.riskOnly ? " is-active" : ""}`}
-            onClick={() =>
-              setFilters((f) => ({ ...f, riskOnly: !f.riskOnly }))
-            }
-          >
-            Flagged Only
-          </button>
-          <button
-            type="button"
-            className="linkish"
+            className="collat-chip collat-reset"
             onClick={resetFilters}
             disabled={!activeFilterCount}
           >
@@ -770,17 +940,21 @@ export default function LoanLevelCollateral() {
         </div>
       </div>
 
-      {ltvMode === "current" ? (
-        <p className="collat-coverage muted">
-          Current LTV/CLTV Derived From UPB ÷ Most Recent Property Value (Not An Issuer Field).
-          Source: {source || "—"}.
-        </p>
-      ) : (
-        <p className="collat-coverage muted">
-          Metrics Are UPB-Weighted. DTI/DSCR Coverage Is Partial By Underwrite Path. Source:{" "}
-          {source || "—"}.
-        </p>
-      )}
+      {activeChips.length > 0 ? (
+        <div className="collat-active-filters" aria-label="Active Filters">
+          {activeChips.map((chip) => (
+            <button
+              key={chip.key}
+              type="button"
+              className="collat-active-chip"
+              onClick={chip.clear}
+              title="Remove Filter"
+            >
+              {chip.label} ×
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className="collat-grid">
         <div className="collat-panel">
@@ -801,10 +975,13 @@ export default function LoanLevelCollateral() {
 
         <div className="collat-panel">
           <SectionHead
-            title={ltvMode === "current" ? "Current LTV Distribution" : "Original LTV Distribution"}
+            title={
+              ltvMode === "current"
+                ? "Current LTV Distribution"
+                : "Original LTV Distribution"
+            }
             refsKey="ltv"
             sectionRefs={sectionRefs}
-            meta={ltvMode === "current" ? "Derived" : "Tape"}
           />
           <Observation text={obs.ltv} />
           <DistBar
@@ -821,12 +998,7 @@ export default function LoanLevelCollateral() {
         </div>
 
         <div className="collat-panel collat-panel-wide">
-          <SectionHead
-            title="FICO × LTV Heatmap"
-            refsKey="heatmap"
-            sectionRefs={sectionRefs}
-            meta="Priority"
-          />
+          <SectionHead title="FICO × LTV Heatmap" refsKey="heatmap" sectionRefs={sectionRefs} />
           <Observation text={obs.heatmap} />
           <Heatmap
             cells={heatCells}
@@ -844,18 +1016,52 @@ export default function LoanLevelCollateral() {
                 ltvBands: toggleInList(f.ltvBands, b),
               }))
             }
+            onSelectCell={(fico, ltv) =>
+              setFilters((f) => {
+                const same =
+                  f.ficoBands.length === 1 &&
+                  f.ltvBands.length === 1 &&
+                  f.ficoBands[0] === fico &&
+                  f.ltvBands[0] === ltv;
+                return {
+                  ...f,
+                  ficoBands: same ? [] : [fico],
+                  ltvBands: same ? [] : [ltv],
+                };
+              })
+            }
           />
         </div>
 
         <div className="collat-panel">
           <SectionHead title="DTI Histogram" refsKey="dti_dscr" sectionRefs={sectionRefs} />
           <Observation text={obs.dti_dscr} />
-          <DistBar rows={dtiRows} metric={metricKey} onSelect={() => {}} selected={[]} />
+          <DistBar
+            rows={dtiRows}
+            selected={filters.dtiBands}
+            onSelect={(b) =>
+              setFilters((f) => ({
+                ...f,
+                dtiBands: toggleInList(f.dtiBands, b),
+              }))
+            }
+            metric={metricKey}
+          />
         </div>
 
         <div className="collat-panel">
           <SectionHead title="DSCR Histogram" refsKey="dti_dscr" sectionRefs={sectionRefs} />
-          <DistBar rows={dscrRows} metric={metricKey} onSelect={() => {}} selected={[]} />
+          <DistBar
+            rows={dscrRows}
+            selected={filters.dscrBands}
+            onSelect={(b) =>
+              setFilters((f) => ({
+                ...f,
+                dscrBands: toggleInList(f.dscrBands, b),
+              }))
+            }
+            metric={metricKey}
+          />
         </div>
 
         <div className="collat-panel">
@@ -929,17 +1135,46 @@ export default function LoanLevelCollateral() {
         <div className="collat-panel">
           <SectionHead title="Coupon Distribution" refsKey="coupon" sectionRefs={sectionRefs} />
           <Observation text={obs.coupon} />
-          <DistBar rows={couponRows} metric={metricKey} onSelect={() => {}} selected={[]} />
+          <DistBar
+            rows={couponRows}
+            selected={filters.couponBands}
+            onSelect={(b) =>
+              setFilters((f) => ({
+                ...f,
+                couponBands: toggleInList(f.couponBands, b),
+              }))
+            }
+            metric={metricKey}
+          />
         </div>
 
         <div className="collat-panel">
           <SectionHead title="Refinance Incentive" refsKey="coupon" sectionRefs={sectionRefs} />
-          <DistBar rows={riRows} metric={metricKey} onSelect={() => {}} selected={[]} />
+          <DistBar
+            rows={riRows}
+            selected={filters.riBands}
+            onSelect={(b) =>
+              setFilters((f) => ({
+                ...f,
+                riBands: toggleInList(f.riBands, b),
+              }))
+            }
+            metric={metricKey}
+          />
         </div>
 
-        <div className="collat-panel">
-          <SectionHead title="Seasoning (Age)" refsKey="coupon" sectionRefs={sectionRefs} />
-          <DistBar rows={ageRows} metric={metricKey} onSelect={() => {}} selected={[]} />
+        <div className="collat-panel collat-panel-wide">
+          <SectionHead title="Seasoning · UPB + WAC" refsKey="coupon" sectionRefs={sectionRefs} />
+          <AgeWacChart
+            rows={ageRows}
+            selected={filters.ageBands}
+            onSelect={(b) =>
+              setFilters((f) => ({
+                ...f,
+                ageBands: toggleInList(f.ageBands, b),
+              }))
+            }
+          />
         </div>
 
         <div className="collat-panel collat-panel-wide">
@@ -991,12 +1226,7 @@ export default function LoanLevelCollateral() {
         </div>
 
         <div className="collat-panel collat-panel-full">
-          <SectionHead
-            title="Loan Exception Explorer"
-            refsKey="explorer"
-            sectionRefs={sectionRefs}
-            meta={`${filtered.length.toLocaleString()} Loans`}
-          />
+          <SectionHead title="Loan Exception Explorer" refsKey="explorer" sectionRefs={sectionRefs} />
           <Observation text={obs.explorer} />
           <DataGrid
             rowData={filtered}
@@ -1004,26 +1234,8 @@ export default function LoanLevelCollateral() {
             getRowId={(p) => String(p.data.loan_id)}
             heightClass="grid-wrap-collateral"
             exportName="collateral-exceptions"
-            toolbarStart={
-              <span className="muted">
-                Loan ID Shown For Diligence · Risk Flags Are Heuristics, Not PD
-              </span>
-            }
           />
         </div>
-
-        {inventory?.missing?.length ? (
-          <div className="collat-panel collat-panel-full collat-missing">
-            <SectionHead title="Tape Gaps (Unavailable)" />
-            <ul className="collat-missing-list">
-              {inventory.missing.map((m) => (
-                <li key={m.field}>
-                  <strong>{m.spec}</strong> — {m.reason}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
       </div>
     </section>
   );
