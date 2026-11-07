@@ -43,6 +43,7 @@ import {
   remappedKeyedObject,
 } from "./cohortLabels";
 import LoanLevelCollateral from "./LoanLevelCollateral";
+import InvestorAnalysis from "./InvestorAnalysis";
 import "./App.css";
 
 
@@ -52,6 +53,7 @@ const NAV = [
   { id: "asf", label: "Investor Tape" },
   { id: "qc", label: "Loan QC" },
   { id: "collateral", label: "Collateral" },
+  { id: "investor", label: "Investor Analysis" },
   { id: "cohort", label: "Cohort" },
   { id: "scenarios", label: "Scenarios" },
   { id: "cashflow", label: "Cash Flow" },
@@ -112,6 +114,13 @@ function NavIcon({ id }) {
           <path d="M5 11.5h6" {...stroke} />
         </svg>
       );
+    case "investor":
+      return (
+        <svg {...common}>
+          <path d="M3 12.5V5.5l5-3 5 3v7" {...stroke} />
+          <path d="M6.5 12.5V8.5h3v4" {...stroke} />
+        </svg>
+      );
     case "cohort":
       return (
         <svg {...common}>
@@ -149,6 +158,7 @@ function NavIcon({ id }) {
       );
   }
 }
+
 
 function readClusterFilter() {
   // Always start with every cohort selected (not a single restored filter).
@@ -1966,6 +1976,8 @@ export default function App() {
 
           {pane === "collateral" && <LoanLevelCollateral />}
 
+          {pane === "investor" && <InvestorAnalysis />}
+
           {pane === "cohort" && (
             <>
               <section className="section section-cohort-chart">
@@ -2009,8 +2021,8 @@ export default function App() {
                             name="Original CLTV"
                             tick={axisTick}
                             ticks={X_TICKS}
-                            axisLine={{ stroke: "#8A9BB0" }}
-                            tickLine={{ stroke: "#8A9BB0" }}
+                            axisLine={{ stroke: "#323232" }}
+                            tickLine={{ stroke: "#323232" }}
                             tickFormatter={(v) => Number(v).toFixed(1)}
                             domain={X_DOMAIN}
                             allowDataOverflow
@@ -2018,7 +2030,7 @@ export default function App() {
                               value: "Original CLTV",
                               position: "insideBottom",
                               offset: -14,
-                              fill: "#001A41",
+                              fill: "#FCFCFC",
                               fontSize: 11,
                               fontFamily: FONT,
                               fontWeight: 600,
@@ -2030,8 +2042,8 @@ export default function App() {
                             name="Refinance Incentive"
                             tick={axisTick}
                             ticks={Y_TICKS}
-                            axisLine={{ stroke: "#8A9BB0" }}
-                            tickLine={{ stroke: "#8A9BB0" }}
+                            axisLine={{ stroke: "#323232" }}
+                            tickLine={{ stroke: "#323232" }}
                             domain={Y_DOMAIN}
                             allowDataOverflow
                             width={44}
@@ -2040,7 +2052,7 @@ export default function App() {
                               angle: -90,
                               position: "insideLeft",
                               offset: 8,
-                              fill: "#001A41",
+                              fill: "#FCFCFC",
                               fontSize: 11,
                               fontFamily: FONT,
                               fontWeight: 600,
@@ -2050,17 +2062,17 @@ export default function App() {
                           <Tooltip
                             cursor={{
                               strokeDasharray: "3 3",
-                              stroke: "#8A9BB0",
+                              stroke: "#323232",
                             }}
                             contentStyle={{
-                              background: "#FFFFFF",
-                              border: "1px solid #D0D7E2",
+                              background: "#0C0C0C",
+                              border: "1px solid #323232",
                               borderRadius: 0,
                               fontSize: 11,
-                              color: "#001A41",
+                              color: "#FCFCFC",
                               fontFamily: FONT,
                             }}
-                            labelStyle={{ color: "#4A5F7A" }}
+                            labelStyle={{ color: "#808080" }}
                           />
                           <Legend
                             verticalAlign="top"

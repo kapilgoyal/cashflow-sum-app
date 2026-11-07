@@ -8,6 +8,7 @@ from app.api.routes import (
     cashflows,
     collateral,
     health,
+    investor_analysis,
     neon_data,
     qc,
     run_loan,
@@ -22,6 +23,7 @@ api_router.include_router(cashflows.router)
 api_router.include_router(neon_data.router)
 api_router.include_router(asf_tape.router)
 api_router.include_router(collateral.router)
+api_router.include_router(investor_analysis.router)
 api_router.include_router(qc.router)
 api_router.include_router(assumptions.router)
 

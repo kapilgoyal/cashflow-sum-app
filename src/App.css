@@ -1943,3 +1943,335 @@ body {
     min-height: 44px;
   }
 }
+
+/* —— Investor Analysis (Bloomberg Terminal dark) —— */
+.section-investor-analysis {
+  --ia-bg: #000000;
+  --ia-panel: #212026;
+  --ia-text: #fcfcfc;
+  --ia-muted: #808080;
+  --ia-accent: #fd9d24;
+  --ia-hairline: #585858;
+  --ia-empty: #1a1a1a;
+  --ia-font: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  background: var(--ia-bg);
+  color: var(--ia-text);
+  font-family: var(--ia-font);
+  gap: 8px;
+}
+
+.ia-muted {
+  color: var(--ia-muted);
+  font-family: var(--ia-font);
+  padding: 12px;
+}
+
+.ia-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.ia-kpi-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ia-kpi {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1px;
+  min-height: var(--cf-kpi-min-h);
+  padding: 4px 12px;
+  border: 1px solid var(--ia-hairline);
+  background: var(--ia-panel);
+  color: var(--ia-text);
+  text-align: right;
+}
+
+.ia-kpi-label {
+  font-size: var(--cf-font-kpi-label);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--ia-muted);
+  line-height: 1.1;
+}
+
+.ia-kpi-value {
+  font-size: var(--cf-font-kpi-value);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--ia-accent);
+  line-height: 1.1;
+}
+
+.ia-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ia-chip {
+  min-height: var(--cf-control-h);
+  padding: 4px 10px;
+  border: 1px solid var(--ia-hairline);
+  background: transparent;
+  color: var(--ia-muted);
+  font: inherit;
+  font-size: var(--cf-font-sm);
+  cursor: pointer;
+}
+
+.ia-chip:hover {
+  color: var(--ia-text);
+  border-color: var(--ia-accent);
+}
+
+.ia-chip.is-active {
+  color: #000;
+  background: var(--ia-accent);
+  border-color: var(--ia-accent);
+}
+
+.ia-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ia-panel {
+  background: var(--ia-panel);
+  border: 1px solid var(--ia-hairline);
+  padding: 8px 10px 10px;
+  min-width: 0;
+}
+
+.ia-panel:nth-child(1),
+.ia-panel:nth-child(3),
+.ia-panel:nth-child(5),
+.ia-panel:nth-child(6),
+.ia-panel:nth-child(8) {
+  grid-column: 1 / -1;
+}
+
+.ia-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ia-panel-title {
+  margin: 0;
+  font-size: var(--cf-font-md);
+  font-weight: 500;
+  color: var(--ia-text);
+  letter-spacing: 0.01em;
+}
+
+.ia-panel-viz {
+  font-size: 9px;
+  color: var(--ia-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ia-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ia-chart {
+  width: 100%;
+  height: 220px;
+  min-height: 180px;
+}
+
+.ia-chart-tall {
+  height: 260px;
+}
+
+.ia-chart-short {
+  height: 160px;
+}
+
+.ia-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ia-meta {
+  margin: 0;
+  font-size: var(--cf-font-sm);
+  color: var(--ia-muted);
+}
+
+.ia-num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ia-scorecard-table {
+  overflow-x: auto;
+}
+
+.ia-scorecard-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--cf-font-sm);
+}
+
+.ia-scorecard-table th,
+.ia-scorecard-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--ia-hairline);
+  text-align: left;
+}
+
+.ia-scorecard-table th {
+  color: var(--ia-muted);
+  font-weight: 500;
+}
+
+.ia-scorecard-table td.ia-num,
+.ia-scorecard-table th:not(:first-child) {
+  text-align: right;
+}
+
+.ia-heatmap {
+  display: grid;
+  grid-template-columns: 72px repeat(5, minmax(36px, 1fr));
+  gap: 2px;
+  font-size: 10px;
+}
+
+.ia-heatmap-corner {
+  min-height: 22px;
+}
+
+.ia-heatmap-axis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ia-muted);
+  padding: 2px;
+}
+
+.ia-heatmap-y {
+  justify-content: flex-start;
+}
+
+.ia-heatmap-row {
+  display: contents;
+}
+
+.ia-heatmap-cell {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid transparent;
+}
+
+.ia-slider-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--cf-font-sm);
+  color: var(--ia-muted);
+}
+
+.ia-slider-label strong {
+  color: var(--ia-accent);
+  font-weight: 500;
+  min-width: 3.5em;
+}
+
+.ia-slider {
+  flex: 1;
+  accent-color: var(--ia-accent);
+  max-width: 320px;
+}
+
+.ia-geo {
+  display: grid;
+  grid-template-columns: 1fr 180px;
+  gap: 10px;
+  align-items: start;
+}
+
+.ia-top-states {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ia-top-state {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ia-text);
+  font: inherit;
+  font-size: var(--cf-font-sm);
+  cursor: pointer;
+  text-align: left;
+}
+
+.ia-top-state:hover,
+.ia-top-state.is-active {
+  border-color: var(--ia-accent);
+  color: var(--ia-accent);
+}
+
+.ia-table-wrap {
+  min-height: 0;
+}
+
+.grid-wrap-ia-loans {
+  height: 220px;
+  min-height: 180px;
+}
+
+.section-investor-analysis .choropleth-legend {
+  color: var(--ia-muted);
+  font-family: var(--ia-font);
+}
+
+@media (max-width: 1100px) {
+  .ia-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ia-panel:nth-child(n) {
+    grid-column: auto;
+  }
+
+  .ia-split,
+  .ia-geo {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .ia-chip,
+  .ia-top-state,
+  .ia-kpi {
+    min-height: 44px;
+  }
+}
