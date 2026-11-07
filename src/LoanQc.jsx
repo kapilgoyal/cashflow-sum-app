@@ -1,13 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
-import {
   DataGrid,
   StatusBanner,
   fmtInt,
@@ -20,14 +12,12 @@ import { apiUrl } from "./apiBase";
 import { cohortLabel } from "./cohortLabels";
 
 /**
- * Loan QC: Global NQM rules + draft English rules (translate → test → confirm).
+ * Loan QC: Standard NQM rules + draft English rules (translate → test → confirm).
  */
 export default function LoanQc({ onDrillLoan }) {
   const [qcRows, setQcRows] = useState([]);
   const [qcLoading, setQcLoading] = useState(false);
   const [qcError, setQcError] = useState(null);
-  const [qcStatusFilter, setQcStatusFilter] = useState("all");
-  const [qcView, setQcView] = useState("grid");
   const [qcSelectedRule, setQcSelectedRule] = useState(null);
   const [qcDrillLoans, setQcDrillLoans] = useState([]);
   const [qcDrillTotal, setQcDrillTotal] = useState(0);
@@ -45,14 +35,10 @@ export default function LoanQc({ onDrillLoan }) {
   const [composerBusy, setComposerBusy] = useState(false);
   const [composerMsg, setComposerMsg] = useState(null);
   const [composerErr, setComposerErr] = useState(null);
-  const [groqConfigured, setGroqConfigured] = useState(null);
   const [runBusy, setRunBusy] = useState(false);
 
   const applyResultsPayload = useCallback((data) => {
     setQcRows(Array.isArray(data.results) ? data.results : []);
-    if (typeof data.groq_configured === "boolean") {
-      setGroqConfigured(data.groq_configured);
-    }
   }, []);
 
   const refreshResults = useCallback(async () => {
@@ -84,11 +70,14 @@ export default function LoanQc({ onDrillLoan }) {
       .filter((r) => r.outcome === "pass" || r.outcome === "fail")
       .map((r) => ({
         ...r,
-        scope: r.scope || (r.source === "custom" ? "Custom" : "Global"),
+        scope:
+          r.scope === "Global"
+            ? "Standard"
+            : r.scope || (r.source === "custom" ? "Custom" : "Standard"),
         status_label:
           r.outcome === "pass" ? "Pass" : r.outcome === "fail" ? "Fail" : "",
       }));
-    // Custom (user) rules first, then Global
+    // Custom (user) rules first, then Standard
     return [...rows].sort((a, b) => {
       const as = a.scope === "Custom" ? 0 : 1;
       const bs = b.scope === "Custom" ? 0 : 1;
@@ -99,94 +88,102 @@ export default function LoanQc({ onDrillLoan }) {
     });
   }, [qcRows]);
 
-  const qcSummary = useMemo(() => {
-    const pass = qcActiveRows.filter((r) => r.outcome === "pass").length;
-    const fail = qcActiveRows.filter((r) => r.outcome === "fail").length;
-    const total = pass + fail;
-    return { pass, fail, total };
-  }, [qcActiveRows]);
+  const qcKpis = useMemo(() => {
+    // Active rules only — skipped/warning rules are hidden for now.
+    const rows = (qcRows || []).filter(
+      (r) =>
+        r &&
+        r.source !== "demo" &&
+        (r.outcome === "pass" || r.outcome === "fail")
+    );
+    const checks = rows.length;
+    const failed = rows.reduce(
+      (sum, r) => sum + (Number(r.fail_count) || 0),
+      0
+    );
+    return { checks, failed };
+  }, [qcRows]);
 
-  const qcFilteredRows = useMemo(() => {
-    if (qcStatusFilter === "pass") {
-      return qcActiveRows.filter((r) => r.outcome === "pass");
-    }
-    if (qcStatusFilter === "fail") {
-      return qcActiveRows.filter((r) => r.outcome === "fail");
-    }
-    if (qcStatusFilter === "custom") {
-      return qcActiveRows.filter((r) => r.scope === "Custom");
-    }
-    if (qcStatusFilter === "global") {
-      return qcActiveRows.filter((r) => r.scope === "Global");
-    }
-    return qcActiveRows;
-  }, [qcActiveRows, qcStatusFilter]);
+  const qcColumnDefs = useMemo(() => {
+    // Fixed widths from full header label + filter/sort icons (do not shrink).
+    const headerWidth = (label) =>
+      Math.max(120, Math.ceil(String(label).length * 10 + 88));
 
-  const qcChartData = useMemo(
-    () => [
-      { name: "Pass", value: qcSummary.pass, fill: "#1F8A44" },
-      { name: "Fail", value: qcSummary.fail, fill: "#C62828" },
-    ],
-    [qcSummary.pass, qcSummary.fail]
-  );
+    const scope = "Scope";
+    const description = "Description";
+    const status = "Status";
+    const passed = "Passed Loans";
+    const failed = "Failed Loans";
+    const wScope = headerWidth(scope);
+    const wStatus = headerWidth(status);
+    const wPassed = headerWidth(passed);
+    const wFailed = headerWidth(failed);
 
-  const customCount = useMemo(
-    () => qcActiveRows.filter((r) => r.scope === "Custom").length,
-    [qcActiveRows]
-  );
-  const globalCount = useMemo(
-    () => qcActiveRows.filter((r) => r.scope === "Global").length,
-    [qcActiveRows]
-  );
-
-  const qcColumnDefs = useMemo(
-    () => [
+    return [
       {
         field: "scope",
-        headerName: "Scope",
-        flex: 0.7,
-        minWidth: 100,
+        headerName: scope,
+        width: wScope,
+        minWidth: wScope,
+        maxWidth: wScope,
+        flex: 0,
+        suppressSizeToFit: true,
         cellClass: (p) =>
-          p.value === "Custom" ? "qc-scope-custom" : "qc-scope-global",
+          p.value === "Custom" ? "qc-scope-custom" : "qc-scope-standard",
       },
       {
         field: "nl_description",
-        headerName: "Description",
-        flex: 3,
-        minWidth: 280,
+        headerName: description,
+        flex: 1,
+        minWidth: 240,
       },
       {
         field: "status_label",
-        headerName: "Status",
-        flex: 0.8,
-        minWidth: 110,
-        cellClass: (p) => {
-          if (p.value === "Pass") return "qc-outcome-pass";
-          if (p.value === "Fail") return "qc-outcome-fail";
-          return "";
+        headerName: status,
+        width: wStatus,
+        minWidth: wStatus,
+        maxWidth: wStatus,
+        flex: 0,
+        suppressSizeToFit: true,
+        cellRenderer: (p) => {
+          const label = p.value || "";
+          const tone =
+            label === "Pass" ? "pass" : label === "Fail" ? "fail" : "warn";
+          if (!label) return null;
+          return (
+            <span className={`qc-status-cell qc-outcome-${tone}`}>
+              <span className={`qc-status-dot is-${tone}`} aria-hidden="true" />
+              {label}
+            </span>
+          );
         },
       },
       {
         field: "pass_count",
-        headerName: "Passed Loans",
-        flex: 1.1,
-        minWidth: 140,
+        headerName: passed,
+        width: wPassed,
+        minWidth: wPassed,
+        maxWidth: wPassed,
+        flex: 0,
+        suppressSizeToFit: true,
         type: "numericColumn",
         filter: "agNumberColumnFilter",
         cellClass: "cf-num",
       },
       {
         field: "fail_count",
-        headerName: "Failed Loans",
-        flex: 1.1,
-        minWidth: 140,
+        headerName: failed,
+        width: wFailed,
+        minWidth: wFailed,
+        maxWidth: wFailed,
+        flex: 0,
+        suppressSizeToFit: true,
         type: "numericColumn",
         filter: "agNumberColumnFilter",
         cellClass: "cf-num",
       },
-    ],
-    []
-  );
+    ];
+  }, []);
 
   const qcDrillColumnDefs = useMemo(
     () => [
@@ -394,18 +391,13 @@ export default function LoanQc({ onDrillLoan }) {
         body: JSON.stringify({ english: english.trim() }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(detailText(data) || `HTTP ${res.status}`);
+      if (!res.ok || data.ok === false) {
+        throw new Error(
+          detailText(data) || data.error || `HTTP ${res.status}`
+        );
       }
       setPredicate(data.sql_predicate || "");
-      if (data.mode === "mock") setGroqConfigured(false);
-      else if (data.mode === "groq") setGroqConfigured(true);
-      setComposerMsg(
-        data.warning ||
-          (data.mode === "groq"
-            ? `Translated · ${data.model || "Groq"}`
-            : "Translated")
-      );
+      setComposerMsg(`Translated · ${data.model || "Groq"}`);
     } catch (err) {
       setComposerErr(err.message || String(err));
     } finally {
@@ -422,7 +414,6 @@ export default function LoanQc({ onDrillLoan }) {
       setComposerBusy(true);
       setComposerErr(null);
       setComposerMsg(null);
-      setQcView("grid");
       try {
         const res = await fetch(apiUrl("/api/qc/preview"), {
           method: "POST",
@@ -439,9 +430,6 @@ export default function LoanQc({ onDrillLoan }) {
           throw new Error(detailText(data) || `HTTP ${res.status}`);
         }
         if (data.sql_predicate) setPredicate(data.sql_predicate);
-        if (typeof data.groq_configured === "boolean") {
-          setGroqConfigured(data.groq_configured);
-        }
         setTested(true);
         setDraftStats({
           pass_count: data.pass_count,
@@ -462,9 +450,8 @@ export default function LoanQc({ onDrillLoan }) {
         setQcDrillLoans(Array.isArray(data.loans) ? data.loans : []);
         setQcDrillTotal(data.total ?? (data.loans || []).length);
         setQcDrillError(null);
-        const warn = data.warning ? ` · ${data.warning}` : "";
         setComposerMsg(
-          `Tested · ${fmtInt(data.pass_count)} Passed · ${fmtInt(data.fail_count)} Failed${warn}`
+          `Tested · ${fmtInt(data.pass_count)} Passed · ${fmtInt(data.fail_count)} Failed`
         );
         return true;
       } catch (err) {
@@ -605,7 +592,6 @@ export default function LoanQc({ onDrillLoan }) {
   ]);
 
   const showDrill =
-    qcView === "grid" &&
     (drillMode === "draft" || !!qcSelectedRule) &&
     (qcDrillLoading ||
       !!qcDrillError ||
@@ -615,67 +601,15 @@ export default function LoanQc({ onDrillLoan }) {
   return (
     <section className="section section-fill section-qc">
       <div className="qc-toolbar">
-        <div className="qc-kpi-strip" role="toolbar" aria-label="QC Filters">
-          <button
-            type="button"
-            className={`qc-kpi${qcStatusFilter === "all" ? " is-active" : ""}`}
-            onClick={() => setQcStatusFilter("all")}
-          >
-            <span className="qc-kpi-label">Total Rules</span>
-            <span className="qc-kpi-value">{qcSummary.total}</span>
-          </button>
-          <button
-            type="button"
-            className={`qc-kpi${qcStatusFilter === "custom" ? " is-active" : ""}`}
-            onClick={() => setQcStatusFilter("custom")}
-          >
-            <span className="qc-kpi-label">Custom</span>
-            <span className="qc-kpi-value">{customCount}</span>
-          </button>
-          <button
-            type="button"
-            className={`qc-kpi${qcStatusFilter === "global" ? " is-active" : ""}`}
-            onClick={() => setQcStatusFilter("global")}
-          >
-            <span className="qc-kpi-label">Global</span>
-            <span className="qc-kpi-value">{globalCount}</span>
-          </button>
-          <button
-            type="button"
-            className={`qc-kpi qc-kpi-pass${qcStatusFilter === "pass" ? " is-active" : ""}`}
-            onClick={() => setQcStatusFilter("pass")}
-          >
-            <span className="qc-kpi-label">Passed</span>
-            <span className="qc-kpi-value">{qcSummary.pass}</span>
-          </button>
-          <button
-            type="button"
-            className={`qc-kpi qc-kpi-fail${qcStatusFilter === "fail" ? " is-active" : ""}`}
-            onClick={() => setQcStatusFilter("fail")}
-          >
-            <span className="qc-kpi-label">Failed</span>
-            <span className="qc-kpi-value">{qcSummary.fail}</span>
-          </button>
-        </div>
-        <div
-          className="cf-grid-toolbar-actions qc-view-toggle"
-          role="toolbar"
-          aria-label="QC View"
-        >
-          <button
-            type="button"
-            className={`linkish${qcView === "grid" ? " is-active" : ""}`}
-            onClick={() => setQcView("grid")}
-          >
-            Grid
-          </button>
-          <button
-            type="button"
-            className={`linkish${qcView === "chart" ? " is-active" : ""}`}
-            onClick={() => setQcView("chart")}
-          >
-            Chart
-          </button>
+        <div className="qc-kpi-strip" aria-label="QC Summary">
+          <div className="qc-kpi" aria-label="QC Checks">
+            <span className="qc-kpi-label">QC Checks</span>
+            <span className="qc-kpi-value">{fmtInt(qcKpis.checks)}</span>
+          </div>
+          <div className="qc-kpi" aria-label="Total Failed">
+            <span className="qc-kpi-label">Total Failed</span>
+            <span className="qc-kpi-value">{fmtInt(qcKpis.failed)}</span>
+          </div>
         </div>
       </div>
 
@@ -684,11 +618,6 @@ export default function LoanQc({ onDrillLoan }) {
           <h2 className="qc-composer-title">
             {editCheckId ? "Edit Custom Rule" : "New Custom Rule"}
           </h2>
-          {groqConfigured === false ? (
-            <span className="qc-composer-badge">Mock</span>
-          ) : groqConfigured === true ? (
-            <span className="qc-composer-badge is-live">Groq</span>
-          ) : null}
         </div>
         <textarea
           id="qc-english"
@@ -735,15 +664,29 @@ export default function LoanQc({ onDrillLoan }) {
             >
               Failed {fmtInt(draftStats.fail_count)}
             </button>
-            <span
-              className={
-                draftStats.outcome === "pass"
-                  ? "qc-outcome-pass"
-                  : "qc-outcome-fail"
-              }
-            >
-              {draftStats.status_label || ""}
-            </span>
+            {draftStats.status_label ? (
+              <span
+                className={`qc-status-cell qc-outcome-${
+                  draftStats.outcome === "pass"
+                    ? "pass"
+                    : draftStats.outcome === "fail"
+                      ? "fail"
+                      : "warn"
+                }`}
+              >
+                <span
+                  className={`qc-status-dot is-${
+                    draftStats.outcome === "pass"
+                      ? "pass"
+                      : draftStats.outcome === "fail"
+                        ? "fail"
+                        : "warn"
+                  }`}
+                  aria-hidden="true"
+                />
+                {draftStats.status_label}
+              </span>
+            ) : null}
           </div>
         ) : null}
         <div className="qc-composer-actions">
@@ -820,37 +763,15 @@ export default function LoanQc({ onDrillLoan }) {
         <p className="muted">
           Write An English Check, Test Against Loans, Then Confirm To Save.
         </p>
-      ) : qcView === "chart" ? (
-        <div className="qc-chart-wrap">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={qcChartData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius={48}
-                outerRadius={80}
-                paddingAngle={2}
-              >
-                {qcChartData.map((entry) => (
-                  <Cell key={entry.name} fill={entry.fill} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend verticalAlign="bottom" height={28} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
       ) : (
         <DataGrid
-          rowData={qcFilteredRows}
+          rowData={qcActiveRows}
           columnDefs={qcColumnDefs}
           getRowId={(p) => String(p.data.check_id)}
           onRowDrill={onQcRuleDrill}
           heightClass={showDrill ? "grid-wrap-qc-rules" : "grid-wrap-fill"}
           exportName="loan-qc"
+          showExportActions={false}
         />
       )}
 
@@ -870,6 +791,7 @@ export default function LoanQc({ onDrillLoan }) {
               toolbarStart={qcDrillToolbarStart}
               heightClass="grid-wrap-qc-drill"
               exportName="qc-loans"
+              showExportActions={false}
             />
           )}
         </div>

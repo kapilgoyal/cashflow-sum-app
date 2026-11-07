@@ -403,6 +403,7 @@ export function DataGrid({
   heightClass,
   exportName = "cashflow",
   showToolbar = true,
+  showExportActions = true,
   toolbarStart = null,
   gridProps = {},
 }) {
@@ -543,33 +544,35 @@ export function DataGrid({
       tabIndex={0}
       onKeyDown={onKeyDown}
     >
-      {showToolbar && (
+      {showToolbar && (toolbarStart || showExportActions) && (
         <div className="cf-grid-toolbar" role="toolbar" aria-label="Grid Actions">
           {toolbarStart ? (
             <div className="cf-grid-toolbar-start">{toolbarStart}</div>
           ) : (
             <div className="cf-grid-toolbar-start" aria-hidden="true" />
           )}
-          <div className="cf-grid-toolbar-actions">
-            <button
-              type="button"
-              className="cf-grid-icon-btn"
-              onClick={exportCsv}
-              title="Export CSV"
-              aria-label="Export CSV"
-            >
-              <IconExportCsv size={iconSize} />
-            </button>
-            <button
-              type="button"
-              className="cf-grid-icon-btn"
-              onClick={copyRows}
-              title="Copy (Ctrl+C)"
-              aria-label="Copy Rows To Clipboard"
-            >
-              <IconCopy size={iconSize} />
-            </button>
-          </div>
+          {showExportActions ? (
+            <div className="cf-grid-toolbar-actions">
+              <button
+                type="button"
+                className="cf-grid-icon-btn"
+                onClick={exportCsv}
+                title="Export CSV"
+                aria-label="Export CSV"
+              >
+                <IconExportCsv size={iconSize} />
+              </button>
+              <button
+                type="button"
+                className="cf-grid-icon-btn"
+                onClick={copyRows}
+                title="Copy (Ctrl+C)"
+                aria-label="Copy Rows To Clipboard"
+              >
+                <IconCopy size={iconSize} />
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
       <div className="cf-grid-host ag-theme-cashflow">

@@ -551,7 +551,7 @@ class AsfTapeRepository:
                         )
                     )
                     row["scope"] = (
-                        "Custom" if row.get("source") == "custom" else "Global"
+                        "Custom" if row.get("source") == "custom" else "Standard"
                     )
                     out.append(row)
                 return out

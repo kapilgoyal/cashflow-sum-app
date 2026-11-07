@@ -21,7 +21,12 @@
   --cf-nav-hover: #1a1a1a;
   --cf-nav-width: 152px;
   --cf-nav-width-collapsed: 48px;
-  /* Dense Bloomberg Terminal scale — compact body, no oversized display type. */
+  /*
+   * Canonical type scale = Scenarios AG Grid (cashflowGrid GRID_SCALE.base):
+   *   headers / labels / buttons → --cf-font-sm (10px) / weight 600 / 0.01em
+   *   body / inputs / cells      → --cf-font-md (11px) / weight 400
+   * --cf-font-body kept for rare non-grid chrome; prefer --cf-font-md for forms.
+   */
   --cf-font-body: 12px;
   --cf-font-sm: 10px;
   --cf-font-md: 11px;
@@ -342,8 +347,8 @@ body {
 .scenario-speed-title {
   margin: 0;
   font-size: var(--cf-font-sm);
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--cf-text);
 }
 
@@ -356,8 +361,8 @@ body {
 .section-title {
   margin: 0 0 6px;
   font-size: var(--cf-font-sm);
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--cf-text);
 }
 
@@ -540,7 +545,8 @@ body {
   min-height: var(--cf-control-h);
   padding: 3px 6px;
   font: inherit;
-  font-size: var(--cf-font-body);
+  font-size: var(--cf-font-md);
+  font-weight: 400;
   font-feature-settings: "tnum" 1;
   color: var(--cf-text);
   background: var(--cf-bg);
@@ -748,31 +754,16 @@ body {
   gap: 8px;
 }
 
-/* Match Scenarios .section-title / .scenario-speed-title */
+/* Match Scenarios AG Grid headers: 10px / 600 / 0.01em */
 .qc-composer-title {
   margin: 0;
   font-size: var(--cf-font-sm);
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--cf-text);
 }
 
-.qc-composer-badge {
-  font-size: var(--cf-font-sm);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--cf-muted);
-  border: 1px solid var(--cf-hairline);
-  padding: 2px 6px;
-}
-
-.qc-composer-badge.is-live {
-  color: var(--cf-on-accent, #001a41);
-  background: var(--cf-accent, #fd9d24);
-  border-color: var(--cf-accent, #fd9d24);
-}
-
-/* Match .field label */
+/* Match .field label / grid header */
 .qc-composer-label {
   font-size: var(--cf-font-sm);
   font-weight: 600;
@@ -780,6 +771,7 @@ body {
   letter-spacing: 0.01em;
 }
 
+/* Match Scenarios AG Grid body cells: 11px / 400 */
 .qc-composer-input {
   width: 100%;
   resize: vertical;
@@ -790,7 +782,9 @@ body {
   background: var(--cf-panel);
   color: var(--cf-text);
   font: inherit;
-  font-size: var(--cf-font-body);
+  font-family: inherit;
+  font-size: var(--cf-font-md);
+  font-weight: 400;
   font-feature-settings: "tnum" 1;
   line-height: 1.35;
 }
@@ -800,10 +794,10 @@ body {
   outline-offset: 0;
 }
 
-/* Same IBM Plex Mono stack as Scenarios (no alternate mono) */
 .qc-composer-predicate {
   font-family: inherit;
-  font-size: var(--cf-font-body);
+  font-size: var(--cf-font-md);
+  font-weight: 400;
 }
 
 .qc-composer-actions {
@@ -824,8 +818,8 @@ body {
   color: var(--cf-on-accent, #001a41);
   font: inherit;
   font-size: var(--cf-font-sm);
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
 }
 
@@ -844,10 +838,11 @@ body {
   border-color: var(--cf-chrome, #8a9bb0);
 }
 
-/* Match .section-meta */
+/* Match .section-meta / grid header */
 .qc-composer-note {
   margin: 2px 0 0;
   font-size: var(--cf-font-sm);
+  font-weight: 600;
   color: var(--cf-muted);
   letter-spacing: 0.01em;
 }
@@ -870,8 +865,8 @@ body {
   color: var(--cf-text);
   font: inherit;
   font-size: var(--cf-font-sm);
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
 }
 
@@ -887,10 +882,10 @@ body {
 
 .qc-scope-custom {
   color: var(--cf-accent);
-  font-weight: 700;
+  font-weight: 600;
 }
 
-.qc-scope-global {
+.qc-scope-standard {
   color: var(--cf-muted);
 }
 
@@ -898,7 +893,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 6px 10px;
   margin: 0 0 2px;
   min-height: var(--cf-control-h);
@@ -923,10 +918,17 @@ body {
   border-radius: 0;
   background: var(--cf-bg-deep);
   color: var(--cf-text);
-  cursor: pointer;
+  cursor: default;
   text-align: left;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+
+/* Loan QC strip: accent fill (same as former Warning “20” color), dark type */
+.section-qc .qc-kpi {
+  background: var(--cf-accent);
+  border-color: var(--cf-accent);
+  color: var(--cf-on-accent);
 }
 
 .qc-kpi-label {
@@ -937,12 +939,20 @@ body {
   color: var(--cf-muted);
 }
 
+.section-qc .qc-kpi-label {
+  color: rgba(0, 0, 0, 0.72);
+}
+
 .qc-kpi-value {
   font-size: var(--cf-font-kpi-value);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--cf-text);
   line-height: 1.1;
+}
+
+.section-qc .qc-kpi-value {
+  color: var(--cf-on-accent);
 }
 
 .qc-kpi.is-active {
@@ -956,7 +966,7 @@ body {
 }
 
 .qc-kpi-fail .qc-kpi-value {
-  color: #f07a94;
+  color: var(--cf-down);
 }
 
 .qc-view-toggle {
@@ -1013,6 +1023,35 @@ body {
   text-underline-offset: 2px;
 }
 
+.qc-status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--cf-font-md);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.qc-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.qc-status-dot.is-pass {
+  background: var(--cf-up);
+}
+
+.qc-status-dot.is-fail {
+  background: var(--cf-down);
+}
+
+.qc-status-dot.is-warn {
+  background: var(--cf-accent);
+}
+
 .qc-outcome-pass {
   color: var(--cf-up);
   font-weight: 600;
@@ -1023,8 +1062,10 @@ body {
   font-weight: 600;
 }
 
+.qc-outcome-warn,
 .qc-outcome-skip {
-  color: var(--cf-muted);
+  color: var(--cf-accent);
+  font-weight: 600;
 }
 
 .panel-grid {
@@ -1499,6 +1540,17 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Loan QC: never ellipsize header titles (columns sized to full labels). */
+.section-qc .ag-theme-cashflow .ag-header-cell-text {
+  text-overflow: clip;
+  overflow: visible;
+  max-width: none;
+}
+
+.section-qc .ag-theme-cashflow .ag-header-cell-label {
+  overflow: visible;
 }
 
 .ag-theme-cashflow .ag-header-icon,
