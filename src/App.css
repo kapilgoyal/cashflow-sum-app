@@ -731,6 +731,119 @@ body {
   font-family: inherit;
 }
 
+.qc-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--cf-hairline);
+  background: var(--cf-row-alt, #f7f9fc);
+}
+
+.qc-composer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.qc-composer-title {
+  font-size: var(--cf-font-md);
+  font-weight: 600;
+  color: var(--cf-text);
+  letter-spacing: 0.01em;
+}
+
+.qc-composer-badge {
+  font-size: var(--cf-font-sm, 10px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cf-muted);
+  border: 1px solid var(--cf-hairline);
+  padding: 2px 6px;
+}
+
+.qc-composer-badge.is-live {
+  color: var(--cf-on-accent, #001a41);
+  background: var(--cf-accent, #fd9d24);
+  border-color: var(--cf-accent, #fd9d24);
+}
+
+.qc-composer-label {
+  font-size: var(--cf-font-sm, 10px);
+  font-weight: 600;
+  color: var(--cf-muted);
+  letter-spacing: 0.02em;
+}
+
+.qc-composer-input {
+  width: 100%;
+  resize: vertical;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 1px solid var(--cf-chrome, #8a9bb0);
+  border-radius: 0;
+  background: var(--cf-panel, #fff);
+  color: var(--cf-text);
+  font-family: inherit;
+  font-size: var(--cf-font-body);
+  line-height: 1.35;
+}
+
+.qc-composer-input:focus {
+  outline: 1px solid var(--cf-accent, #fd9d24);
+  outline-offset: 0;
+}
+
+.qc-composer-predicate {
+  font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+  font-size: var(--cf-font-md);
+}
+
+.qc-composer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.cf-btn {
+  height: var(--cf-control-h, 28px);
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--cf-accent, #fd9d24);
+  border-radius: 0;
+  background: var(--cf-accent, #fd9d24);
+  color: var(--cf-on-accent, #001a41);
+  font-family: inherit;
+  font-size: var(--cf-font-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cf-btn:hover:not(:disabled) {
+  background: var(--cf-accent-bright, #fca024);
+}
+
+.cf-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cf-btn-muted {
+  background: transparent;
+  color: var(--cf-text);
+  border-color: var(--cf-chrome, #8a9bb0);
+}
+
+.qc-composer-note {
+  margin: 2px 0 0;
+  font-size: var(--cf-font-md);
+}
+
 .qc-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -1440,6 +1553,11 @@ body {
     min-height: var(--cf-tap);
     padding-top: 12px;
     padding-bottom: 12px;
+  }
+
+  .qc-composer-actions .cf-btn,
+  .qc-composer-actions .linkish {
+    min-height: 44px;
   }
 
   .qc-kpi,
