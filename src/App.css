@@ -852,6 +852,48 @@ body {
   letter-spacing: 0.01em;
 }
 
+.qc-draft-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0;
+}
+
+.qc-draft-chip {
+  height: var(--cf-control-h, 28px);
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--cf-hairline);
+  border-radius: 0;
+  background: transparent;
+  color: var(--cf-text);
+  font: inherit;
+  font-size: var(--cf-font-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.qc-draft-chip.is-active {
+  border-color: var(--cf-accent);
+  color: var(--cf-accent);
+}
+
+.qc-draft-chip.is-fail.is-active {
+  border-color: var(--cf-down);
+  color: var(--cf-down);
+}
+
+.qc-scope-custom {
+  color: var(--cf-accent);
+  font-weight: 700;
+}
+
+.qc-scope-global {
+  color: var(--cf-muted);
+}
+
 .qc-toolbar {
   display: flex;
   flex-wrap: wrap;
