@@ -910,9 +910,11 @@ export default function App() {
   }, [cohortStats, clusterFilter]);
 
   const scenarioColumnDefs = useMemo(() => {
-    /** Merge only within the same cohort (PSA / Recovery / Fnma Lag). */
+    /** Equal adjacent values only; keep PSA/Recovery/Lag inside one cohort. */
+    const equalSpan = ({ valueA, valueB }) =>
+      valueA != null && valueA !== "" && valueA === valueB;
     const sameCohortSpan = ({ valueA, valueB, nodeA, nodeB }) =>
-      valueA === valueB &&
+      equalSpan({ valueA, valueB }) &&
       (nodeA?.data?.cohort ?? "") === (nodeB?.data?.cohort ?? "");
 
     return [
@@ -924,7 +926,7 @@ export default function App() {
         sortable: false,
         filter: false,
         /* AG Grid 36+: enableCellSpan + spanRows (legacy rowSpan blanks only). */
-        spanRows: true,
+        spanRows: equalSpan,
         cellClass: "cf-row-span",
         valueFormatter: (p) => cohortLabel(p.value) || "",
       },
@@ -1863,7 +1865,10 @@ export default function App() {
                   heightClass="grid-wrap-fill scenario-grid"
                   exportName="scenarios"
                   showToolbar={false}
-                  gridProps={{ enableCellSpan: true }}
+                  gridProps={{
+                    enableCellSpan: true,
+                    enableCellTextSelection: false,
+                  }}
                 />
                 <ScenarioSpeedCharts />
               </div>

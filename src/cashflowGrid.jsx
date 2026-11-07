@@ -546,6 +546,7 @@ export function DataGrid({
       )}
       <div className="cf-grid-host ag-theme-cashflow">
         <AgGridReact
+          key={gridProps.enableCellSpan ? "cell-span" : "default"}
           theme={scaledTheme}
           rowData={rowData}
           columnDefs={columnDefs}
@@ -554,7 +555,8 @@ export function DataGrid({
           suppressCellFocus
           animateRows={false}
           rowSelection={{ mode: "singleRow", checkboxes: false }}
-          enableCellTextSelection
+          /* spanRows conflicts with enableCellTextSelection in AG Grid 36 */
+          enableCellTextSelection={!gridProps.enableCellSpan}
           ensureDomOrder
           enableBrowserTooltips
           tooltipShowDelay={400}
