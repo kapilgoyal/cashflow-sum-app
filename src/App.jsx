@@ -28,17 +28,50 @@ import {
   moneyCol,
   pcaLabel,
   staLabel,
-  withCohortPsaRowSpans,
 } from "./cashflowGrid";
 import { apiUrl } from "./apiBase";
 import {
   CLUSTER_COLORS,
   CLUSTER_FALLBACK_COUNTS,
   CLUSTER_ORDER,
+  HLTV_STRONG_RI,
+  HLTV_WEAK_RI,
+  LLTV_WEAK_RI,
   cohortLabel,
   relabelCohortFields,
   remappedKeyedObject,
 } from "./cohortLabels";
+
+/** Cohort speed schedule (PSA Down/Base/Up · SDA Low/Base/High) — Scenarios wide grid. */
+const COHORT_SPEED_SCHEDULE = [
+  {
+    cohort: HLTV_STRONG_RI,
+    psaDown: 100,
+    psaBase: 150,
+    psaUp: 225,
+    sdaLow: 100,
+    sdaBase: 150,
+    sdaHigh: 300,
+  },
+  {
+    cohort: HLTV_WEAK_RI,
+    psaDown: 50,
+    psaBase: 75,
+    psaUp: 100,
+    sdaLow: 150,
+    sdaBase: 250,
+    sdaHigh: 450,
+  },
+  {
+    cohort: LLTV_WEAK_RI,
+    psaDown: 75,
+    psaBase: 100,
+    psaUp: 125,
+    sdaLow: 25,
+    sdaBase: 75,
+    sdaHigh: 150,
+  },
+];
 import LoanLevelCollateral from "./LoanLevelCollateral";
 import LoanQc from "./LoanQc";
 import InvestorAnalysis from "./InvestorAnalysis";
@@ -910,76 +943,58 @@ export default function App() {
   }, [cohortStats, clusterFilter]);
 
   const scenarioColumnDefs = useMemo(() => {
-    /** Equal adjacent values only; keep PSA/Recovery/Lag inside one cohort. */
-    const equalSpan = ({ valueA, valueB }) =>
-      valueA != null && valueA !== "" && valueA === valueB;
-    const sameCohortSpan = ({ valueA, valueB, nodeA, nodeB }) =>
-      equalSpan({ valueA, valueB }) &&
-      (nodeA?.data?.cohort ?? "") === (nodeB?.data?.cohort ?? "");
+    const speedCol = (field, headerName, { base = false } = {}) => ({
+      field,
+      headerName,
+      flex: 1,
+      minWidth: 72,
+      sortable: false,
+      filter: false,
+      type: "numericColumn",
+      valueFormatter: (p) => fmtInt(p.value),
+      cellClass: base ? "cf-num cf-speed-base" : "cf-num",
+      headerClass: base ? "cf-grid-header cf-speed-base-hdr" : "cf-grid-header",
+    });
 
     return [
       {
         field: "cohort",
-        headerName: "Cohort Name",
-        flex: 2.2,
+        headerName: "Cohort",
+        flex: 1.8,
         minWidth: 140,
         sortable: false,
         filter: false,
-        /* AG Grid 36+: enableCellSpan + spanRows (legacy rowSpan blanks only). */
-        spanRows: equalSpan,
-        cellClass: "cf-row-span",
         valueFormatter: (p) => cohortLabel(p.value) || "",
       },
-      {
-        field: "psa_multiple",
-        headerName: "PSA",
-        flex: 0.7,
-        minWidth: 56,
-        sortable: false,
-        filter: false,
-        type: "numericColumn",
-        cellClass: "cf-num cf-row-span",
-        spanRows: sameCohortSpan,
-        valueFormatter: (p) =>
-          p.value === "" || p.value == null ? "" : fmtInt(p.value),
-      },
-      {
-        field: "sda_multiple",
-        headerName: "SDA",
-        flex: 0.7,
-        minWidth: 56,
-        sortable: false,
-        filter: false,
-        type: "numericColumn",
-        valueFormatter: (p) => fmtInt(p.value),
-        cellClass: "cf-num",
-      },
+      speedCol("psaDown", "PSA Down"),
+      speedCol("psaBase", "PSA Base", { base: true }),
+      speedCol("psaUp", "PSA Up"),
+      speedCol("sdaLow", "SDA Low"),
+      speedCol("sdaBase", "SDA Base", { base: true }),
+      speedCol("sdaHigh", "SDA High"),
       {
         field: "recovery",
         headerName: "Recovery Rate",
-        flex: 1.2,
-        minWidth: 100,
+        flex: 1.1,
+        minWidth: 96,
         sortable: false,
         filter: false,
-        spanRows: sameCohortSpan,
         valueFormatter: (p) => fmtPct(p.value, 1),
-        cellClass: "cf-num cf-row-span",
+        cellClass: "cf-num",
       },
       {
         field: "lag",
         headerName: "FNMA Lag (Mo)",
-        flex: 1.2,
-        minWidth: 100,
+        flex: 1.1,
+        minWidth: 96,
         sortable: false,
         filter: false,
-        spanRows: sameCohortSpan,
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
             ? ""
             : `${Number(p.value).toFixed(0)}`,
-        cellClass: "cf-num cf-row-span",
+        cellClass: "cf-num",
       },
-      { field: "scenario_id", headerName: "ID", hide: true },
     ];
   }, []);
 
@@ -1174,42 +1189,30 @@ export default function App() {
     []
   );
 
-  /** Full 27-cell grid — never cohort-filtered; Scenarios is a standalone view. */
+  /**
+   * Wide cohort speed schedule (reference layout) + Recovery / FNMA Lag.
+   * One row per cohort — PSA/SDA Down·Base·Up as columns.
+   */
   const scenarioRows = useMemo(() => {
     const byCohort = Object.fromEntries(
       (cohortStats || []).map((r) => [cohortLabel(r.cohort), r])
     );
-    const base = (
-      scenarios.length
-        ? scenarios
-        : aggregates.map((a) => ({
-            scenario_id: a.scenario_id,
-            cohort: a.cohort,
-            psa_multiple: a.psa_multiple,
-            sda_multiple: a.sda_multiple,
-            pca_level: a.pca_level,
-            sta_level: a.sta_level,
-            recovery_rate: a.recovery_rate,
-            recovery_period_months: a.recovery_period_months,
-            recovery_lag_months: a.recovery_lag_months,
-            avg_used_recovery_lag_months: a.avg_used_recovery_lag_months,
-          }))
-    ).map((s) => {
-      const stats = byCohort[cohortLabel(s.cohort)] || {};
-      const recovery = stats.recovery ?? s.recovery_rate;
+    const scenarioByCohort = {};
+    for (const s of scenarios.length ? scenarios : aggregates) {
+      const key = cohortLabel(s.cohort);
+      if (!scenarioByCohort[key]) scenarioByCohort[key] = s;
+    }
+    return COHORT_SPEED_SCHEDULE.map((row) => {
+      const stats = byCohort[row.cohort] || {};
+      const scen = scenarioByCohort[row.cohort] || {};
+      const recovery = stats.recovery ?? scen.recovery_rate ?? null;
       const lag =
         stats.lag ??
-        s.avg_used_recovery_lag_months ??
-        s.recovery_lag_months ??
+        scen.avg_used_recovery_lag_months ??
+        scen.recovery_lag_months ??
         null;
-      return {
-        ...s,
-        cohort: cohortLabel(s.cohort),
-        recovery,
-        lag,
-      };
+      return { ...row, recovery, lag };
     });
-    return withCohortPsaRowSpans(base);
   }, [scenarios, aggregates, cohortStats]);
 
   const scatterByCluster = useMemo(() => {
@@ -1867,21 +1870,17 @@ export default function App() {
             <section className="section section-fill section-scenarios">
               <div className="section-head">
                 <p className="section-meta">
-                  {scenarioRows.length} Scenarios
+                  {scenarioRows.length} Cohorts
                 </p>
               </div>
               <div className="scenario-layout">
                 <DataGrid
                   rowData={scenarioRows}
                   columnDefs={scenarioColumnDefs}
-                  getRowId={(p) => String(p.data.scenario_id)}
+                  getRowId={(p) => String(p.data.cohort)}
                   heightClass="grid-wrap-fill scenario-grid"
                   exportName="scenarios"
                   showToolbar={false}
-                  gridProps={{
-                    enableCellSpan: true,
-                    enableCellTextSelection: false,
-                  }}
                 />
                 <ScenarioSpeedCharts />
               </div>

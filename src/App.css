@@ -312,6 +312,16 @@ body {
   font-weight: 500;
 }
 
+.section-scenarios .ag-theme-cashflow .cf-speed-base {
+  font-weight: 600;
+  color: var(--cf-text);
+}
+
+.section-scenarios .ag-theme-cashflow .cf-speed-base-hdr .ag-header-cell-text {
+  font-weight: 600;
+  color: var(--cf-text);
+}
+
 .section-scenarios .scenario-speed-title {
   font-weight: 500;
 }
