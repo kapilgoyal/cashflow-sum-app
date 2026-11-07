@@ -3,11 +3,61 @@
  * Every tabular React view uses this — one look, one drill interaction,
  * CSV export + clipboard copy.
  */
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz } from "ag-grid-community";
 
 export const FONT = '"Source Sans 3", "Segoe UI", system-ui, sans-serif';
+
+const GRID_SCALE = {
+  base: {
+    fontSize: 11,
+    headerFontSize: 10,
+    headerHeight: 22,
+    rowHeight: 20,
+    spacing: 2,
+    iconSize: 12,
+  },
+  lg: {
+    fontSize: 13,
+    headerFontSize: 12,
+    headerHeight: 32,
+    rowHeight: 28,
+    spacing: 4,
+    iconSize: 14,
+  },
+  xl: {
+    fontSize: 15,
+    headerFontSize: 13,
+    headerHeight: 38,
+    rowHeight: 34,
+    spacing: 6,
+    iconSize: 16,
+  },
+};
+
+function readGridScale() {
+  if (typeof window === "undefined") return "base";
+  if (window.matchMedia("(min-width: 1600px)").matches) return "xl";
+  if (window.matchMedia("(min-width: 1280px)").matches) return "lg";
+  return "base";
+}
+
+function useGridScale() {
+  const [scale, setScale] = useState(readGridScale);
+  useEffect(() => {
+    const mqLg = window.matchMedia("(min-width: 1280px)");
+    const mqXl = window.matchMedia("(min-width: 1600px)");
+    const apply = () => setScale(readGridScale());
+    mqLg.addEventListener("change", apply);
+    mqXl.addEventListener("change", apply);
+    return () => {
+      mqLg.removeEventListener("change", apply);
+      mqXl.removeEventListener("change", apply);
+    };
+  }, []);
+  return scale;
+}
 
 export const gridTheme = themeQuartz.withParams({
   backgroundColor: "#FFFFFF",
@@ -27,7 +77,7 @@ export const gridTheme = themeQuartz.withParams({
   fontSize: 11,
   headerFontSize: 10,
   headerFontWeight: 600,
-  /* Tighter vertical density — same type size/family, more rows on screen. */
+  /* Tighter vertical density on small screens; large desktops scale up. */
   spacing: 2,
   headerHeight: 22,
   rowHeight: 20,
@@ -225,7 +275,7 @@ function rowsToTsv(api, rows) {
   return lines.join("\n");
 }
 
-function IconExportCsv({ size = 14 }) {
+function IconExportCsv({ size = 16 }) {
   return (
     <svg
       width={size}
@@ -253,7 +303,7 @@ function IconExportCsv({ size = 14 }) {
   );
 }
 
-function IconCopy({ size = 14 }) {
+function IconCopy({ size = 16 }) {
   return (
     <svg
       width={size}
@@ -305,6 +355,12 @@ export function DataGrid({
   const wrapRef = useRef(null);
   const onRowStatsRef = useRef(onRowStats);
   onRowStatsRef.current = onRowStats;
+  const gridScale = useGridScale();
+  const scaledTheme = useMemo(
+    () => gridTheme.withParams(GRID_SCALE[gridScale] || GRID_SCALE.base),
+    [gridScale]
+  );
+  const iconSize = gridScale === "xl" ? 18 : gridScale === "lg" ? 16 : 14;
 
   const emitRowStats = useCallback((api) => {
     const cb = onRowStatsRef.current;
@@ -432,7 +488,7 @@ export function DataGrid({
       onKeyDown={onKeyDown}
     >
       {showToolbar && (
-        <div className="cf-grid-toolbar" role="toolbar" aria-label="Grid actions">
+        <div className="cf-grid-toolbar" role="toolbar" aria-label="Grid Actions">
           {toolbarStart ? (
             <div className="cf-grid-toolbar-start">{toolbarStart}</div>
           ) : (
@@ -446,23 +502,23 @@ export function DataGrid({
               title="Export CSV"
               aria-label="Export CSV"
             >
-              <IconExportCsv />
+              <IconExportCsv size={iconSize} />
             </button>
             <button
               type="button"
               className="cf-grid-icon-btn"
               onClick={copyRows}
               title="Copy (Ctrl+C)"
-              aria-label="Copy rows to clipboard"
+              aria-label="Copy Rows To Clipboard"
             >
-              <IconCopy />
+              <IconCopy size={iconSize} />
             </button>
           </div>
         </div>
       )}
       <div className="cf-grid-host ag-theme-cashflow">
         <AgGridReact
-          theme={gridTheme}
+          theme={scaledTheme}
           rowData={rowData}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}

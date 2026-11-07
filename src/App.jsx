@@ -386,7 +386,7 @@ function StratDimChart({ dim, rows, metric, selectedBucket, onBucketClick }) {
   );
 }
 
-function IconExportCsvMini({ size = 14 }) {
+function IconExportCsvMini({ size = 16 }) {
   return (
     <svg
       width={size}
@@ -413,7 +413,7 @@ function IconExportCsvMini({ size = 14 }) {
   );
 }
 
-function IconCopyMini({ size = 14 }) {
+function IconCopyMini({ size = 16 }) {
   return (
     <svg
       width={size}
@@ -1283,8 +1283,7 @@ export default function App() {
       {
         field: "assumption_id",
         headerName: "ID",
-        width: 200,
-        cellClass: "cf-id",
+        hide: true,
       },
       { field: "category", headerName: "Category", width: 120 },
       { field: "name", headerName: "Name", width: 180 },
@@ -1299,13 +1298,13 @@ export default function App() {
       { field: "unit", headerName: "Unit", width: 88 },
       {
         field: "applies_to",
-        headerName: "Applies to",
+        headerName: "Applies To",
         flex: 1,
         minWidth: 140,
       },
       {
         field: "related_data_path",
-        headerName: "Data path",
+        headerName: "Data Path",
         flex: 1.1,
         minWidth: 160,
       },
@@ -1350,18 +1349,12 @@ export default function App() {
   const qcColumnDefs = useMemo(
     () => [
       {
-        field: "rule_name",
-        headerName: "Rule Name",
-        width: 110,
-        pinned: "left",
-        lockPinned: true,
-        cellClass: "cf-id",
-      },
-      {
         field: "nl_description",
         headerName: "Description",
         flex: 2,
         minWidth: 220,
+        pinned: "left",
+        lockPinned: true,
       },
       {
         field: "status_label",
@@ -1761,14 +1754,14 @@ export default function App() {
       },
       {
         field: "avg_refi_incentive",
-        headerName: "Avg refi",
+        headerName: "Avg Refi",
         width: 88,
         valueFormatter: (p) => fmtNum(p.value, 3),
         cellClass: "cf-num",
       },
       {
         field: "avg_remaining_term",
-        headerName: "Avg rem",
+        headerName: "Avg Rem",
         width: 88,
         valueFormatter: (p) => fmtNum(p.value, 0),
         cellClass: "cf-num",
@@ -1802,10 +1795,10 @@ export default function App() {
         flex: 1.2,
         minWidth: 120,
       },
-      intCol("remainingTerm", "Remaining term", 110),
+      intCol("remainingTerm", "Remaining Term", 110),
       {
         field: "refinanceIncentive",
-        headerName: "Refi incentive",
+        headerName: "Refi Incentive",
         width: 110,
         type: "numericColumn",
         filter: "agNumberColumnFilter",
@@ -1838,7 +1831,7 @@ export default function App() {
         valueGetter: (p) =>
           p.data?._scenarioSpan === 0 ? "" : p.data?._scenarioLabel || "",
       },
-      { field: "scenario_id", headerName: "ID", width: 64, cellClass: "cf-id" },
+      { field: "scenario_id", headerName: "ID", hide: true },
       { field: "cohort", headerName: "Cohort", flex: 1.8, minWidth: 180 },
       {
         field: "pca_level",
@@ -1861,9 +1854,9 @@ export default function App() {
         valueFormatter: (p) => fmtPct(p.value, 0),
         cellClass: "cf-num",
       },
-      intCol("recovery_period_months", "Rec mos", 80),
-      intCol("recovery_lag_months", "Lag fallback", 96),
-      intCol("avg_used_recovery_lag_months", "Avg used lag", 100),
+      intCol("recovery_period_months", "Rec Mos", 80),
+      intCol("recovery_lag_months", "Lag Fallback", 96),
+      intCol("avg_used_recovery_lag_months", "Avg Used Lag", 100),
       {
         field: "ran",
         headerName: "Ran",
@@ -1877,7 +1870,7 @@ export default function App() {
 
   const aggColumnDefs = useMemo(
     () => [
-      { field: "scenario_id", headerName: "ID", width: 72, cellClass: "cf-id" },
+      { field: "scenario_id", headerName: "ID", hide: true },
       { field: "cohort", headerName: "Cohort", flex: 1.6, minWidth: 180 },
       {
         field: "pca_level",
@@ -1892,19 +1885,19 @@ export default function App() {
         valueGetter: (p) => staLabel(p.data),
       },
       intCol("n_loans", "Loans", 72),
-      moneyCol("beginning_balance", "Begin bal", 110),
+      moneyCol("beginning_balance", "Begin Bal", 110),
       moneyCol("interest", "Interest", 100),
-      moneyCol("scheduled_principal", "Sched prin", 100),
-      moneyCol("default_amt", "New default", 100),
-      moneyCol("default", "New default", 100),
-      moneyCol("new_default", "New default", 100),
+      moneyCol("scheduled_principal", "Sched Prin", 100),
+      moneyCol("default_amt", "New Default", 100),
+      moneyCol("default", "New Default", 100),
+      moneyCol("new_default", "New Default", 100),
       moneyCol("prepay", "Prepay", 90),
-      moneyCol("liquidated_default", "Liq default", 100),
+      moneyCol("liquidated_default", "Liq Default", 100),
       moneyCol("recovery", "Recovery", 90),
-      moneyCol("realized_loss", "Realized loss", 100),
-      moneyCol("total_cash", "Total cash", 100),
+      moneyCol("realized_loss", "Realized Loss", 100),
+      moneyCol("total_cash", "Total Cash", 100),
       moneyCol("ending_balance", "End UPB", 110),
-      intCol("avg_used_recovery_lag_months", "Avg used lag", 100),
+      intCol("avg_used_recovery_lag_months", "Avg Used Lag", 100),
     ],
     []
   );
@@ -1912,7 +1905,7 @@ export default function App() {
   const cfMonth1ColumnDefs = useMemo(
     () => [
       { field: "loan_id", headerName: "Loan", width: 100, cellClass: "cf-id" },
-      { field: "scenario_id", headerName: "ID", width: 64, cellClass: "cf-id" },
+      { field: "scenario_id", headerName: "ID", hide: true },
       { field: "cohort", headerName: "Cohort", flex: 1.4, minWidth: 160 },
       {
         field: "pca_level",
@@ -1926,14 +1919,14 @@ export default function App() {
         width: 64,
         valueGetter: (p) => staLabel(p.data),
       },
-      intCol("used_recovery_lag_months", "Used lag", 80),
+      intCol("used_recovery_lag_months", "Used Lag", 80),
       {
         headerName: "1 · Performing UPB",
         children: [
           intCol("month", "Mo", 56),
           moneyCol("beginning_balance", "Beg UPB", 110),
           moneyCol("interest", "Interest", 100),
-          moneyCol("scheduled_principal", "Sched prin", 100),
+          moneyCol("scheduled_principal", "Sched Prin", 100),
           {
             field: "cpr",
             headerName: "CPR",
@@ -1949,29 +1942,29 @@ export default function App() {
             cellClass: "cf-num",
           },
           moneyCol("prepay", "Prepay", 90),
-          moneyCol("new_default", "New default", 100),
-          moneyCol("default_amt", "New default", 100),
+          moneyCol("new_default", "New Default", 100),
+          moneyCol("default_amt", "New Default", 100),
           moneyCol("ending_balance", "End UPB", 110),
         ],
       },
       {
-        headerName: "2 · Default roll",
+        headerName: "2 · Default Roll",
         children: [
-          moneyCol("beginning_default_balance", "Beg def bal", 110),
-          moneyCol("liquidated_default", "Liq default", 100),
+          moneyCol("beginning_default_balance", "Beg Def Bal", 110),
+          moneyCol("liquidated_default", "Liq Default", 100),
           moneyCol("recovery", "Recovery", 90),
-          moneyCol("realized_loss", "Realized loss", 100),
-          moneyCol("ending_default_balance", "End def bal", 110),
+          moneyCol("realized_loss", "Realized Loss", 100),
+          moneyCol("ending_default_balance", "End Def Bal", 110),
         ],
       },
       {
-        headerName: "3 · Actual cash (defaults ≠ cash)",
+        headerName: "3 · Actual Cash (Defaults ≠ Cash)",
         children: [
           moneyCol("interest", "Interest", 100),
-          moneyCol("scheduled_principal", "Sched prin", 100),
+          moneyCol("scheduled_principal", "Sched Prin", 100),
           moneyCol("prepay", "Prepay", 90),
           moneyCol("recovery", "Recovery", 90),
-          moneyCol("total_cash", "Total cash", 100),
+          moneyCol("total_cash", "Total Cash", 100),
         ],
       },
     ],
@@ -1980,9 +1973,9 @@ export default function App() {
 
   const loanMonthColumnDefs = useMemo(
     () => [
-      { field: "scenario_id", headerName: "ID", width: 64, cellClass: "cf-id" },
+      { field: "scenario_id", headerName: "ID", hide: true },
       { field: "loan_id", headerName: "Loan", width: 100, cellClass: "cf-id" },
-      intCol("used_recovery_lag_months", "Used lag", 80),
+      intCol("used_recovery_lag_months", "Used Lag", 80),
       {
         field: "recovery_rate",
         headerName: "Rec %",
@@ -1996,7 +1989,7 @@ export default function App() {
           intCol("month", "Mo", 56),
           moneyCol("beginning_balance", "Beg UPB", 110),
           moneyCol("interest", "Interest", 100),
-          moneyCol("scheduled_principal", "Sched prin", 100),
+          moneyCol("scheduled_principal", "Sched Prin", 100),
           {
             field: "cpr",
             headerName: "CPR",
@@ -2012,30 +2005,30 @@ export default function App() {
             cellClass: "cf-num",
           },
           moneyCol("prepay", "Prepay", 90),
-          moneyCol("new_default", "New default", 100),
-          moneyCol("default_amt", "New default", 100),
+          moneyCol("new_default", "New Default", 100),
+          moneyCol("default_amt", "New Default", 100),
           moneyCol("ending_balance", "End UPB", 110),
         ],
       },
       {
-        headerName: "2 · Default roll",
+        headerName: "2 · Default Roll",
         children: [
-          moneyCol("beginning_default_balance", "Beg def bal", 110),
-          moneyCol("liquidated_default", "Liq default", 100),
+          moneyCol("beginning_default_balance", "Beg Def Bal", 110),
+          moneyCol("liquidated_default", "Liq Default", 100),
           moneyCol("recovery", "Recovery", 90),
-          moneyCol("realized_loss", "Realized loss", 100),
+          moneyCol("realized_loss", "Realized Loss", 100),
           moneyCol("loss", "Loss", 90),
-          moneyCol("ending_default_balance", "End def bal", 110),
+          moneyCol("ending_default_balance", "End Def Bal", 110),
         ],
       },
       {
-        headerName: "3 · Actual cash (defaults ≠ cash)",
+        headerName: "3 · Actual Cash (Defaults ≠ Cash)",
         children: [
           moneyCol("interest", "Interest", 100),
-          moneyCol("scheduled_principal", "Sched prin", 100),
+          moneyCol("scheduled_principal", "Sched Prin", 100),
           moneyCol("prepay", "Prepay", 90),
           moneyCol("recovery", "Recovery", 90),
-          moneyCol("total_cash", "Total cash", 100),
+          moneyCol("total_cash", "Total Cash", 100),
         ],
       },
       {
@@ -2238,7 +2231,7 @@ export default function App() {
       });
     }
     crumbs.push({ id: "scenarios", label: "Scenarios", jumpable: true });
-    crumbs.push({ id: "agg", label: "CF aggregates", jumpable: cfView !== "agg" });
+    crumbs.push({ id: "agg", label: "CF Aggregates", jumpable: cfView !== "agg" });
     if (selectedScenarioId && cfView !== "agg") {
       crumbs.push({
         id: "scenario",
@@ -2249,7 +2242,7 @@ export default function App() {
     if (cfView === "month1" || cfView === "loanMonth") {
       crumbs.push({
         id: "month1",
-        label: "All loans · month 1",
+        label: "All Loans · Month 1",
         jumpable: cfView === "loanMonth",
       });
     }
@@ -2712,20 +2705,6 @@ export default function App() {
                 <>
                   <div className="strat-charts">
                     {stratDims.map((dim) => {
-                      const chartLabel =
-                        dim.chart === "histogram"
-                          ? "Histogram"
-                          : dim.chart === "hbar"
-                            ? "Bar"
-                            : dim.chart === "pie"
-                              ? "Pie"
-                              : dim.chart === "line"
-                                ? "WAC Trend"
-                                : dim.chart === "map"
-                                  ? "Map"
-                                  : dim.chart === "zip"
-                                    ? "Choropleth"
-                                    : "Bar";
                       const wide =
                         dim.chart === "map" ||
                         dim.chart === "zip" ||
@@ -2739,10 +2718,6 @@ export default function App() {
                         >
                           <div className="strat-chart-head">
                             <h3 className="strat-chart-title">{dim.label}</h3>
-                            <span className="strat-chart-meta">
-                              {(stratByDim[dim.id] || []).length} Buckets ·{" "}
-                              {chartLabel}
-                            </span>
                           </div>
                           <StratDimChart
                             dim={dim}
@@ -2795,10 +2770,6 @@ export default function App() {
                     K-Prototypes (k=3, 4 Features): Original CLTV vs Refinance
                     Incentive
                   </h2>
-                  <p className="scatter-subtitle">
-                    Cohorts: high LTV + strong / high LTV + weak / low LTV +
-                    weak refinance incentive
-                  </p>
                 </div>
                 <div className="chart-wrap chart-wrap-scatter">
                   {tapeLoading ? (
@@ -2942,10 +2913,7 @@ export default function App() {
 
               <section className="section section-cohort-stats">
                 <div className="section-head">
-                  <h2 className="section-title">Cohort statistics</h2>
-                  <p className="section-meta">
-                    Per-cohort count · UPB · avg LTV/CLTV/FICO
-                  </p>
+                  <h2 className="section-title">Cohort Statistics</h2>
                 </div>
                 {cohortStatsError ? (
                   <StatusBanner tone="muted">
@@ -2981,9 +2949,7 @@ export default function App() {
                         </>
                       )}
                       {" · "}
-                      Ran scenarios: {ranScenarioIds.length}/27
-                      {" · "}
-                      Click row → cohort scenarios
+                      Ran Scenarios: {ranScenarioIds.length}/27
                     </p>
                   </div>
                 </div>
@@ -3007,14 +2973,7 @@ export default function App() {
             <section className="section section-fill">
               <div className="section-head">
                 <p className="section-meta">
-                  Neon securitization_scenarios
-                  {selectedCohort
-                    ? ` · cohort filter: ${selectedCohort}`
-                    : " · 27 cells"}
-                  {" · "}
-                  Scenario col merges PSA×SDA across cohorts
-                  {" · "}
-                  Click row → all-loan month-1 CF
+                  {selectedCohort ? selectedCohort : "27 Cells"}
                 </p>
                 <div className="section-actions">
                   {(selectedCohort || selectedLoanId) && (
@@ -3023,7 +2982,7 @@ export default function App() {
                       className="linkish"
                       onClick={clearDrill}
                     >
-                      Clear drill
+                      Clear Drill
                     </button>
                   )}
                   <button
@@ -3068,10 +3027,10 @@ export default function App() {
               <div className="section-head">
                 <p className="section-meta">
                   {cfView === "loanMonth"
-                    ? "Multi-month loan path"
+                    ? "Multi-Month Loan Path"
                     : cfView === "month1"
-                      ? "All loans · month 1"
-                      : "Scenario aggregates"}
+                      ? "All Loans · Month 1"
+                      : "Scenario Aggregates"}
                 </p>
                 <div className="section-actions">
                   <label className="field-inline">
@@ -3110,7 +3069,7 @@ export default function App() {
                       setSelectedLoanId(null);
                     }}
                   >
-                    All loans
+                    All Loans
                   </button>
                   {cfView === "loanMonth" && (
                     <button
@@ -3118,7 +3077,7 @@ export default function App() {
                       className="linkish"
                       onClick={() => setCfView("month1")}
                     >
-                      Back to loans
+                      Back To Loans
                     </button>
                   )}
                   {(selectedLoanId || selectedCohort) && (
@@ -3127,21 +3086,12 @@ export default function App() {
                       className="linkish"
                       onClick={clearDrill}
                     >
-                      Clear drill
+                      Clear Drill
                     </button>
                   )}
                 </div>
               </div>
               <DrillTrail crumbs={drillCrumbs} onJump={onDrillJump} />
-              <p className="section-meta">
-                {cfView === "loanMonth"
-                  ? `Neon loan_month_cf_enriched · ${selectedLoanId} · ${selectedScenarioId}`
-                  : cfView === "month1"
-                    ? `Neon loan_cashflows_month1_enriched · ${selectedScenarioId}${
-                        neonMonth1Total ? ` · ${neonMonth1Total} loans` : ""
-                      } · click row → months`
-                    : `Scenario aggregates (all loans) · ${aggregates.length || 0} cells · click → loan-level`}
-              </p>
               {cfView === "loanMonth" ? (
                 loanMonthLoading ? (
                   <p className="muted">Loading multi-month CF…</p>
