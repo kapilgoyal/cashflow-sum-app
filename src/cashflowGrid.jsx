@@ -130,14 +130,16 @@ export function fmtPct(v, digits = 1) {
   return `${trimmed}%`;
 }
 
-/** WAC / coupon rates — keep 2 meaningful decimals. */
+/** WAC / coupon rates — ~1 decimal; drop trailing .0. */
 export function fmtWac(v) {
   if (v == null || Number.isNaN(Number(v))) return "";
-  return `${(Number(v) * 100).toFixed(2)}%`;
+  const pct = Number(v) * 100;
+  const fixed = pct.toFixed(1);
+  return `${fixed.replace(/\.?0+$/, "")}%`;
 }
 
-/** General numeric; trims trailing zeros. */
-export function fmtNum(v, digits = 2) {
+/** General numeric; trims trailing zeros. Default 1 dp for rates/RI. */
+export function fmtNum(v, digits = 1) {
   if (v == null || Number.isNaN(Number(v))) return "";
   if (digits <= 0) return fmtInt(v);
   const fixed = Number(v).toFixed(digits);

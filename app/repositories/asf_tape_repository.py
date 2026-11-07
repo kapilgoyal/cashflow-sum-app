@@ -934,6 +934,7 @@ class AsfTapeRepository:
                     "upb": 0.0,
                     "wac_num": 0.0,
                     "wam_num": 0.0,
+                    # UPB-weighted sums / weight for averages (skip weight when field missing)
                     "ltv_sum": 0.0,
                     "cltv_sum": 0.0,
                     "fico_sum": 0.0,
@@ -941,13 +942,13 @@ class AsfTapeRepository:
                     "ri_sum": 0.0,
                     "term_sum": 0.0,
                     "dti_sum": 0.0,
-                    "ltv_n": 0,
-                    "cltv_n": 0,
-                    "fico_n": 0,
-                    "rate_n": 0,
-                    "ri_n": 0,
-                    "term_n": 0,
-                    "dti_n": 0,
+                    "ltv_w": 0.0,
+                    "cltv_w": 0.0,
+                    "fico_w": 0.0,
+                    "rate_w": 0.0,
+                    "ri_w": 0.0,
+                    "term_w": 0.0,
+                    "dti_w": 0.0,
                     "rec_upb": 0.0,
                     "rec_num": 0.0,
                     "lag_num": 0.0,
@@ -957,14 +958,14 @@ class AsfTapeRepository:
             slot["upb"] += upb
             slot["wac_num"] += rate * upb
             slot["wam_num"] += term * upb
-            for field, sum_key, n_key in (
-                ("original_ltv", "ltv_sum", "ltv_n"),
-                ("original_cltv", "cltv_sum", "cltv_n"),
-                ("original_fico", "fico_sum", "fico_n"),
-                ("current_interest_rate", "rate_sum", "rate_n"),
-                ("refinance_incentive", "ri_sum", "ri_n"),
-                ("remaining_term", "term_sum", "term_n"),
-                ("originator_dti", "dti_sum", "dti_n"),
+            for field, sum_key, w_key in (
+                ("original_ltv", "ltv_sum", "ltv_w"),
+                ("original_cltv", "cltv_sum", "cltv_w"),
+                ("original_fico", "fico_sum", "fico_w"),
+                ("current_interest_rate", "rate_sum", "rate_w"),
+                ("refinance_incentive", "ri_sum", "ri_w"),
+                ("remaining_term", "term_sum", "term_w"),
+                ("originator_dti", "dti_sum", "dti_w"),
             ):
                 val = ln.get(field)
                 if val is None:
@@ -973,8 +974,8 @@ class AsfTapeRepository:
                     num = float(val)
                 except (TypeError, ValueError):
                     continue
-                slot[sum_key] += num
-                slot[n_key] += 1
+                slot[sum_key] += num * upb
+                slot[w_key] += upb
             try:
                 cohort_rate = recovery_for_cohort(key)[0]
             except KeyError:
@@ -1000,13 +1001,13 @@ class AsfTapeRepository:
                 "upb": upb,
                 "wac": (slot["wac_num"] / upb) if upb else None,
                 "wam": (slot["wam_num"] / upb) if upb else None,
-                "avg_ltv": (slot["ltv_sum"] / slot["ltv_n"]) if slot["ltv_n"] else None,
-                "avg_cltv": (slot["cltv_sum"] / slot["cltv_n"]) if slot["cltv_n"] else None,
-                "avg_fico": (slot["fico_sum"] / slot["fico_n"]) if slot["fico_n"] else None,
-                "avg_rate": (slot["rate_sum"] / slot["rate_n"]) if slot["rate_n"] else None,
-                "avg_refi_incentive": (slot["ri_sum"] / slot["ri_n"]) if slot["ri_n"] else None,
-                "avg_remaining_term": (slot["term_sum"] / slot["term_n"]) if slot["term_n"] else None,
-                "avg_dti": (slot["dti_sum"] / slot["dti_n"]) if slot["dti_n"] else None,
+                "avg_ltv": (slot["ltv_sum"] / slot["ltv_w"]) if slot["ltv_w"] else None,
+                "avg_cltv": (slot["cltv_sum"] / slot["cltv_w"]) if slot["cltv_w"] else None,
+                "avg_fico": (slot["fico_sum"] / slot["fico_w"]) if slot["fico_w"] else None,
+                "avg_rate": (slot["rate_sum"] / slot["rate_w"]) if slot["rate_w"] else None,
+                "avg_refi_incentive": (slot["ri_sum"] / slot["ri_w"]) if slot["ri_w"] else None,
+                "avg_remaining_term": (slot["term_sum"] / slot["term_w"]) if slot["term_w"] else None,
+                "avg_dti": (slot["dti_sum"] / slot["dti_w"]) if slot["dti_w"] else None,
             }
             if slot["rec_upb"] > 0:
                 row["recovery"] = slot["rec_num"] / slot["rec_upb"]

@@ -520,7 +520,8 @@ body {
 
 .ag-theme-cashflow .cf-num {
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  text-align: right !important;
+  justify-content: flex-end;
 }
 
 .ag-theme-cashflow .cf-id {
@@ -1116,16 +1117,67 @@ body {
   height: min(380px, 48vh);
 }
 
-/* Cohort scatter + stats (no loan grid) */
+/* Cohort scatter + KPI rail (no loan grid) */
+.cohort-chart-row {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 10px;
+  min-height: 0;
+}
+
 .chart-wrap-scatter {
   position: relative;
-  width: min(100%, calc(48vh * 9.5 / 6.5));
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: none;
   max-height: 48vh;
   height: auto;
   aspect-ratio: 9.5 / 6.5;
   padding-top: 0;
-  margin-inline: auto;
-  flex: 0 0 auto;
+  margin-inline: 0;
+}
+
+.cohort-kpi-rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 4px;
+  flex: 0 0 148px;
+  min-width: 132px;
+  max-width: 168px;
+}
+
+.cohort-kpi-rail .cohort-kpi {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--cf-kpi-min-h);
+  padding: 4px 10px;
+  cursor: default;
+  text-align: left;
+}
+
+.cohort-kpi-rail .cohort-kpi.qc-kpi[type="button"],
+.cohort-kpi-rail button.cohort-kpi {
+  cursor: pointer;
+}
+
+.cohort-kpi-rail .qc-kpi-label {
+  flex: 0 1 auto;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cohort-kpi-rail .qc-kpi-value {
+  flex: 1 1 auto;
+  font-weight: 400;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .section-cohort-chart {
@@ -1331,10 +1383,27 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
   }
 
+  .cohort-chart-row {
+    flex-direction: column;
+  }
+
   .chart-wrap-scatter {
     width: 100%;
     max-height: none;
     aspect-ratio: 9.5 / 6.5;
+  }
+
+  .cohort-kpi-rail {
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex: 0 0 auto;
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .cohort-kpi-rail .cohort-kpi {
+    flex: 1 1 140px;
   }
 }
 

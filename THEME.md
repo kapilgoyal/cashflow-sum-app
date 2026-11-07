@@ -47,6 +47,6 @@ Height **36px** default, **44px** from 1280px, **52px** from 1600px (**44px** on
 - No heavy outer grid/section frame (`wrapperBorder: false`); light row/column hairlines only.
 - KPI strip: navy `#001A41` chips, white type, amber underline when active.
 - Responsive: collateral charts stack; touch-sized export/copy icons; mobile hamburger drawer.
-- Money whole dollars; counts/FICO integers; LTV/DTI ~1 decimal; WAC 2 decimals.
+- Money whole dollars (no cents on UPB); counts/FICO integers; LTV/rates/RI ~1 decimal (trim .0).
 - Field labels muted navy Title Case.
 - Buttons square, navy text on amber.
