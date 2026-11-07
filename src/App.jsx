@@ -43,7 +43,6 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 const NAV = [
   { id: "asf", label: "Investor Tape" },
   { id: "qc", label: "Loan QC" },
-  { id: "strat", label: "Stratification" },
   { id: "collateral", label: "Collateral" },
   { id: "cohort", label: "Cohort" },
   { id: "scenarios", label: "Scenarios" },
@@ -476,7 +475,6 @@ const LS_NAV_COLLAPSE_KEY = "cashflow.navCollapsed";
 const NAV_SHORT = {
   asf: "Tape",
   qc: "QC",
-  strat: "Strat",
   collateral: "Collat",
   cohort: "Cohort",
   scenarios: "Scen",
@@ -515,6 +513,7 @@ function readNavCollapsed() {
 function readNav() {
   try {
     const v = localStorage.getItem(LS_NAV_KEY);
+    if (v === "strat") return "collateral";
     if (NAV.some((n) => n.id === v)) return v;
     if (v === "loan") return "cohort";
   } catch {
