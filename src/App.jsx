@@ -914,7 +914,7 @@ export default function App() {
       field,
       headerName,
       flex: 1,
-      minWidth: 72,
+      minWidth: 64,
       sortable: false,
       filter: false,
       type: "numericColumn",
@@ -930,14 +930,27 @@ export default function App() {
         minWidth: 140,
         sortable: false,
         filter: false,
+        spanHeaderHeight: true,
         valueFormatter: (p) => cohortLabel(p.value) || "",
       },
-      speedCol("psaDown", "PSA Down"),
-      speedCol("psaBase", "PSA Base"),
-      speedCol("psaUp", "PSA Up"),
-      speedCol("sdaLow", "SDA Low"),
-      speedCol("sdaBase", "SDA Base"),
-      speedCol("sdaHigh", "SDA High"),
+      {
+        headerName: "PSA",
+        marryChildren: true,
+        children: [
+          speedCol("psaDown", "Down"),
+          speedCol("psaBase", "Base"),
+          speedCol("psaUp", "Up"),
+        ],
+      },
+      {
+        headerName: "SDA",
+        marryChildren: true,
+        children: [
+          speedCol("sdaLow", "Low"),
+          speedCol("sdaBase", "Base"),
+          speedCol("sdaHigh", "High"),
+        ],
+      },
       {
         field: "recovery",
         headerName: "Recovery Rate",
@@ -945,6 +958,7 @@ export default function App() {
         minWidth: 96,
         sortable: false,
         filter: false,
+        spanHeaderHeight: true,
         valueFormatter: (p) => fmtPct(p.value, 1),
         cellClass: "cf-num",
       },
@@ -955,6 +969,7 @@ export default function App() {
         minWidth: 96,
         sortable: false,
         filter: false,
+        spanHeaderHeight: true,
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
             ? ""
@@ -1845,6 +1860,8 @@ export default function App() {
                   themeParams={{
                     headerFontWeight: 300,
                     headerTextColor: "#FD9D24",
+                    headerHeight: 20,
+                    groupHeaderHeight: 20,
                   }}
                 />
                 <ScenarioSpeedCharts />

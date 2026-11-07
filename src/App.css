@@ -314,16 +314,23 @@ body {
   color: var(--cf-text);
 }
 
-/* Amber on every column header; data rows stay light text */
+/* Amber on every column / group header; data rows stay light text */
 .section-scenarios .ag-theme-cashflow {
   --ag-header-foreground-color: var(--cf-accent);
 }
 
 .section-scenarios .ag-theme-cashflow .ag-header-cell,
 .section-scenarios .ag-theme-cashflow .ag-header-cell-text,
-.section-scenarios .ag-theme-cashflow .cf-grid-header {
+.section-scenarios .ag-theme-cashflow .cf-grid-header,
+.section-scenarios .ag-theme-cashflow .ag-header-group-cell,
+.section-scenarios .ag-theme-cashflow .ag-header-group-cell-label,
+.section-scenarios .ag-theme-cashflow .ag-header-group-text {
   font-weight: 300 !important;
   color: var(--cf-accent) !important;
+}
+
+.section-scenarios .ag-theme-cashflow .ag-header-group-cell {
+  justify-content: center;
 }
 
 .section-scenarios .scenario-speed-title,
