@@ -983,12 +983,45 @@ body {
   padding: 4px 12px;
   border: 1px solid var(--cf-hairline);
   border-radius: 0;
-  background: var(--cf-bg-deep);
+  /* Same near-black navy as chart panes (#0C0C0C) */
+  background: #0c0c0c;
   color: var(--cf-text);
-  cursor: pointer;
+  cursor: default;
   text-align: left;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+
+.qc-draft-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0;
+}
+
+.qc-draft-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid var(--cf-hairline);
+  background: #0c0c0c;
+  color: var(--cf-text);
+  font-family: var(--cf-font);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.qc-draft-chip.is-fail {
+  color: #f07a94;
+  border-color: rgba(197, 29, 70, 0.45);
+}
+
+.qc-draft-outcome {
+  font-family: var(--cf-font);
+  font-size: 10px;
+  font-weight: 600;
 }
 
 .qc-kpi-label {

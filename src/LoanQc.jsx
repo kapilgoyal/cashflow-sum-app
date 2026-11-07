@@ -62,6 +62,8 @@ export default function LoanQc({ onDrillLoan }) {
   const [predicate, setPredicate] = useState("");
   const [editCheckId, setEditCheckId] = useState(null);
   const [translateMeta, setTranslateMeta] = useState(null);
+  const [tested, setTested] = useState(false);
+  const [draftStats, setDraftStats] = useState(null);
   const [composerBusy, setComposerBusy] = useState(false);
   const [composerMsg, setComposerMsg] = useState(null);
   const [composerErr, setComposerErr] = useState(null);
@@ -278,11 +280,13 @@ export default function LoanQc({ onDrillLoan }) {
     (row) => {
       if (!row?.check_id) return;
       loadQcDrillLoans(row);
-      if (row.source === "custom") {
+      if (row.source === "custom" || row.scope === "Custom") {
         setEditCheckId(row.check_id);
         setEnglish(row.nl_description || "");
         setPredicate(row.sql_predicate || "");
         setTranslateMeta(null);
+        setTested(false);
+        setDraftStats(null);
         setComposerMsg(null);
         setComposerErr(null);
       }
@@ -332,11 +336,19 @@ export default function LoanQc({ onDrillLoan }) {
     qcDrillLoading,
   ]);
 
+  const detailText = (data) => {
+    if (typeof data?.detail === "string") return data.detail;
+    if (data?.detail) return JSON.stringify(data.detail);
+    return null;
+  };
+
   const resetComposer = useCallback(() => {
     setEnglish("");
     setPredicate("");
     setEditCheckId(null);
     setTranslateMeta(null);
+    setTested(false);
+    setDraftStats(null);
     setComposerMsg(null);
     setComposerErr(null);
   }, []);
@@ -349,6 +361,8 @@ export default function LoanQc({ onDrillLoan }) {
     setComposerBusy(true);
     setComposerErr(null);
     setComposerMsg(null);
+    setTested(false);
+    setDraftStats(null);
     try {
       const res = await fetch(apiUrl("/api/qc/translate"), {
         method: "POST",
@@ -357,7 +371,7 @@ export default function LoanQc({ onDrillLoan }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.detail || `HTTP ${res.status}`);
+        throw new Error(detailText(data) || `HTTP ${res.status}`);
       }
       setPredicate(data.sql_predicate || "");
       setTranslateMeta({
@@ -374,7 +388,7 @@ export default function LoanQc({ onDrillLoan }) {
         data.warning
           ? data.warning
           : data.mode === "groq"
-            ? `Translated with ${data.model || "Groq"}`
+            ? `Translated · ${data.model || "Groq"}`
             : "Translated"
       );
     } catch (err) {
@@ -384,7 +398,7 @@ export default function LoanQc({ onDrillLoan }) {
     }
   }, [english]);
 
-  const onSave = useCallback(async () => {
+  const onTest = useCallback(async () => {
     if (!english.trim()) {
       setComposerErr("Enter an English check first.");
       return false;
@@ -393,11 +407,67 @@ export default function LoanQc({ onDrillLoan }) {
     setComposerErr(null);
     setComposerMsg(null);
     try {
-      const payload = {
-        english: english.trim(),
-        sql_predicate: predicate.trim() || null,
-        check_id: editCheckId || null,
-      };
+      const res = await fetch(apiUrl("/api/qc/preview"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          english: english.trim(),
+          sql_predicate: predicate.trim() || null,
+          failing_only: true,
+          limit: 2000,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(detailText(data) || `HTTP ${res.status}`);
+      }
+      if (data.sql_predicate) setPredicate(data.sql_predicate);
+      if (typeof data.groq_configured === "boolean") {
+        setGroqConfigured(data.groq_configured);
+      }
+      setTested(true);
+      setDraftStats({
+        pass_count: data.pass_count,
+        fail_count: data.fail_count,
+        outcome: data.outcome,
+        status_label: data.status_label,
+      });
+      setQcSelectedRule({
+        check_id: editCheckId || "draft",
+        nl_description: english.trim(),
+        sql_predicate: data.sql_predicate,
+        source: "custom",
+        scope: "Custom",
+      });
+      setQcDrillLoans(Array.isArray(data.loans) ? data.loans : []);
+      setQcDrillTotal(data.total ?? (data.loans || []).length);
+      setQcDrillError(null);
+      const warn = data.warning ? ` · ${data.warning}` : "";
+      setComposerMsg(
+        `Tested · ${fmtInt(data.pass_count)} Passed · ${fmtInt(data.fail_count)} Failed${warn}`
+      );
+      return true;
+    } catch (err) {
+      setComposerErr(err.message || String(err));
+      setTested(false);
+      return false;
+    } finally {
+      setComposerBusy(false);
+    }
+  }, [english, predicate, editCheckId]);
+
+  const onConfirmSave = useCallback(async () => {
+    if (!english.trim()) {
+      setComposerErr("Enter an English check first.");
+      return false;
+    }
+    if (!tested || !predicate.trim()) {
+      setComposerErr("Test the rule before confirming.");
+      return false;
+    }
+    setComposerBusy(true);
+    setComposerErr(null);
+    try {
       const url = editCheckId
         ? apiUrl(`/api/qc/checks/${encodeURIComponent(editCheckId)}`)
         : apiUrl("/api/qc/checks");
@@ -407,40 +477,37 @@ export default function LoanQc({ onDrillLoan }) {
         body: JSON.stringify(
           editCheckId
             ? {
-                english: payload.english,
-                sql_predicate: payload.sql_predicate,
+                english: english.trim(),
+                sql_predicate: predicate.trim(),
               }
-            : payload
+            : {
+                english: english.trim(),
+                sql_predicate: predicate.trim(),
+                check_id: null,
+              }
         ),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(
-          typeof data.detail === "string"
-            ? data.detail
-            : data.detail
-              ? JSON.stringify(data.detail)
-              : `HTTP ${res.status}`
-        );
+        throw new Error(detailText(data) || `HTTP ${res.status}`);
       }
       const check = data.check || {};
       setEditCheckId(check.check_id || editCheckId);
       if (check.sql_predicate) setPredicate(check.sql_predicate);
-      if (typeof data.groq_configured === "boolean") {
-        setGroqConfigured(data.groq_configured);
+
+      const runRes = await fetch(apiUrl("/api/qc/run"), { method: "POST" });
+      const runData = await runRes.json().catch(() => ({}));
+      if (!runRes.ok) {
+        throw new Error(detailText(runData) || `HTTP ${runRes.status}`);
       }
-      setTranslateMeta({
-        mode: data.mode,
-        model: data.model,
-        warning: data.warning,
-      });
-      setComposerMsg(
-        data.warning
-          ? `Saved. ${data.warning}`
-          : editCheckId
-            ? "Custom Rule Updated"
-            : "Custom Rule Saved"
+      applyResultsPayload(runData);
+      setComposerMsg("Confirmed · Saved And Run");
+      setTested(false);
+      setDraftStats(null);
+      const refreshed = (runData.results || []).find(
+        (r) => r.check_id === (check.check_id || editCheckId)
       );
+      if (refreshed) await loadQcDrillLoans(refreshed);
       return true;
     } catch (err) {
       setComposerErr(err.message || String(err));
@@ -448,7 +515,14 @@ export default function LoanQc({ onDrillLoan }) {
     } finally {
       setComposerBusy(false);
     }
-  }, [english, predicate, editCheckId]);
+  }, [
+    english,
+    tested,
+    predicate,
+    editCheckId,
+    applyResultsPayload,
+    loadQcDrillLoans,
+  ]);
 
   const onDelete = useCallback(async () => {
     if (!editCheckId) return;
@@ -504,11 +578,6 @@ export default function LoanQc({ onDrillLoan }) {
     }
   }, [applyResultsPayload, loadQcDrillLoans, qcSelectedRule]);
 
-  const onSaveAndRun = useCallback(async () => {
-    const saved = await onSave();
-    if (saved) await onRunAnalysis();
-  }, [onSave, onRunAnalysis]);
-
   return (
     <section className="section section-fill section-qc">
       <div className="qc-toolbar">
@@ -546,22 +615,51 @@ export default function LoanQc({ onDrillLoan }) {
           rows={2}
           placeholder="Example: Flag Loans With FICO Below 620"
           value={english}
-          onChange={(e) => setEnglish(e.target.value)}
+          onChange={(e) => {
+            setEnglish(e.target.value);
+            setTested(false);
+            setDraftStats(null);
+          }}
           disabled={composerBusy || runBusy}
         />
-        <label className="qc-composer-label" htmlFor="qc-predicate">
-          Runnable Rule
-        </label>
-        <textarea
-          id="qc-predicate"
-          className="qc-composer-input qc-composer-predicate"
-          rows={2}
-          placeholder="Translate To Preview The Rule"
-          value={predicate}
-          onChange={(e) => setPredicate(e.target.value)}
-          disabled={composerBusy || runBusy}
-          spellCheck={false}
-        />
+        {(predicate || tested) && (
+          <>
+            <label className="qc-composer-label" htmlFor="qc-predicate">
+              Runnable Rule
+            </label>
+            <textarea
+              id="qc-predicate"
+              className="qc-composer-input qc-composer-predicate"
+              rows={2}
+              placeholder="Translated Rule"
+              value={predicate}
+              onChange={(e) => {
+                setPredicate(e.target.value);
+                setTested(false);
+                setDraftStats(null);
+              }}
+              disabled={composerBusy || runBusy}
+              spellCheck={false}
+            />
+          </>
+        )}
+        {draftStats ? (
+          <div className="qc-draft-stats" role="status">
+            <span className="qc-draft-chip">
+              Passed {fmtInt(draftStats.pass_count)}
+            </span>
+            <span className="qc-draft-chip is-fail">
+              Failed {fmtInt(draftStats.fail_count)}
+            </span>
+            {draftStats.status_label ? (
+              <span
+                className={`qc-draft-outcome qc-status-${qcStatusTone(draftStats.outcome)}`}
+              >
+                {draftStats.status_label}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         <div className="qc-composer-actions">
           <button
             type="button"
@@ -574,22 +672,28 @@ export default function LoanQc({ onDrillLoan }) {
           <button
             type="button"
             className="cf-btn"
-            onClick={onSave}
+            onClick={onTest}
             disabled={composerBusy || runBusy || !english.trim()}
           >
-            {editCheckId ? "Update" : "Save"}
+            Test
           </button>
           <button
             type="button"
             className="cf-btn"
-            onClick={onSaveAndRun}
-            disabled={composerBusy || runBusy || !english.trim()}
+            onClick={onConfirmSave}
+            disabled={
+              composerBusy ||
+              runBusy ||
+              !english.trim() ||
+              !tested ||
+              !predicate.trim()
+            }
           >
-            Save &amp; Run
+            Confirm
           </button>
           <button
             type="button"
-            className="cf-btn"
+            className="cf-btn cf-btn-muted"
             onClick={onRunAnalysis}
             disabled={composerBusy || runBusy}
           >
@@ -635,8 +739,7 @@ export default function LoanQc({ onDrillLoan }) {
         <StatusBanner tone="error">Loan QC: {qcError}</StatusBanner>
       ) : !qcActiveRows.length ? (
         <p className="muted">
-          No QC Results Yet. Save A Custom Rule Or Run Analysis Against The
-          Tape.
+          Write An English Check, Test Against Loans, Then Confirm To Save.
         </p>
       ) : (
         <DataGrid

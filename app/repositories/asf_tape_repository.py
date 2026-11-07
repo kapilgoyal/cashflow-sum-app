@@ -494,7 +494,7 @@ class AsfTapeRepository:
                 SELECT run_id
                 FROM public.qc_results
                 GROUP BY run_id
-                ORDER BY MAX(ran_at) DESC, run_id DESC
+                ORDER BY MAX(ran_at) DESC, COUNT(*) DESC, run_id DESC
                 LIMIT 1
             )
             SELECT
@@ -521,9 +521,9 @@ class AsfTapeRepository:
             WHERE c.source <> 'demo'
             ORDER BY
                 CASE c.source
-                    WHEN 'foundation' THEN 0
-                    WHEN 'absolute_basis' THEN 1
-                    WHEN 'custom' THEN 2
+                    WHEN 'custom' THEN 0
+                    WHEN 'foundation' THEN 1
+                    WHEN 'absolute_basis' THEN 2
                     ELSE 3
                 END,
                 c.edit_number NULLS FIRST,
@@ -549,6 +549,9 @@ class AsfTapeRepository:
                             if row.get("edit_number") is not None
                             else "Custom"
                         )
+                    )
+                    row["scope"] = (
+                        "Custom" if row.get("source") == "custom" else "Global"
                     )
                     out.append(row)
                 return out
@@ -619,6 +622,96 @@ class AsfTapeRepository:
                 colnames = [d.name for d in cur.description]
                 loans = [dict(zip(colnames, tup)) for tup in cur.fetchall()]
         return relabel_records(loans), total, meta
+
+    def preview_predicate(
+        self,
+        sql_predicate: str,
+        *,
+        failing_only: bool = True,
+        limit: int = 2000,
+    ) -> dict[str, Any]:
+        """Run a draft predicate against asf_tape without saving a check."""
+        from app.services.qc_predicate import validate_predicate
+
+        cleaned, required = validate_predicate(sql_predicate)
+        present = self.tape_columns()
+        missing = [c for c in required if c not in present]
+        tape_n = self.count_tape()
+        if missing:
+            return {
+                "ok": False,
+                "sql_predicate": cleaned,
+                "required_columns": required,
+                "tape_row_count": tape_n,
+                "fail_count": None,
+                "pass_count": None,
+                "outcome": "skipped",
+                "detail": f"asf_tape lacks required field(s): {', '.join(missing)}",
+                "loans": [],
+                "total": 0,
+            }
+
+        cols = (
+            "loan_id",
+            "current_loan_amount",
+            "current_interest_rate",
+            "original_fico",
+            "original_ltv",
+            "original_cltv",
+            "state",
+            "postal_code",
+            "documentation_type",
+            "property_type",
+            "occupancy",
+            "loan_purpose",
+            "remaining_term",
+            "refinance_incentive",
+            "cohort",
+            "has_mi",
+        )
+        select_cols = tuple(c for c in cols if c in present or c == "loan_id")
+        if "loan_id" not in select_cols:
+            select_cols = ("loan_id",) + select_cols
+        col_sql = ", ".join(select_cols)
+        fail_where = cleaned
+        pass_where = f"NOT ({cleaned})"
+        list_where = fail_where if failing_only else pass_where
+
+        with connect(self.require_url(), connect_timeout=60) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"SELECT COUNT(*) FROM public.asf_tape WHERE {fail_where}"
+                )
+                fail_n = int(cur.fetchone()[0])
+                pass_n = tape_n - fail_n
+                cur.execute(
+                    f"SELECT COUNT(*) FROM public.asf_tape WHERE {list_where}"
+                )
+                total = int(cur.fetchone()[0])
+                cur.execute(
+                    f"SELECT {col_sql} FROM public.asf_tape "
+                    f"WHERE {list_where} ORDER BY loan_id LIMIT %s",
+                    (limit,),
+                )
+                colnames = [d.name for d in cur.description]
+                loans = [dict(zip(colnames, tup)) for tup in cur.fetchall()]
+
+        outcome = "fail" if fail_n > 0 else "pass"
+        return {
+            "ok": True,
+            "sql_predicate": cleaned,
+            "required_columns": required,
+            "tape_row_count": tape_n,
+            "fail_count": fail_n,
+            "pass_count": pass_n,
+            "outcome": outcome,
+            "status_label": "Fail" if outcome == "fail" else "Pass",
+            "failing_only": failing_only,
+            "detail": None,
+            "loans": relabel_records(loans),
+            "total": total,
+            "n": len(loans),
+        }
 
     def list_loans(
         self, limit: int = 2000, offset: int = 0
@@ -1207,7 +1300,6 @@ class AsfTapeRepository:
                 "avg_remaining_term": (slot["term_sum"] / slot["term_w"]) if slot["term_w"] else None,
                 "avg_dti": (slot["dti_sum"] / slot["dti_w"]) if slot["dti_w"] else None,
             }
-            # Always UPB-weighted (never loan-count simple average).
             if slot["rec_upb"] > 0:
                 row["recovery"] = slot["rec_num"] / slot["rec_upb"]
                 row["lag"] = slot["lag_num"] / slot["rec_upb"]
