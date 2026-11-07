@@ -11,6 +11,7 @@ export const FONT =
   '"IBM Plex Mono", "Roboto Mono", ui-monospace, Menlo, monospace';
 
 const GRID_SCALE = {
+  /* Tight Terminal density — compact cells, no oversized type. */
   base: {
     fontSize: 11,
     headerFontSize: 10,
@@ -20,20 +21,20 @@ const GRID_SCALE = {
     iconSize: 12,
   },
   lg: {
-    fontSize: 13,
-    headerFontSize: 12,
-    headerHeight: 32,
-    rowHeight: 28,
-    spacing: 4,
-    iconSize: 14,
+    fontSize: 12,
+    headerFontSize: 11,
+    headerHeight: 26,
+    rowHeight: 24,
+    spacing: 3,
+    iconSize: 13,
   },
   xl: {
-    fontSize: 15,
-    headerFontSize: 13,
-    headerHeight: 38,
-    rowHeight: 34,
-    spacing: 6,
-    iconSize: 16,
+    fontSize: 13,
+    headerFontSize: 12,
+    headerHeight: 28,
+    rowHeight: 26,
+    spacing: 3,
+    iconSize: 14,
   },
 };
 
@@ -78,7 +79,7 @@ export const gridTheme = themeQuartz.withParams({
   fontSize: 11,
   headerFontSize: 10,
   headerFontWeight: 600,
-  /* Tighter vertical density on small screens; large desktops scale up. */
+  /* Tight rows; modest step-up on large desktops via GRID_SCALE. */
   spacing: 2,
   headerHeight: 22,
   rowHeight: 20,

@@ -36,14 +36,16 @@ Height **36px** default, **44px** from 1280px, **52px** from 1600px (**44px** on
 | Viewport | Body | Labels | Grid cells | KPI value | Controls |
 | --- | --- | --- | --- | --- | --- |
 | Default | 12px | 10px | 11px | 14px | 28px |
-| ≥1280px | 14px | 12px | 13px | 18px | 34px |
-| ≥1600px | 16px | 13px | 15px | 22px | 40px |
+| ≥1280px | 13px | 11px | 12px | 15px | 30px |
+| ≥1600px | 13px | 11px | 13px | 16px | 32px |
 | Phone | compact type | — | — | — | ≥44px taps |
+
+Dense Terminal hierarchy — no oversized display fonts. Body stays ~12–13px.
 
 ## Density / chrome
 
-- Section padding `8–10px`, main gap `6–8px` (more padding on ≥1600px).
-- AG Grid dark Quartz params; compact `rowHeight`/`headerHeight` **20/22** by default, **28/32** at 1280px, **34/38** at 1600px. Square corners.
+- Section padding `6–10px`, main gap `6–8px`.
+- AG Grid dark Quartz params; tight `rowHeight`/`headerHeight` **20/22** by default, **24/26** at 1280px, **26/28** at 1600px. Square corners.
 - No heavy outer grid/section frame (`wrapperBorder: false`); light row/column hairlines only.
 - KPI strip: black chips, light type, amber underline when active.
 - Responsive: strat charts stack; touch-sized export/copy icons; mobile hamburger drawer.
