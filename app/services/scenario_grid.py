@@ -1,19 +1,8 @@
 """Build the cohort × PSA × SDA securitization scenario grid.
 
-Down/Base/Up (ChatGPT grid; PCA=PSA, STA=SDA):
-  PSA (PCA): Down=75, Base=100, Up=125
-  SDA (STA): Down=50, Base=100, Up=200
+Axes and cohort recovery come from ``data/scenario_config.json`` (shared with UI).
+
 Full cross: 3 cohorts × 3 PSA × 3 SDA = 27 rows.
-
-Display names (cluster ids 0/1/2 unchanged):
-- LLTV Weak RI   (cluster 0)
-- HLTV Strong RI (cluster 1)
-- HLTV Weak RI   (cluster 2)
-
-Per-cohort recovery (rate / period months; lag=0):
-- HLTV Strong RI → 60% / 12mo
-- HLTV Weak RI → 55% / 15mo
-- LLTV Weak RI → 75% / 9mo
 """
 
 from __future__ import annotations
@@ -25,30 +14,42 @@ from app.services.cohort_labels import (
     COHORT_LOW_LTV_WEAK,
     canonical_cohort_label,
 )
-
-# Order matches prior S01–S09 / S10–S18 / S19–S27 blocks (clusters 0 / 1 / 2).
-COHORTS = (
-    COHORT_LOW_LTV_WEAK,
-    COHORT_HIGH_LTV_STRONG,
-    COHORT_HIGH_LTV_WEAK,
+from app.services.scenario_config import (
+    COHORT_GRID_ORDER,
+    cohort_recovery_map,
+    grid_psa_multiples,
+    grid_sda_multiples,
+    label_psa_sda,
+    load_scenario_config,
+    psa_level_name,
+    sda_level_name,
 )
+
+COHORTS = COHORT_GRID_ORDER
 
 CREDIT_LEAN_COHORTS = (COHORT_HIGH_LTV_STRONG, COHORT_HIGH_LTV_WEAK)
 PREPAY_LEAN_COHORT = COHORT_LOW_LTV_WEAK
 
-PSA_MULTIPLES = (75, 100, 125)  # Down / Base / Up
-SDA_MULTIPLES = (50, 100, 200)  # Down / Base / Up
-PSA_LEVEL_NAME = {75: "Down", 100: "Base", 125: "Up"}
-SDA_LEVEL_NAME = {50: "Down", 100: "Base", 200: "Up"}
-BASE_PSA = 100
-BASE_SDA = 100
 
-# recovery_rate, recovery_period_months, recovery_lag_months
-COHORT_RECOVERY: dict[str, tuple[float, int, int]] = {
-    COHORT_HIGH_LTV_STRONG: (0.60, 12, 0),
-    COHORT_HIGH_LTV_WEAK: (0.55, 15, 0),
-    COHORT_LOW_LTV_WEAK: (0.75, 9, 0),
-}
+def _axes() -> tuple[tuple[int, ...], tuple[int, ...], int, int]:
+    cfg = load_scenario_config()["grid_axes"]
+    return (
+        tuple(int(x) for x in cfg["psa_multiples"]),
+        tuple(int(x) for x in cfg["sda_multiples"]),
+        int(cfg["base_psa"]),
+        int(cfg["base_sda"]),
+    )
+
+
+PSA_MULTIPLES = grid_psa_multiples()
+SDA_MULTIPLES = grid_sda_multiples()
+PSA_LEVEL_NAME = {p: psa_level_name(p) for p in PSA_MULTIPLES}
+SDA_LEVEL_NAME = {s: sda_level_name(s) for s in SDA_MULTIPLES}
+_BASE = load_scenario_config()["grid_axes"]
+BASE_PSA = int(_BASE["base_psa"])
+BASE_SDA = int(_BASE["base_sda"])
+
+COHORT_RECOVERY: dict[str, tuple[float, int, int]] = cohort_recovery_map()
 
 STATE_LAG_NOTE = (
     "recovery_rate is cohort (not one pool rate); "
@@ -67,11 +68,11 @@ def recovery_for_cohort(cohort: str) -> tuple[float, int, int]:
 
 def _cell_note(cohort: str, psa: int, sda: int) -> str:
     bits = [
-        f"{cohort} PSA{psa}/SDA{sda}",
-        f"PCA={PSA_LEVEL_NAME[psa]} STA={SDA_LEVEL_NAME[sda]}",
+        f"{cohort} {label_psa_sda(psa, sda)}",
+        f"PCA={psa_level_name(psa)} STA={sda_level_name(sda)}",
     ]
     if psa == BASE_PSA and sda == BASE_SDA:
-        bits.append("BASE CASE (100 PSA / 100 SDA)")
+        bits.append(f"GRID BASE CASE ({label_psa_sda(BASE_PSA, BASE_SDA)})")
     if cohort in CREDIT_LEAN_COHORTS and sda >= 100:
         bits.append(f"{cohort} credit-leaning cell")
     if cohort == PREPAY_LEAN_COHORT and psa >= 100 and sda <= 100:
@@ -83,23 +84,24 @@ def _cell_note(cohort: str, psa: int, sda: int) -> str:
 
 
 def build_scenario_grid() -> list[Scenario]:
+    psa_mults, sda_mults, _, _ = _axes()
     rows: list[Scenario] = []
     i = 0
     for cohort in COHORTS:
         rate, period, lag = recovery_for_cohort(cohort)
-        for psa in PSA_MULTIPLES:
-            for sda in SDA_MULTIPLES:
+        for psa in psa_mults:
+            for sda in sda_mults:
                 i += 1
                 rows.append(
                     Scenario(
                         scenario_id=f"S{i:02d}",
                         cohort=cohort,
-                        psa_multiple=psa,
-                        sda_multiple=sda,
+                        psa_multiple=int(psa),
+                        sda_multiple=int(sda),
                         recovery_period_months=period,
                         recovery_lag_months=lag,
                         recovery_rate=rate,
-                        note=_cell_note(cohort, psa, sda),
+                        note=_cell_note(cohort, int(psa), int(sda)),
                         state_varying_recovery_todo=False,
                     )
                 )
@@ -113,6 +115,7 @@ def scenarios_to_records(scenarios: list[Scenario]) -> list[dict]:
             "cohort": s.cohort,
             "psa_multiple": s.psa_multiple,
             "sda_multiple": s.sda_multiple,
+            "psa_sda_label": label_psa_sda(s.psa_multiple, s.sda_multiple),
             "recovery_period_months": s.recovery_period_months,
             "recovery_lag_months": s.recovery_lag_months,
             "recovery_rate": s.recovery_rate,
@@ -124,7 +127,7 @@ def scenarios_to_records(scenarios: list[Scenario]) -> list[dict]:
 
 
 def base_case_scenario(scenarios: list[Scenario] | None = None) -> Scenario:
-    """First-cohort base cell at 100 PSA / 100 SDA."""
+    """First-cohort grid base cell at BASE_PSA / BASE_SDA (usually 100/100)."""
     scenarios = scenarios or build_scenario_grid()
     for s in scenarios:
         if (
@@ -133,4 +136,6 @@ def base_case_scenario(scenarios: list[Scenario] | None = None) -> Scenario:
             and s.sda_multiple == BASE_SDA
         ):
             return s
-    raise ValueError("base case 100 PSA / 100 SDA not found for first cohort")
+    raise ValueError(
+        f"base case {label_psa_sda(BASE_PSA, BASE_SDA)} not found for first cohort"
+    )

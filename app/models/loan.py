@@ -47,6 +47,21 @@ class Loan(BaseModel):
         default=None,
         description="Mortgage insurance flag; None → assumptions.csv has_mi_all (True)",
     )
+    # ARM fields (tape). Engine is fixed-coupon; resets inside the horizon raise.
+    arm_index: str | None = Field(
+        default=None,
+        description="ARM index name when present; None/blank = fixed-rate",
+    )
+    arm_initial_fixed_months: int | None = Field(
+        default=None,
+        ge=0,
+        description="Months from origination until first ARM reset",
+    )
+    arm_reset_frequency_months: int | None = Field(
+        default=None,
+        ge=0,
+        description="ARM reset frequency; >0 marks loan as ARM for validation",
+    )
 
 
 class LoanORM(Base):

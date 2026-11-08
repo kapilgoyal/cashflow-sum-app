@@ -22,14 +22,11 @@ from app.services.cohort_labels import (
     canonical_cohort_label,
 )
 from app.services.recovery import resolve_recovery_lag_months
+from app.services.scenario_config import base_speeds, label_psa_sda
 from app.services.scenario_grid import COHORT_RECOVERY
 
-# Mirrors src/scenarioSpeeds.js COHORT_SPEED_SCHEDULE Base column.
-BASE_SPEEDS: dict[str, tuple[int, int]] = {
-    COHORT_HIGH_LTV_STRONG: (150, 150),
-    COHORT_HIGH_LTV_WEAK: (75, 250),
-    COHORT_LOW_LTV_WEAK: (100, 75),
-}
+# From data/scenario_config.json cohort_speed_schedule (psaBase/sdaBase).
+BASE_SPEEDS: dict[str, tuple[int, int]] = base_speeds()
 
 COHORT_ORDER = (
     COHORT_LOW_LTV_WEAK,
@@ -58,9 +55,10 @@ def base_scenarios() -> list[Scenario]:
                 recovery_lag_months=lag,
                 recovery_rate=rate,
                 note=(
-                    f"Base scenario · {cohort} PSA{psa}/SDA{sda}; "
+                    f"Base scenario · {cohort} {label_psa_sda(psa, sda)}; "
                     "CPR/CDR from PSA/SDA curves at loan age + month; "
-                    "horizon includes FNMA recovery lag + period"
+                    "horizon includes FNMA recovery lag + period; "
+                    "WAL kind = base_wal (cohort psaBase/sdaBase)"
                 ),
             )
         )
@@ -139,7 +137,9 @@ def run_base_case_cohort_cf(
                 scenario_lag_months=int(scenario.recovery_lag_months),
             )
             max_lag_used = max(max_lag_used, lag)
-            rows = project_loan_cashflows(loan, scenario, months=loan_months)
+            rows = project_loan_cashflows(
+                loan, scenario, months=loan_months, validate=False
+            )
             if not rows:
                 continue
             n_loan_months += len(rows)
@@ -181,6 +181,10 @@ def run_base_case_cohort_cf(
             "scenario_id": scenario.scenario_id,
             "psa_multiple": scenario.psa_multiple,
             "sda_multiple": scenario.sda_multiple,
+            "psa_sda_label": label_psa_sda(
+                scenario.psa_multiple, scenario.sda_multiple
+            ),
+            "wal_kind": "base_wal",
             "recovery_period_months": int(scenario.recovery_period_months),
             "n_loans": len(cohort_loans),
             "beginning_upb": round(sum_beg0, 2),
