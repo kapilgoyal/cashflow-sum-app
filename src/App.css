@@ -22,10 +22,12 @@
   --cf-nav-width: 152px;
   --cf-nav-width-collapsed: 48px;
   /*
-   * Canonical type scale = Scenarios AG Grid:
-   *   chrome labels / buttons → --cf-font-sm (10px) / weight 600 / 0.01em
-   *   body / inputs             → --cf-font-md (11px) / weight 400
-   * AG Grid: cells 11px/200, IDs 500, headers 12px/500.
+   * Canonical type scale (CF-192):
+   *   labels / buttons / titles → --cf-font-sm (10px) / --cf-weight-label (600)
+   *   inputs / selects / textareas → --cf-font-md (11px) / --cf-weight-input (400)
+   *   AG Grid data → 11px / --cf-weight-data (200); IDs → --cf-weight-id (500)
+   *   AG Grid headers → 12px / --cf-weight-header (500)
+   *   KPI values → --cf-font-kpi-value (larger than body)
    * Row height may still step up at ≥1280 / ≥1600; header ≥ row.
    * --cf-font-body kept for rare non-grid chrome; prefer --cf-font-md for forms.
    */
@@ -36,6 +38,12 @@
   --cf-font-kpi-label: 10px;
   --cf-font-kpi-value: 14px;
   --cf-font-chart: 10px;
+  --cf-weight-data: 200;
+  --cf-weight-input: 400;
+  --cf-weight-id: 500;
+  --cf-weight-header: 500;
+  --cf-weight-label: 600;
+  --cf-weight-kpi: 600;
   --cf-control-h: 28px;
   --cf-icon: 28px;
   --cf-topbar-h: 36px;
@@ -402,7 +410,7 @@ body {
 .qc-composer-title {
   font-family: var(--cf-font);
   font-size: var(--cf-font-sm);
-  font-weight: 600;
+  font-weight: var(--cf-weight-label);
   letter-spacing: 0.01em;
   color: var(--cf-text);
   text-transform: none;
@@ -426,7 +434,7 @@ button.btn,
 .qc-composer-actions .btn {
   font-family: var(--cf-font);
   font-size: var(--cf-font-sm);
-  font-weight: 600;
+  font-weight: var(--cf-weight-label);
   letter-spacing: 0.01em;
   border-radius: 0;
 }
@@ -444,7 +452,7 @@ button.btn,
 .ia-kpi-label,
 .cohort-kpi-rail .qc-kpi-label {
   font-size: var(--cf-font-kpi-label);
-  font-weight: 500;
+  font-weight: var(--cf-weight-label);
   color: var(--cf-muted);
   letter-spacing: 0.02em;
 }
@@ -453,7 +461,7 @@ button.btn,
 .ia-kpi-value,
 .cohort-kpi-rail .qc-kpi-value {
   font-size: var(--cf-font-kpi-value);
-  font-weight: 600;
+  font-weight: var(--cf-weight-kpi);
   font-synthesis: none;
   color: var(--cf-accent);
   font-variant-numeric: tabular-nums;
@@ -1060,7 +1068,7 @@ button.btn,
 
 .field label {
   font-size: var(--cf-font-sm);
-  font-weight: 600;
+  font-weight: var(--cf-weight-label);
   letter-spacing: 0.01em;
   color: var(--cf-muted);
 }
@@ -1071,7 +1079,7 @@ button.btn,
   padding: 3px 6px;
   font: inherit;
   font-size: var(--cf-font-md);
-  font-weight: 400;
+  font-weight: var(--cf-weight-input);
   font-feature-settings: "tnum" 1;
   color: var(--cf-text);
   background: var(--cf-bg);
@@ -1091,6 +1099,7 @@ button.btn,
   border-radius: 0;
   font-family: inherit;
   font-size: var(--cf-font-md);
+  font-weight: var(--cf-weight-input);
   min-height: var(--cf-control-h);
   padding: 2px 6px;
   margin-left: 4px;
@@ -1134,7 +1143,7 @@ button.btn,
 .ag-theme-cashflow .ag-spanned-cell {
   font-family: var(--cf-font);
   font-size: 11px;
-  font-weight: 200;
+  font-weight: var(--cf-weight-data);
   color: var(--cf-text);
 }
 
@@ -1142,12 +1151,12 @@ button.btn,
   font-variant-numeric: tabular-nums;
   text-align: right !important;
   justify-content: flex-end;
-  font-weight: 200;
+  font-weight: var(--cf-weight-data);
 }
 
 .ag-theme-cashflow .cf-id {
   /* Beats shared cellStyle fontWeight: 200. */
-  font-weight: 500 !important;
+  font-weight: var(--cf-weight-id) !important;
   letter-spacing: 0.02em;
 }
 
@@ -1156,7 +1165,7 @@ button.btn,
 .ag-theme-cashflow .ag-header-cell-text {
   letter-spacing: 0.01em;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: var(--cf-weight-header);
 }
 
 /* Selected row: amber-tint fill + left accent rail (readable on near-black panes). */
@@ -1176,8 +1185,8 @@ button.btn,
   padding: 4px 10px;
   min-height: var(--cf-control-h);
   font: inherit;
-  font-size: var(--cf-font-md);
-  font-weight: 600;
+  font-size: var(--cf-font-sm);
+  font-weight: var(--cf-weight-label);
   letter-spacing: 0.01em;
   color: var(--cf-on-accent);
   background: var(--cf-accent);
@@ -1507,19 +1516,19 @@ button.btn,
   gap: 8px;
 }
 
-/* Match Scenarios AG Grid headers: 10px / 600 / 0.01em */
+/* Labels / titles: 10px / 600 */
 .qc-composer-title {
   margin: 0;
   font-size: var(--cf-font-sm);
-  font-weight: 600;
+  font-weight: var(--cf-weight-label);
   letter-spacing: 0.01em;
   color: var(--cf-text);
 }
 
-/* Match .field label / grid header */
+/* Match .field label */
 .qc-composer-label {
   font-size: var(--cf-font-sm);
-  font-weight: 600;
+  font-weight: var(--cf-weight-label);
   color: var(--cf-muted);
   letter-spacing: 0.01em;
 }
@@ -1558,7 +1567,7 @@ button.btn,
   padding-top: 10px;
 }
 
-/* Match Scenarios AG Grid body cells: 11px / 400 */
+/* Inputs / textareas: 11px / 400 */
 .qc-composer-input {
   width: 100%;
   resize: vertical;
@@ -1571,7 +1580,7 @@ button.btn,
   font: inherit;
   font-family: inherit;
   font-size: var(--cf-font-md);
-  font-weight: 400;
+  font-weight: var(--cf-weight-input);
   font-feature-settings: "tnum" 1;
   line-height: 1.35;
 }
@@ -1584,7 +1593,7 @@ button.btn,
 .qc-composer-predicate {
   font-family: inherit;
   font-size: var(--cf-font-md);
-  font-weight: 400;
+  font-weight: var(--cf-weight-input);
 }
 
 .qc-composer-predicate[readonly] {
@@ -2350,7 +2359,7 @@ button.btn,
 
 .qc-kpi-label {
   font-size: var(--cf-font-kpi-label);
-  font-weight: 600;
+  font-weight: var(--cf-weight-label);
   letter-spacing: 0.01em;
   line-height: 1.1;
   color: var(--cf-muted);
@@ -2372,7 +2381,7 @@ button.btn,
 
 .qc-kpi-value {
   font-size: var(--cf-font-kpi-value);
-  font-weight: 600;
+  font-weight: var(--cf-weight-kpi);
   font-synthesis: none;
   font-variant-numeric: tabular-nums;
   color: var(--cf-text);
@@ -2941,7 +2950,7 @@ button.btn,
   border-bottom: 1px solid var(--cf-hairline);
   align-items: flex-start;
   padding-top: 4px;
-  font-weight: 200;
+  font-weight: var(--cf-weight-data);
   color: var(--cf-text);
 }
 
@@ -3491,14 +3500,14 @@ button.btn,
   overflow: hidden;
 }
 
-/* Wide desktop: row density may step up; AG Grid fonts stay 11px / 10px. */
+/* Wide desktop: row density may step up; labels stay 10px, grid 11/12. */
 @media (min-width: 1280px) {
   :root {
     --cf-font-body: 13px;
     --cf-font-sm: 10px;
     --cf-font-md: 11px;
     --cf-font-lg: 14px;
-    --cf-font-kpi-label: 11px;
+    --cf-font-kpi-label: 10px;
     --cf-font-kpi-value: 15px;
     --cf-font-chart: 11px;
     --cf-control-h: 30px;
@@ -3526,7 +3535,7 @@ button.btn,
     --cf-font-sm: 10px;
     --cf-font-md: 11px;
     --cf-font-lg: 14px;
-    --cf-font-kpi-label: 11px;
+    --cf-font-kpi-label: 10px;
     --cf-font-kpi-value: 16px;
     --cf-font-chart: 11px;
     --cf-control-h: 32px;
@@ -4512,7 +4521,7 @@ button.btn,
 
 .ia-kpi-label {
   font-size: var(--cf-font-kpi-label);
-  font-weight: 400;
+  font-weight: var(--cf-weight-label);
   letter-spacing: 0.02em;
   color: var(--ia-muted);
   line-height: 1.1;
@@ -4520,7 +4529,7 @@ button.btn,
 
 .ia-kpi-value {
   font-size: var(--cf-font-kpi-value);
-  font-weight: 400;
+  font-weight: var(--cf-weight-kpi);
   font-variant-numeric: tabular-nums;
   color: var(--ia-accent);
   line-height: 1.1;
@@ -5643,5 +5652,258 @@ button.btn,
   .valuation-matrix th,
   .valuation-matrix td {
     padding: 8px 6px;
+  }
+}
+
+/* ==========================================================================
+ * CF-193 — Mobile layout consistency
+ * QC / Strats / Cohort / Valuation / Scenarios
+ * Goals: single .main scroller, denser KPIs, no overlaps / x-overflow.
+ * Trailing block wins over earlier (max-width: 900px) fragments.
+ * ========================================================================== */
+
+@media (max-width: 900px) {
+  html,
+  body,
+  #root,
+  .app {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* One vertical scroll owner for every analysis pane. */
+  .main:has(> .section-qc),
+  .main:has(> .section-strats),
+  .main:has(> .section-collateral),
+  .main:has(> .cohort-page),
+  .main:has(> .section-scenarios),
+  .main:has(> .section-valuation),
+  .main:has(> .section-asf) {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Sections size to content so .main.scrollHeight grows (no nested clip). */
+  .section-fill.section-qc,
+  .section-qc,
+  .section-fill.section-strats,
+  .section-strats.section-collateral,
+  .section-strats,
+  .cohort-page,
+  .section-fill.section-scenarios,
+  .section-scenarios,
+  .section-fill.section-valuation,
+  .section-valuation {
+    display: flex !important;
+    flex-direction: column;
+    flex: 0 0 auto !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0;
+    overflow: visible !important;
+    max-width: 100%;
+  }
+
+  .section-strats .strats-body,
+  .section-strats .strats-charts,
+  .valuation-body,
+  .scenario-page,
+  .scenario-results,
+  .scenario-results > * {
+    flex: 0 0 auto !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    min-height: 0;
+  }
+
+  /* �� Shared dense KPI tiles �� */
+  .section-qc .qc-kpi,
+  .section-strats .qc-kpi,
+  .section-strats .strats-kpi-strip .qc-kpi,
+  .cohort-kpi-rail .qc-kpi.cohort-kpi,
+  .section-valuation .qc-kpi {
+    box-sizing: border-box;
+    min-height: 44px !important;
+    height: auto !important;
+    max-height: none;
+    padding: 4px 8px !important;
+    gap: 2px !important;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .section-qc .qc-kpi-label,
+  .section-strats .qc-kpi-label,
+  .cohort-kpi-rail .qc-kpi-label,
+  .section-valuation .qc-kpi-label {
+    font-size: 9px !important;
+    font-weight: var(--cf-weight-label, 600);
+    line-height: 1.15;
+    color: var(--cf-muted);
+  }
+
+  .section-qc .qc-kpi-value,
+  .section-strats .qc-kpi-value,
+  .cohort-kpi-rail .qc-kpi-value,
+  .section-valuation .qc-kpi-value {
+    font-size: 14px !important;
+    font-weight: var(--cf-weight-kpi, 600);
+    line-height: 1.1;
+    color: var(--cf-accent, #fd9d24);
+  }
+
+  /* Horizontal KPI rails — one dense row; scroll sideways, never stack over chrome. */
+  .section-qc .qc-kpi-strip,
+  .section-strats .strats-kpi-strip,
+  .section-strats .qc-kpi-strip,
+  .cohort-kpi-rail,
+  .section-valuation .qc-kpi-strip.valuation-kpi-strip {
+    display: flex;
+    flex-wrap: nowrap !important;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 8px;
+    padding-bottom: 2px;
+  }
+
+  .section-qc .qc-kpi,
+  .section-strats .strats-kpi-strip .qc-kpi,
+  .section-strats .qc-kpi,
+  .cohort-kpi-rail .qc-kpi.cohort-kpi,
+  .section-valuation .qc-kpi {
+    flex: 0 0 auto !important;
+    min-width: 72px;
+    max-width: none;
+  }
+
+  /* QC has only 3 KPIs — share the row evenly. */
+  .section-qc .qc-kpi {
+    flex: 1 1 0 !important;
+    min-width: 0;
+  }
+
+  /* Collapse empty Strats filter-chip slot so meta sits tight above KPIs. */
+  .section-strats .strats-active-chips[aria-hidden="true"] {
+    display: none;
+  }
+
+  .section-strats .strats-topbar {
+    gap: 6px;
+  }
+
+  /* QC toolbar: stack button above KPIs — no side-by-side crush. */
+  .qc-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .qc-toolbar-start {
+    margin-right: 0;
+  }
+
+  .qc-new-rule-btn {
+    min-height: var(--cf-tap, 44px);
+    height: var(--cf-tap, 44px);
+  }
+
+  /* Cohort chips clear of KPI rail. */
+  .cohort-filter-bar {
+    position: relative;
+    z-index: 1;
+    margin-top: 0;
+    clear: both;
+  }
+
+  /* Valuation toolbar: static (sticky caused overlap with KPIs / charts). */
+  .valuation-toolbar {
+    position: static;
+    top: auto;
+    z-index: auto;
+    background: transparent;
+    padding-bottom: 0;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .valuation-z-input,
+  .valuation-btn {
+    min-height: 44px;
+    height: 44px;
+  }
+
+  .valuation-meta {
+    margin-left: 0;
+    width: 100%;
+    line-height: 1.35;
+  }
+
+  .valuation-charts {
+    grid-template-columns: 1fr;
+    flex: 0 0 auto;
+  }
+
+  .valuation-matrix-panel {
+    flex: 0 0 auto;
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .valuation-chart-wrap {
+    height: 220px;
+    min-height: 200px;
+    flex: none;
+  }
+
+  .valuation-matrix-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Scenarios: keep chart stack fully in .main flow. */
+  .scenario-page {
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .scenario-grid-cash-panel {
+    flex: 0 0 auto !important;
+    min-height: 240px !important;
+    height: 260px !important;
+    overflow: visible !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .section-qc .qc-kpi-value,
+  .section-strats .qc-kpi-value,
+  .cohort-kpi-rail .qc-kpi-value,
+  .section-valuation .qc-kpi-value {
+    font-size: 14px !important;
+  }
+
+  .section-qc .qc-kpi,
+  .section-strats .qc-kpi,
+  .cohort-kpi-rail .qc-kpi.cohort-kpi,
+  .section-valuation .qc-kpi {
+    min-height: 44px !important;
+    padding: 4px 6px !important;
+  }
+
+  .cohort-kpi-rail .qc-kpi.cohort-kpi,
+  .section-strats .strats-kpi-strip .qc-kpi,
+  .section-strats .qc-kpi,
+  .section-valuation .qc-kpi {
+    min-width: 68px;
   }
 }

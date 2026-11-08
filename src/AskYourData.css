@@ -1,0 +1,147 @@
+/* Ask Your Data layout only — type tokens come from App.css variables. */
+.section-ask-data {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  padding: 8px 10px 10px;
+}
+
+.ask-data-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.ask-data-meta {
+  font-size: var(--cf-font-sm);
+}
+
+.ask-data-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.ask-data-chip {
+  text-align: left;
+  max-width: 100%;
+  white-space: normal;
+  line-height: 1.25;
+  padding: 8px 10px;
+}
+
+.ask-data-thread {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 2px 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ask-data-empty {
+  margin: 12px 4px;
+}
+
+.ask-data-bubble {
+  border: 1px solid var(--cf-hairline);
+  background: var(--cf-panel);
+  padding: 8px 10px;
+  max-width: 920px;
+}
+
+.ask-data-user {
+  align-self: flex-end;
+  background: #1a1a1a;
+}
+
+.ask-data-assistant {
+  align-self: flex-start;
+}
+
+.ask-data-assistant.is-error {
+  border-color: var(--cf-down);
+}
+
+.ask-data-role {
+  color: var(--cf-muted);
+  font-size: var(--cf-font-sm);
+  font-weight: var(--cf-weight-label);
+  margin-bottom: 4px;
+}
+
+.ask-data-text {
+  white-space: pre-wrap;
+  font-size: var(--cf-font-md);
+  line-height: 1.4;
+}
+
+.ask-data-tools {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ask-data-tool {
+  border: 1px solid var(--cf-hairline);
+  background: #0c0c0c;
+  padding: 4px 6px;
+  font-size: var(--cf-font-sm);
+}
+
+.ask-data-tool summary {
+  cursor: pointer;
+  color: var(--cf-accent);
+  font-weight: var(--cf-weight-label);
+}
+
+.ask-data-tool pre {
+  margin: 6px 0 2px;
+  overflow: auto;
+  max-height: 220px;
+  font-size: 10px;
+  color: var(--cf-text);
+}
+
+.ask-data-composer {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  padding-top: 4px;
+  border-top: 1px solid var(--cf-hairline);
+}
+
+.ask-data-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  resize: vertical;
+  min-height: 44px;
+  background: #0c0c0c;
+  color: var(--cf-text);
+  border: 1px solid var(--cf-hairline);
+  font-family: var(--cf-font);
+  font-size: var(--cf-font-md);
+  font-weight: var(--cf-weight-input);
+  padding: 8px 10px;
+}
+
+@media (max-width: 720px) {
+  .ask-data-composer {
+    flex-direction: column;
+  }
+
+  .ask-data-composer .btn {
+    min-height: var(--cf-tap);
+  }
+}

@@ -105,14 +105,14 @@ export function fmtMoney(v) {
   });
 }
 
-/** Compact UPB for KPI chips / chart tips. */
+/** Compact UPB for KPI chips / chart tips (M/B keep 1 dp padding). */
 export function fmtUpbShort(v) {
   if (v == null || Number.isNaN(Number(v))) return "";
   const n = Math.round(Number(v));
   const abs = Math.abs(n);
-  if (abs >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
-  if (abs >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
-  if (abs >= 1e3) return `$${(n / 1e3).toFixed(0)}k`;
+  if (abs >= 1e9) return `$${fmtNum(n / 1e9, 1)}B`;
+  if (abs >= 1e6) return `$${fmtNum(n / 1e6, 1)}M`;
+  if (abs >= 1e3) return `$${Math.round(n / 1e3)}k`;
   return `$${n.toLocaleString()}`;
 }
 
@@ -123,17 +123,15 @@ export function fmtInt(v) {
 }
 
 /**
- * Fraction → percent. Default 1 decimal (DTI/rates).
- * Pass digits=2 for fine rates; use fmtLtv for LTV/CLTV (whole %).
+ * Fraction → percent. Default 1 decimal (DTI/rates) with fixed padding
+ * (109.0% not 109%). Pass digits=2 for fine rates; use fmtLtv for LTV/CLTV
+ * (whole %, no decimals).
  */
 export function fmtPct(v, digits = 1) {
   if (v == null || Number.isNaN(Number(v))) return "";
   const pct = Number(v) * 100;
   if (digits <= 0) return `${Math.round(pct)}%`;
-  const fixed = pct.toFixed(digits);
-  // Drop trailing zeros: 80.0% → 80%, 6.50% → 6.5%
-  const trimmed = fixed.replace(/\.?0+$/, "");
-  return `${trimmed}%`;
+  return `${pct.toFixed(digits)}%`;
 }
 
 /** Original/current LTV & CLTV — whole percent, no decimals. */
@@ -141,25 +139,26 @@ export function fmtLtv(v) {
   return fmtPct(v, 0);
 }
 
-/** WAC / coupon rates — ~1 decimal; drop trailing .0. */
+/** WAC / coupon rates — fixed 1 decimal (6.0% not 6%). */
 export function fmtWac(v) {
   if (v == null || Number.isNaN(Number(v))) return "";
   const pct = Number(v) * 100;
-  const fixed = pct.toFixed(1);
-  return `${fixed.replace(/\.?0+$/, "")}%`;
-}
-
-/** General numeric; trims trailing zeros. Default 1 dp for rates/RI. */
-export function fmtNum(v, digits = 1) {
-  if (v == null || Number.isNaN(Number(v))) return "";
-  if (digits <= 0) return fmtInt(v);
-  const fixed = Number(v).toFixed(digits);
-  return fixed.replace(/\.?0+$/, "");
+  return `${pct.toFixed(1)}%`;
 }
 
 /**
- * Chart/axis/tooltip money — whole dollars; at most 1 decimal on M/B.
- * Prefer this over ad-hoc toFixed in Recharts formatters.
+ * General numeric with fixed decimal padding (109.0 not 109; Duration 1.0).
+ * Default 1 dp for rates/RI/WAL. digits ≤ 0 → integer.
+ */
+export function fmtNum(v, digits = 1) {
+  if (v == null || Number.isNaN(Number(v))) return "";
+  if (digits <= 0) return fmtInt(v);
+  return Number(v).toFixed(digits);
+}
+
+/**
+ * Chart/axis/tooltip money — whole dollars; at most 1 decimal on M/B
+ * (padded: $1.0B). Prefer this over ad-hoc toFixed in Recharts formatters.
  */
 export function chartMoney(v) {
   if (v == null || Number.isNaN(Number(v))) return "";
@@ -172,8 +171,8 @@ export function chartMoney(v) {
 }
 
 /**
- * Chart percent. Pass fraction (0.06 → 6%) unless alreadyPercent.
- * At most 1 decimal; trailing .0 dropped.
+ * Chart percent. Pass fraction (0.06 → 6.0%) unless alreadyPercent.
+ * Fixed 1 decimal padding.
  */
 export function chartPct(v, { alreadyPercent = false } = {}) {
   if (v == null || Number.isNaN(Number(v))) return "";
@@ -181,7 +180,7 @@ export function chartPct(v, { alreadyPercent = false } = {}) {
   return `${fmtNum(pct, 1)}%`;
 }
 
-/** Chart scalar — integers preferred; at most 1 decimal. */
+/** Chart scalar — fixed 1 decimal padding (Duration 1.0). */
 export function chartNum(v) {
   return fmtNum(v, 1);
 }

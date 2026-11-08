@@ -1,4 +1,28 @@
-"""Pool valuation: servicing haircut, QuantLib discount, Z-spread scenarios."""
+"""Pool valuation: servicing haircut, QuantLib discount, Z-spread scenarios.
+
+Discount curve contract
+-----------------------
+* Inputs: FRED CMT **par yields** (decimal), not continuous zeros.
+* Bootstrap: QuantLib rate helpers → piecewise log-linear **discount** factors
+  (``PiecewiseLogLinearDiscount``). Short tenors (<1Y) use
+  ``DepositRateHelper``; coupon tenors use ``FixedRateBondHelper`` at par
+  with coupon = CMT yield (semi-annual, Actual/Actual Bond).
+* Fallback: if helpers cannot be built, an **explicit flat continuous zero**
+  curve at 4% (labeled in ``curve_meta``) — never silent "par-as-zero".
+* Valuation date: ``ql.Settings.evaluationDate`` = calendar today
+  (``_ql_today``).
+* Day count (curve DF / NPV): ``Actual/365 (Fixed)`` on the discount curve
+  handle used for cashflow PV.
+* Z-spread: constant continuous spread via ``ZeroSpreadedTermStructure``
+  (bp → decimal); scenarios bump this spread only.
+* Compounding on the spreaded curve: Continuous / NoFrequency.
+
+WAL contract
+------------
+``pool_wal_years`` weights **returned principal only**:
+``scheduled_principal + prepay + recovery``. Interest, servicing fees,
+defaults, and realized losses are excluded.
+"""
 
 from __future__ import annotations
 
@@ -21,6 +45,8 @@ DEFAULT_Z_SPREAD_BP = 100.0
 Z_SCENARIO_OFFSETS_BP = (-50, -25, 0, 25, 50)
 # Finite-difference bump for spread / curve risk.
 RISK_BUMP_BP = 10.0
+# Explicit flat continuous zero used only when CMT bootstrap fails.
+FLAT_FALLBACK_ZERO = 0.04
 # Key-rate knots (match FRED CMT tenors used in the discount curve).
 KEY_RATE_TENORS: list[tuple[float, str]] = [
     (0.5, "6M"),
@@ -33,6 +59,14 @@ KEY_RATE_TENORS: list[tuple[float, str]] = [
     (20.0, "20Y"),
     (30.0, "30Y"),
 ]
+
+# Last curve build metadata (for API / tests — not a global rate store).
+_LAST_CURVE_META: dict[str, Any] = {}
+
+
+def curve_meta() -> dict[str, Any]:
+    """Copy of metadata from the most recent ``build_discount_curve`` call."""
+    return dict(_LAST_CURVE_META)
 
 
 def _load_base_cf() -> dict[str, Any]:
@@ -92,47 +126,168 @@ def _ql_today() -> ql.Date:
     return d
 
 
-def build_discount_curve(
-    curve_points: list[dict[str, Any]],
+def _flat_continuous_curve(
+    today: ql.Date,
+    rate: float,
+    *,
+    reason: str,
 ) -> ql.YieldTermStructureHandle:
-    """Piecewise log-linear discount from CMT yields (treated as continuous zeros)."""
-    today = _ql_today()
+    """Honest flat continuous-zero fallback (not CMT par yields)."""
     calendar = ql.NullCalendar()
     day_count = ql.Actual365Fixed()
-
-    dates = [today]
-    rates = [0.0]
-    for p in sorted(curve_points, key=lambda x: float(x["tenor_years"])):
-        tenor = float(p["tenor_years"])
-        if tenor <= 0:
-            continue
-        # Skip extrapolated 40Y in the bootstrap engine (keep chart-only).
-        if p.get("extrapolated"):
-            continue
-        y = float(p["yield"])
-        # Months for short tenors, years otherwise.
-        if tenor < 1.0:
-            months = max(1, int(round(tenor * 12)))
-            dt = calendar.advance(today, ql.Period(months, ql.Months))
-        else:
-            years = int(round(tenor))
-            dt = calendar.advance(today, ql.Period(years, ql.Years))
-        if dt <= dates[-1]:
-            continue
-        dates.append(dt)
-        rates.append(y)
-
-    if len(dates) < 2:
-        # Flat fallback 4%.
-        dates = [today, calendar.advance(today, ql.Period(30, ql.Years))]
-        rates = [0.04, 0.04]
-
-    # Seed rate at t=0 with first tenor.
-    rates[0] = rates[1]
+    dates = [today, calendar.advance(today, ql.Period(30, ql.Years))]
+    rates = [float(rate), float(rate)]
     curve = ql.ZeroCurve(
         dates, rates, day_count, calendar, ql.Linear(), ql.Continuous
     )
     curve.enableExtrapolation()
+    _LAST_CURVE_META.clear()
+    _LAST_CURVE_META.update(
+        {
+            "method": "flat_continuous_zero",
+            "flat_zero": float(rate),
+            "compounding": "Continuous",
+            "day_count": "Actual/365 (Fixed)",
+            "calendar": "NullCalendar",
+            "valuation_date": ql.Date_isoFormat(today)
+            if hasattr(ql, "Date_isoFormat")
+            else str(today),
+            "z_spread_compounding": "Continuous",
+            "z_spread_day_count": "Actual/365 (Fixed)",
+            "note": reason,
+            "n_helpers": 0,
+        }
+    )
+    return ql.YieldTermStructureHandle(curve)
+
+
+def _cmt_rate_helpers(
+    today: ql.Date,
+    curve_points: list[dict[str, Any]],
+) -> list[Any]:
+    """Build QuantLib helpers from FRED CMT **par** yields (decimal)."""
+    calendar = ql.UnitedStates(ql.UnitedStates.GovernmentBond)
+    dc_deposit = ql.Actual365Fixed()
+    dc_bond = ql.ActualActual(ql.ActualActual.Bond)
+    settlement_days = 0
+    face = 100.0
+    helpers: list[Any] = []
+    seen_dates: list[ql.Date] = []
+
+    for p in sorted(curve_points, key=lambda x: float(x["tenor_years"])):
+        if p.get("extrapolated"):
+            # Chart-only 40Y — do not bootstrap.
+            continue
+        tenor = float(p["tenor_years"])
+        if tenor <= 0:
+            continue
+        y = float(p["yield"])
+        if not (0.0 <= y < 1.0):
+            continue
+
+        if tenor < 1.0:
+            months = max(1, int(round(tenor * 12.0)))
+            period = ql.Period(months, ql.Months)
+            maturity = calendar.advance(today, period)
+            if seen_dates and maturity <= seen_dates[-1]:
+                continue
+            helper = ql.DepositRateHelper(
+                ql.QuoteHandle(ql.SimpleQuote(y)),
+                period,
+                settlement_days,
+                calendar,
+                ql.Unadjusted,
+                False,
+                dc_deposit,
+            )
+        else:
+            years = max(1, int(round(tenor)))
+            maturity = calendar.advance(today, ql.Period(years, ql.Years))
+            if seen_dates and maturity <= seen_dates[-1]:
+                continue
+            schedule = ql.Schedule(
+                today,
+                maturity,
+                ql.Period(ql.Semiannual),
+                calendar,
+                ql.Unadjusted,
+                ql.Unadjusted,
+                ql.DateGeneration.Backward,
+                False,
+            )
+            # Par bond: clean price 100, coupon = CMT par yield (SA BEY).
+            helper = ql.FixedRateBondHelper(
+                ql.QuoteHandle(ql.SimpleQuote(face)),
+                settlement_days,
+                face,
+                schedule,
+                [y],
+                dc_bond,
+                ql.Unadjusted,
+                face,
+            )
+        helpers.append(helper)
+        seen_dates.append(maturity)
+
+    return helpers
+
+
+def build_discount_curve(
+    curve_points: list[dict[str, Any]],
+) -> ql.YieldTermStructureHandle:
+    """Bootstrap a discount curve from CMT **par** yields (not continuous zeros).
+
+    See module docstring for units / compounding / day count / val date / spread.
+    """
+    today = _ql_today()
+    helpers = _cmt_rate_helpers(today, curve_points or [])
+    if len(helpers) < 2:
+        return _flat_continuous_curve(
+            today,
+            FLAT_FALLBACK_ZERO,
+            reason=(
+                "Fewer than 2 CMT helpers — using explicit flat continuous "
+                f"zero {FLAT_FALLBACK_ZERO:.2%} (not par-as-zero)."
+            ),
+        )
+
+    try:
+        curve = ql.PiecewiseLogLinearDiscount(
+            today, helpers, ql.Actual365Fixed()
+        )
+        # Force first bootstrap evaluation before enabling extrapolation.
+        _ = curve.discount(today + ql.Period(1, ql.Years))
+        curve.enableExtrapolation()
+    except RuntimeError as exc:
+        return _flat_continuous_curve(
+            today,
+            FLAT_FALLBACK_ZERO,
+            reason=(
+                f"CMT bootstrap failed ({exc}); using explicit flat continuous "
+                f"zero {FLAT_FALLBACK_ZERO:.2%}."
+            ),
+        )
+
+    _LAST_CURVE_META.clear()
+    _LAST_CURVE_META.update(
+        {
+            "method": "cmt_par_bootstrap",
+            "compounding": "log-linear discount (implied zeros Continuous)",
+            "day_count": "Actual/365 (Fixed) on discount curve",
+            "helper_day_count_short": "Actual/365 (Fixed) deposits",
+            "helper_day_count_bonds": "Actual/Actual (Bond) semi-annual pars",
+            "calendar": "UnitedStates.GovernmentBond",
+            "valuation_date": str(today),
+            "z_spread_compounding": "Continuous",
+            "z_spread_day_count": "Actual/365 (Fixed)",
+            "inputs": "FRED CMT par yields (decimal)",
+            "n_helpers": len(helpers),
+            "note": (
+                "CMT pars bootstrapped via DepositRateHelper (<1Y) and "
+                "FixedRateBondHelper (≥1Y, coupon=par yield, price=100)."
+            ),
+        }
+    )
     return ql.YieldTermStructureHandle(curve)
 
 
@@ -392,31 +547,101 @@ def key_rate_durations(
     return out
 
 
-def pool_wal_years(net_months: list[dict[str, float]]) -> float:
-    """WAL-A on net principal proxy: use net_cash timing when prin not stored."""
-    # Prefer balance runoff as principal proxy when available.
+def _row_returned_principal(row: dict[str, Any]) -> float:
+    """Returned principal for WAL: sched + prepay + recovery (never interest/fees/default/loss)."""
+    if row.get("principal_cash") is not None:
+        return max(0.0, float(row["principal_cash"] or 0.0))
+    sched = float(row.get("scheduled_principal") or 0.0)
+    prepay = float(row.get("prepay") or 0.0)
+    recovery = float(row.get("recovery") or 0.0)
+    # Explicit zeros still win over net_cash / balance runoff fallbacks.
+    if any(k in row for k in ("scheduled_principal", "prepay", "recovery")):
+        return max(0.0, sched + prepay + recovery)
+    return 0.0
+
+
+def pool_wal_years(months: list[dict[str, Any]]) -> float:
+    """Weighted-average life in years from returned principal only.
+
+    Includes: ``scheduled_principal``, ``prepay``, ``recovery`` (or
+    pre-aggregated ``principal_cash``).
+    Excludes: interest, servicing fees, defaults, realized losses, net_cash,
+    and performing-balance runoff (which mixes in defaults).
+    """
     num = 0.0
     den = 0.0
-    prev_beg = None
-    for row in net_months:
-        m = int(row["month"])
-        beg = float(row["beginning_upb"])
-        if prev_beg is not None and prev_beg > beg:
-            prin = prev_beg - beg
-            # Cap by net cash to avoid negative-balance noise
-            prin = max(0.0, min(prin, abs(float(row["net_cash"])) + beg * 0.02))
-            num += m * prin
-            den += prin
-        prev_beg = beg
-    if den <= 0:
-        for row in net_months:
-            m = int(row["month"])
-            cf = max(0.0, float(row["net_cash"]))
-            num += m * cf
-            den += cf
-    if den <= 0:
+    for row in months:
+        m = int(row.get("month") or 0)
+        if m <= 0:
+            continue
+        prin = _row_returned_principal(row)
+        if prin <= 0.0:
+            continue
+        num += float(m) * prin
+        den += prin
+    if den <= 0.0:
         return 0.0
     return round(num / den / 12.0, 4)
+
+
+def pool_principal_months(payload: dict[str, Any]) -> list[dict[str, float]]:
+    """Build WAL principal rows from base-CF payload when components exist.
+
+    Prefers ``principal_months`` (sched / prepay / recovery or ``principal_cash``).
+    Falls back to ``months`` only when those rows carry returned-principal
+    fields (``Pool__prin`` / ``scheduled_principal`` / …). Does **not** treat
+    ``recovery_months`` alone as WAL input (that would omit sched+prepay).
+    Returns [] → ``pool_wal_years`` = 0 when the series is absent.
+    """
+    if payload.get("principal_months"):
+        rows_src = list(payload["principal_months"])
+        allow_recovery_only_row = True
+    else:
+        rows_src = list(payload.get("months") or [])
+        allow_recovery_only_row = False
+
+    out: list[dict[str, float]] = []
+    for row in rows_src:
+        m = int(row.get("month") or 0)
+        if m <= 0:
+            continue
+        has_prin_fields = any(
+            k in row
+            for k in (
+                "principal_cash",
+                "Pool__prin",
+                "scheduled_principal",
+                "Pool__sched",
+                "prepay",
+                "Pool__prepay",
+                "recovery",
+                "Pool__recovery",
+            )
+        )
+        if not has_prin_fields and not allow_recovery_only_row:
+            continue
+        sched = float(
+            row.get("scheduled_principal") or row.get("Pool__sched") or 0.0
+        )
+        prepay = float(row.get("prepay") or row.get("Pool__prepay") or 0.0)
+        recovery = float(
+            row.get("recovery") or row.get("Pool__recovery") or 0.0
+        )
+        prin = float(row.get("principal_cash") or row.get("Pool__prin") or 0.0)
+        if prin <= 0.0:
+            prin = sched + prepay + recovery
+        if prin <= 0.0:
+            continue
+        out.append(
+            {
+                "month": float(m),
+                "scheduled_principal": sched,
+                "prepay": prepay,
+                "recovery": recovery,
+                "principal_cash": prin,
+            }
+        )
+    return out
 
 
 def pool_speed_kpis(payload: dict[str, Any], age_months: int = 60) -> dict[str, float]:
@@ -449,6 +674,10 @@ def pool_speed_kpis(payload: dict[str, Any], age_months: int = 60) -> dict[str, 
     }
 
 
+class StaleCashflowCacheError(RuntimeError):
+    """Base cohort CF cache does not match current engine/assumptions (CF-191)."""
+
+
 def build_valuation(
     *,
     servicing_bp: float = DEFAULT_SERVICING_BP,
@@ -456,7 +685,32 @@ def build_valuation(
     refresh_fred: bool = False,
 ) -> dict[str, Any]:
     """Full valuation payload for the Valuation tab."""
+    from app.repositories.tape_repository import resolve_default_tape_path
+    from app.services.cache_keys import (
+        assumptions_fingerprint,
+        cache_is_fresh,
+    )
+    from app.services.cashflow_engine import ENGINE_VERSION
+
     base = _load_base_cf()
+    # CF-191: never value on a stale base CF (no silent static bypass).
+    if not cache_is_fresh(base, tape_path=resolve_default_tape_path()):
+        raise StaleCashflowCacheError(
+            "Base cohort cashflow cache is stale or missing engine/assumptions "
+            f"fingerprints (engine={ENGINE_VERSION}, "
+            f"assumptions={assumptions_fingerprint()}). "
+            "Recompute with POST /api/cashflows/run-base-cohort?force=true "
+            "before running Valuation."
+        )
+    if not base.get("principal_months"):
+        # Older caches lack returned-principal series — WAL would be wrong.
+        raise StaleCashflowCacheError(
+            "Base cohort cashflow cache has no principal_months "
+            "(sched+prepay+recovery). Recompute with "
+            "POST /api/cashflows/run-base-cohort?force=true "
+            "(older caches are not used for WAL)."
+        )
+
     gross = pool_gross_months(base)
     net = apply_servicing(gross, servicing_bp=servicing_bp)
     if not net:
@@ -493,12 +747,14 @@ def build_valuation(
         )
 
     speeds = pool_speed_kpis(base)
-    wal = pool_wal_years(net)
+    prin_months = pool_principal_months(base)
+    wal = pool_wal_years(prin_months)
     pts = treasury.get("points") or []
     risk = spread_risk_metrics(net, curve, z_spread_bp, start_upb)
     rates = rates_dv01(net, pts, z_spread_bp)
     krds = key_rate_durations(net, pts, z_spread_bp)
     pv_profile = pv_profile_by_year(monthly_pv, max_years=30)
+    meta = curve_meta()
 
     return {
         "ok": True,
@@ -524,6 +780,7 @@ def build_valuation(
         "speeds": speeds,
         "scenarios": scenarios,
         "pv_profile": pv_profile,
+        "curve_meta": meta,
         "treasury": {
             "as_of": treasury.get("as_of"),
             "fetched_at": treasury.get("fetched_at"),
@@ -537,11 +794,23 @@ def build_valuation(
             "path": str(BASE_CF_PATH.relative_to(REPO_ROOT)).replace("\\", "/"),
             "engine_version": base.get("engine_version"),
             "n_months": len(net),
+            "n_principal_months": len(prin_months),
         },
         "formula": {
             "servicing_fee": "servicing_bp × beginning_UPB / 12",
             "net_cash": "pool total_cash − servicing_fee",
             "price_pts": "100 × NPV(net CF @ Treasury + Z-spread) / start_UPB",
+            "discount_curve": (
+                "CMT par bootstrap (DepositRateHelper <1Y, "
+                "FixedRateBondHelper >=1Y SA Actual/Actual Bond) -> "
+                "PiecewiseLogLinearDiscount; Z-spread = continuous "
+                "ZeroSpreadedTermStructure (bp->decimal); val date = QL today; "
+                "DF day count Actual/365 Fixed"
+            ),
+            "wal_years": (
+                "Σ(month × (sched+prepay+recovery)) / Σ(sched+prepay+recovery) / 12; "
+                "excludes interest, fees, defaults, losses"
+            ),
             "duration": "(P− − P+) / (2 × P0 × Δy) · Z-spread bump",
             "cs01": "(NPV− − NPV+) / (2 × bump_bp) · $ per 1 bp Z-spread",
             "dv01": "(NPV− − NPV+) / (2 × bump_bp) · $ per 1 bp parallel Treasury",

@@ -17,13 +17,13 @@ from app.repositories.env_load import load_dotenv
 from app.services.qc_predicate import validate_predicate
 from app.services.qc_tape_schema import schema_prompt_block
 
-# Primary + fallbacks: llama-3.1-8b-instant was removed from many Groq accounts.
+# Valid Groq chat models only — skip ids that 404 (e.g. qwen/qwen3-32b).
 _DEFAULT_MODELS = (
-    "openai/gpt-oss-20b",
-    "llama-3.1-8b-instant",
     "llama-3.3-70b-versatile",
-    "qwen/qwen3-32b",
+    "llama-3.1-8b-instant",
+    "openai/gpt-oss-20b",
 )
+_BLOCKED_MODELS = frozenset({"qwen/qwen3-32b"})
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 
@@ -32,14 +32,11 @@ def _groq_models() -> list[str]:
     primary = (os.environ.get("GROQ_MODEL") or "").strip()
     extra = (os.environ.get("GROQ_MODEL_FALLBACKS") or "").strip()
     models: list[str] = []
-    if primary:
-        models.append(primary)
-    if extra:
-        models.extend(m.strip() for m in extra.split(",") if m.strip())
-    for m in _DEFAULT_MODELS:
-        if m not in models:
-            models.append(m)
-    return models
+    for m in [primary, *[x.strip() for x in extra.split(",") if x.strip()], *_DEFAULT_MODELS]:
+        if not m or m in _BLOCKED_MODELS or m in models:
+            continue
+        models.append(m)
+    return models or list(_DEFAULT_MODELS)
 
 
 GROQ_MODEL = _DEFAULT_MODELS[0]

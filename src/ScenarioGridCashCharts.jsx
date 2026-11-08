@@ -1,6 +1,6 @@
 /**
  * Bottom Scenarios band: 27-scenario total cash + pool Avg vs Stress (+ cum prin).
- * Prefers GET /api/cashflows/scenario-grid; falls back to /scenario-grid-cashflow.json.
+ * Loads GET /api/cashflows/scenario-grid only (CF-191: no static JSON bypass).
  *
  * Avg  = Σ of 3 cohort 9-cell means (cohort_avg) — not min of paths.
  * Stress = Σ PSA Down / SDA Up cells (typically S03+S12+S21).
@@ -15,7 +15,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { apiUrl } from "./apiBase";
 import { FONT, chartMoney } from "./cashflowGrid";
 import {
   CLUSTER_COLORS,
@@ -304,16 +303,9 @@ export default function ScenarioGridCashCharts() {
       setLoading(true);
       setError(null);
       try {
-        let res = await fetch(apiUrl("/api/cashflows/scenario-grid")).catch(
-          () => null
-        );
-        if (!res || !res.ok) {
-          res = await fetch("/scenario-grid-cashflow.json").catch(() => null);
-        }
-        if (!res || !res.ok) {
-          throw new Error("27-scenario cashflow not loaded yet");
-        }
-        const data = await res.json();
+        // CF-191: API fingerprint gate only — no static JSON bypass.
+        const { fetchScenarioGridCf } = await import("./cfCache");
+        const data = await fetchScenarioGridCf();
         if (!cancelled) setPayload(data);
       } catch (err) {
         if (!cancelled) setError(err.message || String(err));

@@ -71,6 +71,7 @@ const LoanStrats = lazy(() =>
   })
 );
 const Valuation = lazy(() => import("./Valuation"));
+const AskYourData = lazy(() => import("./AskYourData"));
 
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -82,6 +83,7 @@ const NAV = [
   { id: "cohort", label: "Cohort" },
   { id: "scenarios", label: "Scenarios" },
   { id: "valuation", label: "Valuation" },
+  { id: "ask", label: "Ask Your Data" },
 ];
 
 const X_DOMAIN = [0.28, 0.92];
@@ -160,6 +162,13 @@ function NavIcon({ id }) {
         <svg {...common}>
           <path d="M2.5 12.5 5.5 8l2.5 3 5-7.5" {...stroke} />
           <path d="M10.5 3.5H13.5V6.5" {...stroke} />
+        </svg>
+      );
+    case "ask":
+      return (
+        <svg {...common}>
+          <path d="M3 3.5h10v7H8l-3 2.5V10.5H3z" {...stroke} />
+          <path d="M6 6.2h4M6 8.2h2.5" {...stroke} />
         </svg>
       );
     case "cashflow":
@@ -705,14 +714,9 @@ export default function App() {
 
       /* Cohort-avg WAL for Scenarios schedule table (last column). */
       try {
-        let walRes = await fetch(apiUrl("/api/cashflows/scenario-grid")).catch(
-          () => null
-        );
-        if (!walRes || !walRes.ok) {
-          walRes = await fetch("/scenario-grid-cashflow.json").catch(() => null);
-        }
-        if (!cancelled && walRes?.ok) {
-          const payload = await walRes.json();
+        const { fetchScenarioGridCf } = await import("./cfCache");
+        const payload = await fetchScenarioGridCf();
+        if (!cancelled) {
           const avg = payload?.cohort_avg || {};
           const out = {};
           for (const c of CLUSTER_ORDER) {
@@ -1812,6 +1816,12 @@ export default function App() {
           {pane === "valuation" && (
             <Suspense fallback={<PaneSpinner label="Loading Valuation…" />}>
               <Valuation />
+            </Suspense>
+          )}
+
+          {pane === "ask" && (
+            <Suspense fallback={<PaneSpinner label="Loading Ask Your Data…" />}>
+              <AskYourData />
             </Suspense>
           )}
 
