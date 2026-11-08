@@ -48,6 +48,8 @@
   --cf-scroll-size: 7px;
   --cf-scroll-track: var(--cf-row-alt);
   --cf-scroll-thumb: #7a6035;
+  /* Charcoal KPI tile (Investor Tape / QC / Strats / Cohort) */
+  --cf-kpi-bg: #1a1a1a;
 }
 
 *,
@@ -307,9 +309,30 @@ body {
 }
 
 /* Tab / in-pane scrollbars — same rails as AG Grid (~7px, dark track, muted amber) */
+.main,
+.section-strats .strats-charts,
+.section-strats .strats-body,
+.cohort-page,
+.scenario-page,
+.scenario-cash-chart,
+.scenario-component-chart-body,
+.section-qc,
+.section-asf .cf-grid-host,
+.collat-top-states {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cf-scroll-thumb) var(--cf-scroll-track);
+}
+
 .main::-webkit-scrollbar,
 .section-strats .strats-charts::-webkit-scrollbar,
-.section-strats .strats-body::-webkit-scrollbar {
+.section-strats .strats-body::-webkit-scrollbar,
+.cohort-page::-webkit-scrollbar,
+.scenario-page::-webkit-scrollbar,
+.scenario-cash-chart::-webkit-scrollbar,
+.scenario-component-chart-body::-webkit-scrollbar,
+.section-qc::-webkit-scrollbar,
+.section-asf .cf-grid-host::-webkit-scrollbar,
+.collat-top-states::-webkit-scrollbar {
   width: var(--cf-scroll-size);
   height: var(--cf-scroll-size);
   background: var(--cf-scroll-track);
@@ -317,14 +340,28 @@ body {
 
 .main::-webkit-scrollbar-track,
 .section-strats .strats-charts::-webkit-scrollbar-track,
-.section-strats .strats-body::-webkit-scrollbar-track {
+.section-strats .strats-body::-webkit-scrollbar-track,
+.cohort-page::-webkit-scrollbar-track,
+.scenario-page::-webkit-scrollbar-track,
+.scenario-cash-chart::-webkit-scrollbar-track,
+.scenario-component-chart-body::-webkit-scrollbar-track,
+.section-qc::-webkit-scrollbar-track,
+.section-asf .cf-grid-host::-webkit-scrollbar-track,
+.collat-top-states::-webkit-scrollbar-track {
   background: var(--cf-scroll-track);
   border: none;
 }
 
 .main::-webkit-scrollbar-thumb,
 .section-strats .strats-charts::-webkit-scrollbar-thumb,
-.section-strats .strats-body::-webkit-scrollbar-thumb {
+.section-strats .strats-body::-webkit-scrollbar-thumb,
+.cohort-page::-webkit-scrollbar-thumb,
+.scenario-page::-webkit-scrollbar-thumb,
+.scenario-cash-chart::-webkit-scrollbar-thumb,
+.scenario-component-chart-body::-webkit-scrollbar-thumb,
+.section-qc::-webkit-scrollbar-thumb,
+.section-asf .cf-grid-host::-webkit-scrollbar-thumb,
+.collat-top-states::-webkit-scrollbar-thumb {
   background: var(--cf-scroll-thumb);
   border: none;
   border-radius: 0;
@@ -334,15 +371,104 @@ body {
 
 .main::-webkit-scrollbar-thumb:hover,
 .section-strats .strats-charts::-webkit-scrollbar-thumb:hover,
-.section-strats .strats-body::-webkit-scrollbar-thumb:hover {
+.section-strats .strats-body::-webkit-scrollbar-thumb:hover,
+.cohort-page::-webkit-scrollbar-thumb:hover,
+.scenario-page::-webkit-scrollbar-thumb:hover,
+.scenario-cash-chart::-webkit-scrollbar-thumb:hover,
+.scenario-component-chart-body::-webkit-scrollbar-thumb:hover,
+.section-qc::-webkit-scrollbar-thumb:hover,
+.section-asf .cf-grid-host::-webkit-scrollbar-thumb:hover,
+.collat-top-states::-webkit-scrollbar-thumb:hover {
   background: var(--cf-accent);
 }
 
 .main::-webkit-scrollbar-corner,
 .section-strats .strats-charts::-webkit-scrollbar-corner,
-.section-strats .strats-body::-webkit-scrollbar-corner {
+.section-strats .strats-body::-webkit-scrollbar-corner,
+.cohort-page::-webkit-scrollbar-corner,
+.scenario-page::-webkit-scrollbar-corner,
+.section-qc::-webkit-scrollbar-corner,
+.section-asf .cf-grid-host::-webkit-scrollbar-corner,
+.collat-top-states::-webkit-scrollbar-corner {
   background: var(--cf-scroll-track);
   border: none;
+}
+
+/* —— Cross-pane Bloomberg chrome (Investor Tape patterns) —— */
+.section-title,
+.scenario-cash-title,
+.scenario-section-title,
+.collat-section-title,
+.qc-composer-title {
+  font-family: var(--cf-font);
+  font-size: var(--cf-font-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--cf-text);
+  text-transform: none;
+}
+
+.section-meta,
+.scenario-cash-meta,
+.collat-section-hint,
+.strats-tape-meta {
+  font-family: var(--cf-font);
+  color: var(--cf-muted);
+}
+
+.btn,
+button.btn,
+.cf-grid-icon-btn,
+.strats-chip,
+.strats-seg-btn,
+.strats-reset,
+.qc-toolbar .btn,
+.qc-composer-actions .btn {
+  font-family: var(--cf-font);
+  font-size: var(--cf-font-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border-radius: 0;
+}
+
+.qc-kpi,
+.ia-kpi,
+.cohort-kpi-rail .qc-kpi.cohort-kpi {
+  font-family: var(--cf-font);
+  border-radius: 0;
+  background: var(--cf-kpi-bg);
+  border: 1px solid var(--cf-hairline);
+}
+
+.qc-kpi-label,
+.ia-kpi-label,
+.cohort-kpi-rail .qc-kpi-label {
+  font-size: var(--cf-font-kpi-label);
+  font-weight: 500;
+  color: var(--cf-muted);
+  letter-spacing: 0.02em;
+}
+
+.qc-kpi-value,
+.ia-kpi-value,
+.cohort-kpi-rail .qc-kpi-value {
+  font-size: var(--cf-font-kpi-value);
+  font-weight: 600;
+  color: var(--cf-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.scenario-component-chart,
+.cf-chart-tile {
+  border-radius: 0;
+  border-color: var(--cf-hairline);
+  background: var(--cf-bg-deep);
+  font-family: var(--cf-font);
+}
+
+.scenario-component-stat {
+  font-family: var(--cf-font);
+  color: var(--cf-accent);
 }
 
 .section {
@@ -1625,7 +1751,8 @@ body {
 }
 
 .section-qc .qc-kpi,
-.section-strats .qc-kpi {
+.section-strats .qc-kpi,
+.cohort-kpi-rail .qc-kpi.cohort-kpi {
   box-sizing: border-box;
   flex: 0 0 auto;
   width: auto;
@@ -1641,11 +1768,11 @@ body {
   justify-content: flex-start;
   gap: 8px;
   text-align: center;
-  background: #1a1a1a;
+  background: var(--cf-kpi-bg);
   border: 1px solid var(--cf-hairline);
-  border-color: var(--cf-hairline);
   color: var(--cf-text);
   cursor: default;
+  border-radius: 0;
 }
 
 .section-strats .qc-kpi[type="button"] {
@@ -4201,19 +4328,19 @@ body {
   }
 }
 
-/* —— Investor Analysis (Bloomberg Terminal dark) —— */
+/* —— Investor Analysis — aliases to shared CashFlow tokens —— */
 .section-investor-analysis {
-  --ia-bg: #000000;
-  --ia-panel: #212026;
-  --ia-text: #fcfcfc;
-  --ia-muted: #808080;
-  --ia-accent: #fd9d24;
-  --ia-hairline: #585858;
-  --ia-empty: #1a1a1a;
-  --ia-font: "IBM Plex Mono", Consolas, "Courier New", monospace;
-  background: var(--ia-bg);
-  color: var(--ia-text);
-  font-family: var(--ia-font);
+  --ia-bg: var(--cf-bg);
+  --ia-panel: var(--cf-panel);
+  --ia-text: var(--cf-text);
+  --ia-muted: var(--cf-muted);
+  --ia-accent: var(--cf-accent);
+  --ia-hairline: var(--cf-hairline);
+  --ia-empty: var(--cf-kpi-bg);
+  --ia-font: var(--cf-font);
+  background: var(--cf-bg);
+  color: var(--cf-text);
+  font-family: var(--cf-font);
   gap: 8px;
 }
 
