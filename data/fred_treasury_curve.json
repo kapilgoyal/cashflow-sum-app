@@ -1,0 +1,108 @@
+{
+  "source": "Seed CMT (offline fallback)",
+  "as_of": "2026-11-07",
+  "fetched_at": "2026-11-07T17:00:00+00:00",
+  "fred_api_key_configured": false,
+  "points": [
+    {
+      "series_id": "DGS1MO",
+      "tenor_years": 0.0833333333,
+      "yield": 0.0415,
+      "yield_pct": 4.15,
+      "as_of": "2026-11-07",
+      "extrapolated": false
+    },
+    {
+      "series_id": "DGS3MO",
+      "tenor_years": 0.25,
+      "yield": 0.0408,
+      "yield_pct": 4.08,
+      "as_of": "2026-11-07",
+      "extrapolated": false
+    },
+    {
+      "series_id": "DGS6MO",
+      "tenor_years": 0.5,
+      "yield": 0.0399,
+      "yield_pct": 3.99,
+      "as_of": "2026-11-07",
+      "extrapolated": false
+    },
+    {
+      "series_id": "DGS1",
+      "tenor_years": 1.0,
+      "yield": 0.0385,
+      "yield_pct": 3.85,
+      "as_of": "2026-11-07",
+      "extrapolated": false
+    },
+    {
+      "series_id": "DGS2",
+      "tenor_years": 2.0,
+      "yield": 0.0372,
+      "yield_pct": 3.72,
+      "as_of": "2026-11-07",
+      "extrapolated": false
+    },
+    {
+      "series_id": "DGS3",
+      "tenor_years": 3.0,
+      "yield": 0.0368,
+      "yield_pct": 3.68,
+      "as_of": "2026-11-07",
+      "extrapolated": false
+    },
+    {
+      "series_id": "DGS5",
+      "tenor_years": 5.0,
+      "yield": 0.0375,
+      "yield_pct": 3.75,
+      "as_of": "2026-11-07",
+      "extrapolated": false
+    },
+    {
+      "series_id": "DGS7",
+      "tenor_years": 7.0,
+      "yield": 0.0388,
+      "yield_pct": 3.88,
+      "as_of": "2026-11-07",
+      "extrapolated": false
+    },
+    {
+      "series_id": "DGS10",
+      "tenor_years": 10.0,
+      "yield": 0.0402,
+      "yield_pct": 4.02,
+      "as_of": "2026-11-07",
+      "extrapolated": false
+    },
+    {
+      "series_id": "DGS20",
+      "tenor_years": 20.0,
+      "yield": 0.0445,
+      "yield_pct": 4.45,
+      "as_of": "2026-11-07",
+      "extrapolated": false
+    },
+    {
+      "series_id": "DGS30",
+      "tenor_years": 30.0,
+      "yield": 0.0458,
+      "yield_pct": 4.58,
+      "as_of": "2026-11-07",
+      "extrapolated": false
+    },
+    {
+      "series_id": "DGS40_EXTRAP",
+      "tenor_years": 40.0,
+      "yield": 0.0471,
+      "yield_pct": 4.71,
+      "as_of": "2026-11-07",
+      "extrapolated": true
+    }
+  ],
+  "errors": [],
+  "note": "40Y is extrapolated from the 20Y–30Y slope (not a FRED series). Seed used until FRED download succeeds.",
+  "cached": true,
+  "seed": true
+}

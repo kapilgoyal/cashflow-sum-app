@@ -98,7 +98,7 @@ function SpeedLineChart({ shortTitle, fullTitle, data, series, yLabel }) {
               />
               <YAxis
                 tickFormatter={pctTick}
-                width={40}
+                width={48}
                 tickCount={4}
                 tick={{ fill: "#808080", fontSize: 8, fontFamily: FONT }}
                 axisLine={{ stroke: "#464646" }}

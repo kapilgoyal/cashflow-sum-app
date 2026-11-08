@@ -13,6 +13,7 @@ from app.api.routes import (
     qc,
     run_loan,
     scenarios,
+    valuation,
 )
 
 api_router = APIRouter()
@@ -26,5 +27,6 @@ api_router.include_router(collateral.router)
 api_router.include_router(investor_analysis.router)
 api_router.include_router(qc.router)
 api_router.include_router(assumptions.router)
+api_router.include_router(valuation.router)
 
 __all__ = ["api_router"]

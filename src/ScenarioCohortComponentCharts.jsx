@@ -207,7 +207,7 @@ function ComponentChart({ config, data, horizon, loading, error }) {
               />
               <YAxis
                 tickFormatter={moneyTick}
-                width={40}
+                width={48}
                 tickCount={4}
                 tick={{ fill: "#808080", fontSize: 8, fontFamily: FONT }}
                 axisLine={{ stroke: "#464646" }}
