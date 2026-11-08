@@ -1,9 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  memo,
+  startTransition,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import {
   CartesianGrid,
   ComposedChart,
-  Legend,
   Polygon,
   ResponsiveContainer,
   Scatter,
@@ -18,17 +26,22 @@ import {
   DataGrid,
   DrillTrail,
   FONT,
+  PaneSpinner,
   StatusBanner,
+  ToastHost,
+  pushToast,
+  registerToastPush,
   fmtInt,
+  fmtLtv,
   fmtNum,
   fmtPct,
   fmtUpbShort,
   fmtWac,
   intCol,
+  ltvCol,
   moneyCol,
   pcaLabel,
   staLabel,
-  withCohortPsaRowSpans,
 } from "./cashflowGrid";
 import { apiUrl } from "./apiBase";
 import {
@@ -39,10 +52,14 @@ import {
   relabelCohortFields,
   remappedKeyedObject,
 } from "./cohortLabels";
-import LoanLevelCollateral from "./LoanLevelCollateral";
+import { COHORT_SPEED_SCHEDULE } from "./scenarioSpeeds";
+import LoanStrats from "./LoanStrats";
 import LoanQc from "./LoanQc";
-import InvestorAnalysis from "./InvestorAnalysis";
 import ScenarioSpeedCharts from "./ScenarioSpeedCharts";
+import ScenarioCohortCashChart from "./ScenarioCohortCashChart";
+import ScenarioCohortComponentCharts from "./ScenarioCohortComponentCharts";
+import ScenarioGridCashCharts from "./ScenarioGridCashCharts";
+import CohortPmCharts, { buildCohortPmCache } from "./CohortPmCharts";
 import "./App.css";
 
 
@@ -51,12 +68,9 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 const NAV = [
   { id: "asf", label: "Investor Tape" },
   { id: "qc", label: "Loan QC" },
-  { id: "collateral", label: "Collateral" },
-  { id: "investor", label: "Investor Analysis" },
+  { id: "strats", label: "Loan Strats" },
   { id: "cohort", label: "Cohort" },
   { id: "scenarios", label: "Scenarios" },
-  { id: "cashflow", label: "Cash Flow" },
-  { id: "assumptions", label: "Assumptions" },
 ];
 
 const X_DOMAIN = [0.28, 0.92];
@@ -64,6 +78,12 @@ const Y_DOMAIN = [-2.4, 3.2];
 const X_TICKS = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
 const Y_TICKS = [-2, -1, 0, 1, 2, 3];
 const POINT_SIZE = 28;
+const AXIS_TICK = {
+  fill: "#808080",
+  fontSize: 9,
+  fontFamily: FONT,
+  fontWeight: 300,
+};
 const LS_CLUSTER_KEY = "cashflow.clusterFilter";
 const LS_GRID_KEY = "cashflow.agGridState";
 const LS_NAV_KEY = "cashflow.navPane";
@@ -99,25 +119,14 @@ function NavIcon({ id }) {
           <path d="M3 8.2 6.2 11.5 13 4.5" {...stroke} />
         </svg>
       );
+    case "strats":
     case "strat":
+    case "collateral":
+    case "investor":
       return (
         <svg {...common}>
           <path d="M3 12.5V7.5M7 12.5V3.5M11 12.5V5.5" {...stroke} />
           <path d="M2 12.5h12" {...stroke} />
-        </svg>
-      );
-    case "collateral":
-      return (
-        <svg {...common}>
-          <path d="M2.5 11.5 8 3.5l5.5 8H2.5z" {...stroke} />
-          <path d="M5 11.5h6" {...stroke} />
-        </svg>
-      );
-    case "investor":
-      return (
-        <svg {...common}>
-          <path d="M3 12.5V5.5l5-3 5 3v7" {...stroke} />
-          <path d="M6.5 12.5V8.5h3v4" {...stroke} />
         </svg>
       );
     case "cohort":
@@ -159,9 +168,35 @@ function NavIcon({ id }) {
 }
 
 
-function readClusterFilter() {
-  // Always start with every cohort selected (not a single restored filter).
-  return "all";
+/** Multi-select: all cohorts selected by default. Persist as JSON array. */
+function readSelectedCohorts() {
+  try {
+    const raw = localStorage.getItem(LS_CLUSTER_KEY);
+    if (!raw) return [...CLUSTER_ORDER];
+    if (raw === "all") return [...CLUSTER_ORDER];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const ok = parsed.filter((c) => CLUSTER_ORDER.includes(c));
+      return ok.length ? ok : [...CLUSTER_ORDER];
+    }
+    if (typeof parsed === "string" && CLUSTER_ORDER.includes(parsed)) {
+      return [parsed];
+    }
+  } catch {
+    /* ignore */
+  }
+  return [...CLUSTER_ORDER];
+}
+
+function cohortsAllSelected(selected) {
+  return (
+    selected.length === CLUSTER_ORDER.length &&
+    CLUSTER_ORDER.every((c) => selected.includes(c))
+  );
+}
+
+function cohortIsActive(code, selected) {
+  return cohortsAllSelected(selected) || selected.includes(code);
 }
 
 function isNarrowViewport() {
@@ -185,7 +220,9 @@ function readNavCollapsed() {
 function readNav() {
   try {
     const v = localStorage.getItem(LS_NAV_KEY);
-    if (v === "strat") return "collateral";
+    if (v === "strat" || v === "collateral" || v === "investor") return "strats";
+    // Cash Flow / Assumptions tabs hidden for now → Scenarios
+    if (v === "cashflow" || v === "assumptions") return "scenarios";
     if (NAV.some((n) => n.id === v)) return v;
     if (v === "loan") return "cohort";
   } catch {
@@ -224,55 +261,56 @@ function saveGridState(api) {
   }
 }
 
-function CustomLegend({ payload, activeCluster, onSelect, counts }) {
-  if (!payload?.length) return null;
-  const byValue = Object.fromEntries(payload.map((e) => [e.value, e]));
-  const entries = CLUSTER_ORDER.map((code) => byValue[code]).filter(Boolean);
+/** Top-of-page multi-select — drives chart, KPIs, and stats grid. */
+const CohortButtonGroup = memo(function CohortButtonGroup({
+  selected,
+  onToggle,
+  onSelectAll,
+  counts,
+}) {
+  const allOn = cohortsAllSelected(selected);
   return (
-    <div className="scatter-legend-box">
-      <div className="scatter-legend-title">Cohort</div>
-      <ul className="scatter-legend">
-        {entries.map((entry) => {
-          const code = entry.value;
-          const selected =
-            activeCluster === "all" || activeCluster === code;
-          const n = counts?.[code] ?? CLUSTER_FALLBACK_COUNTS[code] ?? "?";
-          return (
-            <li key={code}>
-              <button
-                type="button"
-                className={`scatter-legend-btn${selected ? " is-active" : ""}`}
-                style={{ "--cluster-color": entry.color }}
-                onClick={() => onSelect(code)}
-                title={`Filter to ${code}`}
-                aria-pressed={selected}
-              >
-                <span className="scatter-legend-swatch" />
-                <span>
-                  {code} (n={n})
-                </span>
-              </button>
-            </li>
-          );
-        })}
-        <li>
+    <div
+      className="cohort-btn-group"
+      role="group"
+      aria-label="Cohort Filter"
+    >
+      <button
+        type="button"
+        className={`cohort-btn-group-btn cohort-btn-group-all${
+          allOn ? " is-active" : ""
+        }`}
+        onClick={onSelectAll}
+        title="All Cohorts"
+        aria-pressed={allOn}
+      >
+        All
+      </button>
+      {CLUSTER_ORDER.map((code) => {
+        const n = counts?.[code] ?? CLUSTER_FALLBACK_COUNTS[code] ?? "—";
+        const active = selected.includes(code);
+        return (
           <button
+            key={code}
             type="button"
-            className={`scatter-legend-btn scatter-legend-all${
-              activeCluster === "all" ? " is-active" : ""
-            }`}
-            onClick={() => onSelect("all")}
-            aria-pressed={activeCluster === "all"}
+            className={`cohort-btn-group-btn${active ? " is-active" : ""}`}
+            style={{ "--cluster-color": CLUSTER_COLORS[code] }}
+            onClick={() => onToggle(code)}
+            title={`${code} · ${n} Loans`}
+            aria-pressed={active}
           >
-            All
+            <span className="cohort-btn-group-swatch" aria-hidden="true" />
+            <span>
+              {code} ({n})
+            </span>
           </button>
-        </li>
-      </ul>
+        );
+      })}
     </div>
   );
-}
+});
 
-function HullFills({ hullSeries, activeCluster }) {
+function HullFills({ hullSeries, selected }) {
   const xScale = useXAxisScale();
   const yScale = useYAxisScale();
   if (!xScale || !yScale) return null;
@@ -282,7 +320,7 @@ function HullFills({ hullSeries, activeCluster }) {
       {CLUSTER_ORDER.map((code) => {
         const pts = hullSeries[code];
         if (!pts?.length) return null;
-        const active = activeCluster === "all" || activeCluster === code;
+        const active = cohortIsActive(code, selected);
         const points = pts.map((p) => ({
           x: xScale(p.cltv),
           y: yScale(p.incentive),
@@ -303,6 +341,99 @@ function HullFills({ hullSeries, activeCluster }) {
   );
 }
 
+/** Scatter stays mounted; only opacity tracks selection (deferred). */
+const CohortScatterChart = memo(function CohortScatterChart({
+  scatterByCluster,
+  hullSeries,
+  selected,
+  onToggle,
+}) {
+  return (
+    <div className="cohort-scatter-plot">
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart margin={{ top: 12, right: 16, left: 8, bottom: 28 }}>
+          <CartesianGrid
+            stroke="#323232"
+            strokeDasharray="2 4"
+            strokeOpacity={0.9}
+          />
+          <XAxis
+            type="number"
+            dataKey="cltv"
+            name="Original CLTV"
+            tick={AXIS_TICK}
+            ticks={X_TICKS}
+            axisLine={{ stroke: "#323232" }}
+            tickLine={{ stroke: "#323232" }}
+            tickFormatter={(v) => Number(v).toFixed(1)}
+            domain={X_DOMAIN}
+            allowDataOverflow
+            label={{
+              value: "Original CLTV",
+              position: "insideBottom",
+              offset: -14,
+              fill: "#FCFCFC",
+              fontSize: 11,
+              fontFamily: FONT,
+              fontWeight: 600,
+            }}
+          />
+          <YAxis
+            type="number"
+            dataKey="incentive"
+            name="Refinance Incentive"
+            tick={AXIS_TICK}
+            ticks={Y_TICKS}
+            axisLine={{ stroke: "#323232" }}
+            tickLine={{ stroke: "#323232" }}
+            domain={Y_DOMAIN}
+            allowDataOverflow
+            width={44}
+            label={{
+              value: "Refinance Incentive",
+              angle: -90,
+              position: "insideLeft",
+              offset: 8,
+              fill: "#FCFCFC",
+              fontSize: 11,
+              fontFamily: FONT,
+              fontWeight: 600,
+            }}
+          />
+          <ZAxis range={[POINT_SIZE, POINT_SIZE]} />
+          <Tooltip
+            cursor={{ strokeDasharray: "3 3", stroke: "#323232" }}
+            contentStyle={{
+              background: "#0C0C0C",
+              border: "1px solid #323232",
+              borderRadius: 0,
+              fontSize: 11,
+              color: "#FCFCFC",
+              fontFamily: FONT,
+            }}
+            labelStyle={{ color: "#808080" }}
+          />
+          <HullFills hullSeries={hullSeries} selected={selected} />
+          {CLUSTER_ORDER.map((code) => (
+            <Scatter
+              key={code}
+              name={code}
+              data={scatterByCluster[code]}
+              fill={CLUSTER_COLORS[code]}
+              fillOpacity={cohortIsActive(code, selected) ? 0.75 : 0.12}
+              shape="circle"
+              onClick={() => onToggle(code)}
+              cursor="pointer"
+              isAnimationActive={false}
+              legendType="none"
+            />
+          ))}
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+});
+
 export default function App() {
   const [pane, setPane] = useState(readNav);
   const [navCollapsed, setNavCollapsed] = useState(readNavCollapsed);
@@ -311,20 +442,49 @@ export default function App() {
   const [counts, setCounts] = useState(CLUSTER_FALLBACK_COUNTS);
   const [tapeError, setTapeError] = useState(null);
   const [tapeLoading, setTapeLoading] = useState(true);
-  const [clusterFilter, setClusterFilter] = useState(readClusterFilter);
+  const [selectedCohorts, setSelectedCohorts] = useState(readSelectedCohorts);
+  /** Charts/KPIs lag slightly so button presses stay instant. */
+  const deferredCohorts = useDeferredValue(selectedCohorts);
 
   const [asfLoans, setAsfLoans] = useState([]);
   const [asfTotal, setAsfTotal] = useState(0);
   const [asfLoading, setAsfLoading] = useState(false);
   const [asfError, setAsfError] = useState(null);
   const [asfVisible, setAsfVisible] = useState(null);
+  const [toasts, setToasts] = useState([]);
+
+  const dismissToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const enqueueToast = useCallback((message, tone = "error") => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setToasts((prev) => [...prev.slice(-4), { id, message, tone }]);
+  }, []);
+
+  useEffect(() => {
+    registerToastPush(enqueueToast);
+    return () => registerToastPush(null);
+  }, [enqueueToast]);
+
+  useEffect(() => {
+    if (!toasts.length) return undefined;
+    const timers = toasts.map((t) =>
+      setTimeout(() => dismissToast(t.id), 6500)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [toasts, dismissToast]);
 
 
   const [cohortStats, setCohortStats] = useState([]);
   const [cohortStatsError, setCohortStatsError] = useState(null);
+  const [cohortStatsLoading, setCohortStatsLoading] = useState(true);
 
   const [scenarios, setScenarios] = useState([]);
   const [aggregates, setAggregates] = useState([]);
+  /** Cohort-avg WAL (years) from 27-scenario CF — keyed by cohort label. */
+  const [cohortWalYears, setCohortWalYears] = useState({});
+  const [scenariosBootLoading, setScenariosBootLoading] = useState(true);
   const [ranScenarioIds, setRanScenarioIds] = useState([]);
   const [runMeta, setRunMeta] = useState(null);
   const [neonStatus, setNeonStatus] = useState(null);
@@ -376,8 +536,10 @@ export default function App() {
         if (data.meta?.counts) setCounts(remappedKeyedObject(data.meta.counts));
       } catch (err) {
         if (!cancelled) {
-          setTapeError(err.message || String(err));
+          const msg = err.message || String(err);
+          setTapeError(msg);
           setLoans([]);
+          pushToast(`Cohort Chart: ${msg}`, "error");
         }
       } finally {
         if (!cancelled) setTapeLoading(false);
@@ -406,8 +568,10 @@ export default function App() {
         setAsfTotal(data.total ?? (data.loans || []).length);
       } catch (err) {
         if (!cancelled) {
-          setAsfError(err.message || String(err));
+          const msg = err.message || String(err);
+          setAsfError(msg);
           setAsfLoans([]);
+          pushToast(`Investor Tape: ${msg}`, "error");
         }
       } finally {
         if (!cancelled) setAsfLoading(false);
@@ -422,6 +586,7 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      setCohortStatsLoading(true);
       try {
         const res = await fetch(apiUrl("/api/asf/cohort-stats"));
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -434,7 +599,10 @@ export default function App() {
         if (!cancelled) {
           setCohortStats([]);
           setCohortStatsError(err.message || String(err));
+          pushToast(`Cohort Stats: ${err.message || String(err)}`, "error");
         }
+      } finally {
+        if (!cancelled) setCohortStatsLoading(false);
       }
     })();
     return () => {
@@ -446,6 +614,7 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      setScenariosBootLoading(true);
       let loadedFromNeon = false;
       try {
         const [neonScenRes, neonStatusRes] = await Promise.all([
@@ -514,6 +683,31 @@ export default function App() {
         }
       } catch {
         /* ignore */
+      }
+
+      /* Cohort-avg WAL for Scenarios schedule table (last column). */
+      try {
+        let walRes = await fetch(apiUrl("/api/cashflows/scenario-grid")).catch(
+          () => null
+        );
+        if (!walRes || !walRes.ok) {
+          walRes = await fetch("/scenario-grid-cashflow.json").catch(() => null);
+        }
+        if (!cancelled && walRes?.ok) {
+          const payload = await walRes.json();
+          const avg = payload?.cohort_avg || {};
+          const out = {};
+          for (const c of CLUSTER_ORDER) {
+            const cell = avg[c] || avg[cohortLabel(c)];
+            const w = Number(cell?.wal_years ?? cell?.wal);
+            if (Number.isFinite(w)) out[cohortLabel(c)] = w;
+          }
+          setCohortWalYears(out);
+        }
+      } catch {
+        /* WAL column stays blank until CF JSON is present */
+      } finally {
+        if (!cancelled) setScenariosBootLoading(false);
       }
     })();
     return () => {
@@ -596,12 +790,15 @@ export default function App() {
   }, [cfView, selectedLoanId, selectedScenarioId]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(LS_CLUSTER_KEY, clusterFilter);
-    } catch {
-      /* ignore */
-    }
-  }, [clusterFilter]);
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(LS_CLUSTER_KEY, JSON.stringify(selectedCohorts));
+      } catch {
+        /* ignore */
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [selectedCohorts]);
 
   useEffect(() => {
     let cancelled = false;
@@ -626,9 +823,11 @@ export default function App() {
         });
       } catch (err) {
         if (!cancelled) {
-          setAssumptionError(err.message || String(err));
+          const msg = err.message || String(err);
+          setAssumptionError(msg);
           setAssumptionRows([]);
           setAssumptionMeta(null);
+          pushToast(`Assumptions: ${msg}`, "error");
         }
       } finally {
         if (!cancelled) setAssumptionLoading(false);
@@ -640,79 +839,85 @@ export default function App() {
   }, []);
 
 
+  /* Widths: full header text (10px/500 + filter chrome) and PT/LP data. */
   const asfColumnDefs = useMemo(
     () => [
       {
         field: "loan_id",
         headerName: "Loan ID",
         width: 100,
+        minWidth: 100,
         pinned: "left",
         lockPinned: true,
         cellClass: "cf-id",
       },
-      moneyCol("current_loan_amount", "UPB", 110),
+      { ...moneyCol("current_loan_amount", "UPB", 110), minWidth: 110 },
       {
         field: "current_interest_rate",
         headerName: "Interest Rate",
-        width: 96,
+        width: 132,
+        minWidth: 132,
         valueFormatter: (p) => fmtWac(p.value),
         cellClass: "cf-num",
       },
-      intCol("original_fico", "FICO", 72),
-      {
-        field: "original_ltv",
-        headerName: "LTV",
-        width: 72,
-        valueFormatter: (p) => fmtPct(p.value, 1),
-        cellClass: "cf-num",
-      },
-      {
-        field: "original_cltv",
-        headerName: "CLTV",
-        width: 72,
-        valueFormatter: (p) => fmtPct(p.value, 1),
-        cellClass: "cf-num",
-      },
-      { field: "state", headerName: "State", width: 64 },
+      { ...intCol("original_fico", "FICO", 78), minWidth: 78 },
+      { ...ltvCol("original_ltv", "LTV", 72), minWidth: 72 },
+      { ...ltvCol("original_cltv", "CLTV", 78), minWidth: 78 },
+      { field: "state", headerName: "State", width: 72, minWidth: 72 },
       {
         field: "documentation_type",
         headerName: "Documentation Type",
         flex: 1.2,
-        minWidth: 140,
+        width: 168,
+        minWidth: 168,
       },
-      { field: "property_type", headerName: "Property Type", width: 110 },
-      { field: "occupancy", headerName: "Occupancy", width: 100 },
-      { field: "loan_purpose", headerName: "Loan Purpose", width: 110 },
-      intCol("remaining_term", "Remaining Term", 120),
+      /* Data: "Manufactured / other" / "Rate-term refinance". */
+      {
+        field: "property_type",
+        headerName: "Property Type",
+        width: 168,
+        minWidth: 168,
+      },
+      { field: "occupancy", headerName: "Occupancy", width: 108, minWidth: 108 },
+      {
+        field: "loan_purpose",
+        headerName: "Loan Purpose",
+        width: 168,
+        minWidth: 168,
+      },
+      { ...intCol("remaining_term", "Remaining Term", 140), minWidth: 140 },
       {
         field: "refinance_incentive",
         headerName: "Refinance Incentive",
-        width: 130,
+        width: 172,
+        minWidth: 172,
         valueFormatter: (p) => fmtNum(p.value, 2),
         cellClass: "cf-num",
       },
-      {
-        field: "cohort",
-        headerName: "Cohort",
-        flex: 1.4,
-        minWidth: 160,
-        valueFormatter: (p) => cohortLabel(p.value),
-      },
+      /* Cohort omitted: derived HLTV/LLTV × RI segment (not a native tape field). */
       {
         field: "has_mi",
         headerName: "Mortgage Insurance",
         headerTooltip: "Mortgage Insurance (private MI on the loan)",
-        width: 140,
+        width: 168,
+        minWidth: 168,
+        /* Force text — AG Grid v36 treats boolean as checkbox otherwise. */
+        cellDataType: "text",
         cellClass: "cf-num",
-        valueFormatter: (p) => {
-          if (p.value === true || p.value === "true" || p.value === 1) return "Yes";
-          if (p.value === false || p.value === "false" || p.value === 0) return "No";
+        valueGetter: (p) => {
+          const v = p.data?.has_mi;
+          if (v === true || v === "true" || v === 1 || v === "Y" || v === "Yes")
+            return "Y";
+          if (v === false || v === "false" || v === 0 || v === "N" || v === "No")
+            return "N";
           return "";
         },
         filterValueGetter: (p) => {
           const v = p.data?.has_mi;
-          if (v === true || v === "true" || v === 1) return "Yes";
-          if (v === false || v === "false" || v === 0) return "No";
+          if (v === true || v === "true" || v === 1 || v === "Y" || v === "Yes")
+            return "Y";
+          if (v === false || v === "false" || v === 0 || v === "N" || v === "No")
+            return "N";
           return "";
         },
       },
@@ -818,71 +1023,22 @@ export default function App() {
   );
 
 
-  const cohortStatsColumnDefs = useMemo(
-    () => [
-      {
-        field: "cohort",
-        headerName: "Cohort",
-        flex: 1.8,
-        minWidth: 160,
-        valueFormatter: (p) => cohortLabel(p.value),
-      },
-      intCol("loan_count", "Loans", 80),
-      moneyCol("upb", "UPB", 120),
-      {
-        field: "wac",
-        headerName: "WAC",
-        width: 88,
-        valueGetter: (p) => p.data?.wac ?? p.data?.avg_rate,
-        valueFormatter: (p) => fmtWac(p.value),
-        cellClass: "cf-num",
-      },
-      {
-        field: "wam",
-        headerName: "WAM",
-        width: 88,
-        valueGetter: (p) => p.data?.wam ?? p.data?.avg_remaining_term,
-        valueFormatter: (p) => fmtInt(p.value),
-        cellClass: "cf-num",
-      },
-      {
-        field: "avg_ltv",
-        headerName: "Avg LTV",
-        width: 88,
-        valueFormatter: (p) => fmtPct(p.value, 1),
-        cellClass: "cf-num",
-      },
-      {
-        field: "avg_cltv",
-        headerName: "Avg CLTV",
-        width: 88,
-        valueFormatter: (p) => fmtPct(p.value, 1),
-        cellClass: "cf-num",
-      },
-      intCol("avg_fico", "Avg FICO", 88),
-      {
-        field: "avg_refi_incentive",
-        headerName: "Avg Refi",
-        width: 88,
-        valueFormatter: (p) => fmtNum(p.value, 1),
-        cellClass: "cf-num",
-      },
-      {
-        field: "avg_remaining_term",
-        headerName: "Avg Rem",
-        width: 88,
-        valueFormatter: (p) => fmtInt(p.value),
-        cellClass: "cf-num",
-      },
-    ],
-    []
-  );
+  /** One row per cohort — built once; selection only picks which rows to roll up. */
+  const cohortStatsByCode = useMemo(() => {
+    const map = Object.fromEntries(CLUSTER_ORDER.map((c) => [c, null]));
+    for (const r of cohortStats || []) {
+      const code = cohortLabel(r.cohort);
+      if (code && code in map) map[code] = r;
+    }
+    return map;
+  }, [cohortStats]);
 
   const cohortKpis = useMemo(() => {
-    const rows = (cohortStats || []).filter(
-      (r) =>
-        clusterFilter === "all" || cohortLabel(r.cohort) === clusterFilter
-    );
+    const rows = CLUSTER_ORDER.filter((c) =>
+      cohortIsActive(c, deferredCohorts)
+    )
+      .map((c) => cohortStatsByCode[c])
+      .filter(Boolean);
     const loanCount = rows.reduce((s, r) => s + (Number(r.loan_count) || 0), 0);
     const upb = rows.reduce((s, r) => s + (Number(r.upb) || 0), 0);
     const upbWeighted = (getter) => {
@@ -907,66 +1063,100 @@ export default function App() {
       avgFico: upbWeighted((r) => r.avg_fico),
       avgRi: upbWeighted((r) => r.avg_refi_incentive),
     };
-  }, [cohortStats, clusterFilter]);
+  }, [cohortStatsByCode, deferredCohorts]);
 
-  const scenarioColumnDefs = useMemo(
-    () => [
+  const scenarioColumnDefs = useMemo(() => {
+    /* Compact speed cols; last 3 (Recov / Lag / WAL) keep fixed readable width. */
+    const speedCol = (field, headerName) => ({
+      field,
+      headerName,
+      flex: 1,
+      minWidth: 44,
+      maxWidth: 72,
+      sortable: false,
+      filter: false,
+      type: "numericColumn",
+      valueFormatter: (p) => fmtInt(p.value),
+      cellClass: "cf-num",
+      headerClass: "cf-grid-header ag-right-aligned-header",
+    });
+
+    const tailCol = (field, headerName, opts = {}) => ({
+      field,
+      headerName,
+      width: opts.width ?? 76,
+      minWidth: opts.width ?? 76,
+      maxWidth: opts.width ?? 76,
+      flex: 0,
+      sortable: false,
+      filter: false,
+      spanHeaderHeight: true,
+      type: "numericColumn",
+      headerClass: `cf-grid-header ag-right-aligned-header scenario-tail-hdr${
+        opts.wal ? " scenario-wal-col-hdr" : ""
+      }`,
+      headerTooltip: opts.tooltip,
+      valueFormatter: opts.valueFormatter,
+      cellClass: `cf-num scenario-tail-cell${opts.wal ? " scenario-wal-col" : ""}`,
+    });
+
+    return [
       {
         field: "cohort",
-        headerName: "Cohort Name",
-        flex: 1.6,
-        minWidth: 132,
+        headerName: "Cohort",
+        flex: 1.4,
+        minWidth: 108,
+        maxWidth: 160,
         sortable: false,
         filter: false,
-        rowSpan: (p) => Math.max(1, p.data?._cohortSpan || 1),
-        cellClassRules: {
-          "cf-row-span": (p) => (p.data?._cohortSpan || 0) > 1,
-        },
-        valueGetter: (p) =>
-          p.data?._cohortSpan === 0
-            ? ""
-            : cohortLabel(p.data?.cohort) || "",
+        spanHeaderHeight: true,
+        headerClass: "cf-grid-header cf-hdr-left",
+        valueFormatter: (p) => cohortLabel(p.value) || "",
       },
       {
-        field: "psa_multiple",
         headerName: "PSA",
-        width: 64,
-        sortable: false,
-        filter: false,
-        type: "numericColumn",
-        cellClass: "cf-num",
-        rowSpan: (p) => Math.max(1, p.data?._psaSpan || 1),
-        cellClassRules: {
-          "cf-row-span": (p) => (p.data?._psaSpan || 0) > 1,
-          "cf-num": () => true,
-        },
-        valueGetter: (p) =>
-          p.data?._psaSpan === 0 ? "" : p.data?.psa_multiple,
-        valueFormatter: (p) =>
-          p.value === "" || p.value == null ? "" : fmtInt(p.value),
+        marryChildren: true,
+        headerClass: "cf-hdr-group-center",
+        children: [
+          speedCol("psaDown", "Dn"),
+          speedCol("psaBase", "Base"),
+          speedCol("psaUp", "Up"),
+        ],
       },
-      intCol("sda_multiple", "SDA", 64),
       {
-        field: "recovery",
-        headerName: "Recovery Rate",
-        width: 104,
+        headerName: "SDA",
+        marryChildren: true,
+        headerClass: "cf-hdr-group-center",
+        children: [
+          speedCol("sdaLow", "Lo"),
+          speedCol("sdaBase", "Base"),
+          speedCol("sdaHigh", "Hi"),
+        ],
+      },
+      tailCol("recovery", "Recov", {
+        width: 72,
+        tooltip: "UPB-weighted recovery rate",
         valueFormatter: (p) => fmtPct(p.value, 1),
-        cellClass: "cf-num",
-      },
-      {
-        field: "lag",
-        headerName: "Fnma Lag",
-        width: 84,
+      }),
+      tailCol("lag", "Lag", {
+        width: 64,
+        tooltip: "UPB-weighted FNMA lag (months)",
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
             ? ""
-            : `${Number(p.value).toFixed(0)} Mo`,
-        cellClass: "cf-num",
-      },
-      { field: "scenario_id", headerName: "ID", hide: true },
-    ],
-    []
-  );
+            : Number(p.value).toFixed(1),
+      }),
+      tailCol("wal_years", "WAL", {
+        width: 72,
+        wal: true,
+        tooltip: "Cohort-avg WAL · prin = sched + prepay + recovery",
+        valueFormatter: (p) =>
+          p.value == null || Number.isNaN(Number(p.value))
+            ? "—"
+            : `${Number(p.value).toFixed(2)}Y`,
+      }),
+    ];
+  }, []);
 
   const aggColumnDefs = useMemo(
     () => [
@@ -1003,7 +1193,17 @@ export default function App() {
       moneyCol("realized_loss", "Realized Loss", 100),
       moneyCol("total_cash", "Total Cash", 100),
       moneyCol("ending_balance", "End UPB", 110),
-      intCol("avg_used_recovery_lag_months", "Avg Used Lag", 100),
+      {
+        field: "avg_used_recovery_lag_months",
+        headerName: "Wtd FNMA Lag",
+        width: 100,
+        type: "numericColumn",
+        valueFormatter: (p) =>
+          p.value == null || Number.isNaN(Number(p.value))
+            ? ""
+            : Number(p.value).toFixed(1),
+        cellClass: "cf-num",
+      },
     ],
     []
   );
@@ -1159,43 +1359,27 @@ export default function App() {
     []
   );
 
-  /** Full 27-cell grid — never cohort-filtered; Scenarios is a standalone view. */
+  /**
+   * Wide cohort speed schedule + Recovery / FNMA Lag from underlying loans.
+   * Recovery = UPB-weighted loan Urban/severity (or cohort fallback when no MI);
+   * Lag = UPB-weighted FNMA state lag — never scenario-grid constants.
+   */
   const scenarioRows = useMemo(() => {
     const byCohort = Object.fromEntries(
       (cohortStats || []).map((r) => [cohortLabel(r.cohort), r])
     );
-    const base = (
-      scenarios.length
-        ? scenarios
-        : aggregates.map((a) => ({
-            scenario_id: a.scenario_id,
-            cohort: a.cohort,
-            psa_multiple: a.psa_multiple,
-            sda_multiple: a.sda_multiple,
-            pca_level: a.pca_level,
-            sta_level: a.sta_level,
-            recovery_rate: a.recovery_rate,
-            recovery_period_months: a.recovery_period_months,
-            recovery_lag_months: a.recovery_lag_months,
-            avg_used_recovery_lag_months: a.avg_used_recovery_lag_months,
-          }))
-    ).map((s) => {
-      const stats = byCohort[cohortLabel(s.cohort)] || {};
-      const recovery = stats.recovery ?? s.recovery_rate;
-      const lag =
-        stats.lag ??
-        s.avg_used_recovery_lag_months ??
-        s.recovery_lag_months ??
-        null;
+    return COHORT_SPEED_SCHEDULE.map((row) => {
+      const label = cohortLabel(row.cohort);
+      const stats = byCohort[label] || byCohort[row.cohort] || {};
+      const wal = cohortWalYears[label] ?? cohortWalYears[row.cohort];
       return {
-        ...s,
-        cohort: cohortLabel(s.cohort),
-        recovery,
-        lag,
+        ...row,
+        recovery: stats.recovery ?? null,
+        lag: stats.lag ?? null,
+        wal_years: Number.isFinite(Number(wal)) ? Number(wal) : null,
       };
     });
-    return withCohortPsaRowSpans(base);
-  }, [scenarios, aggregates, cohortStats]);
+  }, [cohortStats, cohortWalYears]);
 
   const scatterByCluster = useMemo(() => {
     const groups = Object.fromEntries(CLUSTER_ORDER.map((c) => [c, []]));
@@ -1211,6 +1395,12 @@ export default function App() {
     }
     return groups;
   }, [loans]);
+
+  /** Cohort PM analytics — join k-proto tape + Investor Tape UPB/state. */
+  const cohortPmCache = useMemo(
+    () => buildCohortPmCache(loans, asfLoans),
+    [loans, asfLoans]
+  );
 
   const hullSeries = useMemo(() => {
     const out = {};
@@ -1264,10 +1454,23 @@ export default function App() {
     }
   }, []);
 
-  const selectCluster = useCallback((code) => {
-    setClusterFilter((prev) => {
-      if (code === "all") return "all";
-      return prev === code ? "all" : code;
+  const toggleCohort = useCallback((code) => {
+    startTransition(() => {
+      setSelectedCohorts((prev) => {
+        const has = prev.includes(code);
+        if (has) {
+          const next = prev.filter((c) => c !== code);
+          return next.length ? next : [...CLUSTER_ORDER];
+        }
+        const next = CLUSTER_ORDER.filter((c) => prev.includes(c) || c === code);
+        return next;
+      });
+    });
+  }, []);
+
+  const selectAllCohorts = useCallback(() => {
+    startTransition(() => {
+      setSelectedCohorts([...CLUSTER_ORDER]);
     });
   }, []);
 
@@ -1278,30 +1481,12 @@ export default function App() {
     }
   }, []);
 
-  const drillLoan = useCallback((row) => {
-    const loanId = row.loanId || row.loan_id;
-    const cohort = cohortLabel(row.cluster || row.cohort || "") || null;
-    setSelectedLoanId(loanId || null);
-    setSelectedCohort(cohort);
-    if (cohort) setClusterFilter(cohort);
-    setCfView("month1");
-    setPane("cashflow");
-  }, []);
-
   const drillAggScenario = useCallback((row) => {
     if (!row?.scenario_id) return;
     setSelectedScenarioId(row.scenario_id);
     if (row.cohort) setSelectedCohort(cohortLabel(row.cohort));
     setSelectedLoanId(null);
     setCfView("month1");
-  }, []);
-
-  const drillMonth1Loan = useCallback((row) => {
-    if (!row?.loan_id || !row?.scenario_id) return;
-    setSelectedLoanId(row.loan_id);
-    setSelectedScenarioId(row.scenario_id);
-    if (row.cohort) setSelectedCohort(cohortLabel(row.cohort));
-    setCfView("loanMonth");
   }, []);
 
   const onDrillJump = useCallback((crumb) => {
@@ -1315,13 +1500,13 @@ export default function App() {
     if (crumb.id === "agg") {
       setCfView("agg");
       setSelectedLoanId(null);
-      setPane("cashflow");
+      setPane("scenarios");
       return;
     }
     if (crumb.id === "month1") {
       setCfView("month1");
       setSelectedLoanId(null);
-      setPane("cashflow");
+      setPane("scenarios");
     }
   }, []);
 
@@ -1415,19 +1600,13 @@ export default function App() {
         );
       }
       setCfView("agg");
-      setPane("cashflow");
+      setPane("scenarios");
     } catch (err) {
       setRunError(err.message || String(err));
     } finally {
       setRunning(false);
     }
   }
-
-  const axisTick = {
-    fill: "#4A5F7A",
-    fontSize: 10,
-    fontFamily: FONT,
-  };
 
   const scenarioDisplayName = useCallback(
     (id) => {
@@ -1568,10 +1747,10 @@ export default function App() {
               title={item.label}
               aria-label={item.label}
             >
-              <span className="sidenav-label-full">{item.label}</span>
-              <span className="sidenav-label-short" aria-hidden="true">
+              <span className="sidenav-icon" aria-hidden="true">
                 <NavIcon id={item.id} />
               </span>
+              <span className="sidenav-label-full">{item.label}</span>
             </button>
           ))}
         </nav>
@@ -1580,291 +1759,299 @@ export default function App() {
           {pane === "asf" && (
             <section className="section section-fill section-asf">
               {asfLoading ? (
-                <p className="muted">Loading Investor Tape…</p>
-              ) : asfError ? (
-                <StatusBanner tone="error">Investor Tape: {asfError}</StatusBanner>
+                <PaneSpinner label="Loading Investor Tape…" />
               ) : (
                 <DataGrid
                   rowData={asfLoans}
                   columnDefs={asfColumnDefs}
                   getRowId={(p) => String(p.data.loan_id)}
-                  onRowDrill={drillLoan}
                   onRowStats={onAsfRowStats}
                   toolbarStart={asfToolbarStart}
                   heightClass="grid-wrap-fill"
                   exportName="asf-tape"
+                  gridProps={{ alwaysShowHorizontalScroll: true }}
                 />
               )}
             </section>
           )}
 
-          {pane === "qc" && <LoanQc onDrillLoan={drillLoan} />}
+          {pane === "qc" && <LoanQc />}
 
-          {pane === "collateral" && <LoanLevelCollateral />}
-
-          {pane === "investor" && <InvestorAnalysis />}
+          {pane === "strats" && <LoanStrats />}
 
           {pane === "cohort" && (
-            <>
-              <section className="section section-cohort-chart">
-                <div className="section-head">
-                  <h2 className="section-title section-title-chart">
-                    Original CLTV vs Refinance Incentive
-                  </h2>
-                  {clusterFilter !== "all" && (
-                    <div className="section-actions">
-                      <button
-                        type="button"
-                        className="linkish"
-                        onClick={() => selectCluster("all")}
-                      >
-                        Clear {clusterFilter}
-                      </button>
-                    </div>
-                  )}
+            <div className="cohort-page">
+              <aside
+                className="cohort-kpi-rail"
+                role="toolbar"
+                aria-label="Cohort KPIs"
+              >
+                <button
+                  type="button"
+                  className={`qc-kpi cohort-kpi${
+                    cohortsAllSelected(selectedCohorts) ? " is-active" : ""
+                  }`}
+                  aria-label="Total Loans"
+                  onClick={selectAllCohorts}
+                >
+                  <span className="qc-kpi-label">Total Loans</span>
+                  <span className="qc-kpi-value">
+                    {cohortKpis.loanCount
+                      ? fmtInt(cohortKpis.loanCount)
+                      : "—"}
+                  </span>
+                </button>
+                <div className="qc-kpi cohort-kpi" aria-label="UPB">
+                  <span className="qc-kpi-label">UPB</span>
+                  <span className="qc-kpi-value">
+                    {cohortKpis.upb ? fmtUpbShort(cohortKpis.upb) : "—"}
+                  </span>
                 </div>
+                <div
+                  className="qc-kpi cohort-kpi"
+                  aria-label="WAC"
+                  title="UPB-Weighted Average Coupon"
+                >
+                  <span className="qc-kpi-label">WAC</span>
+                  <span className="qc-kpi-value">
+                    {cohortKpis.wac != null ? fmtWac(cohortKpis.wac) : "—"}
+                  </span>
+                </div>
+                <div
+                  className="qc-kpi cohort-kpi"
+                  aria-label="WAM"
+                  title="UPB-Weighted Average Maturity"
+                >
+                  <span className="qc-kpi-label">WAM</span>
+                  <span className="qc-kpi-value">
+                    {cohortKpis.wam != null
+                      ? `${fmtInt(cohortKpis.wam)} Mo`
+                      : "—"}
+                  </span>
+                </div>
+                <div
+                  className="qc-kpi cohort-kpi"
+                  aria-label="WA LTV"
+                  title="UPB-Weighted Average LTV"
+                >
+                  <span className="qc-kpi-label">WA LTV</span>
+                  <span className="qc-kpi-value">
+                    {cohortKpis.avgLtv != null
+                      ? fmtLtv(cohortKpis.avgLtv)
+                      : "—"}
+                  </span>
+                </div>
+                <div
+                  className="qc-kpi cohort-kpi"
+                  aria-label="WA FICO"
+                  title="UPB-Weighted Average FICO"
+                >
+                  <span className="qc-kpi-label">WA FICO</span>
+                  <span className="qc-kpi-value">
+                    {cohortKpis.avgFico != null
+                      ? fmtInt(cohortKpis.avgFico)
+                      : "—"}
+                  </span>
+                </div>
+                <div
+                  className="qc-kpi cohort-kpi"
+                  aria-label="WA RI"
+                  title="UPB-Weighted Average Refinance Incentive"
+                >
+                  <span className="qc-kpi-label">WA RI</span>
+                  <span className="qc-kpi-value">
+                    {cohortKpis.avgRi != null
+                      ? fmtNum(cohortKpis.avgRi, 1)
+                      : "—"}
+                  </span>
+                </div>
+              </aside>
+
+              <div className="cohort-filter-bar">
+                <CohortButtonGroup
+                  selected={selectedCohorts}
+                  onToggle={toggleCohort}
+                  onSelectAll={selectAllCohorts}
+                  counts={counts}
+                />
+              </div>
+
+              <section className="section section-cohort-chart">
                 <div className="cohort-chart-row">
                   <div className="chart-wrap chart-wrap-scatter">
                     {tapeLoading ? (
-                      <p className="muted">Loading Cohort Chart…</p>
-                    ) : tapeError ? (
-                      <StatusBanner tone="error">Tape: {tapeError}</StatusBanner>
+                      <PaneSpinner label="Loading Cohort Chart…" />
                     ) : !loans.length ? (
                       <p className="muted">No Cohort Points Loaded.</p>
                     ) : (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart
-                          margin={{ top: 12, right: 16, left: 8, bottom: 28 }}
-                        >
-                          <CartesianGrid
-                            stroke="#323232"
-                            strokeDasharray="2 4"
-                            strokeOpacity={0.9}
-                          />
-                          <XAxis
-                            type="number"
-                            dataKey="cltv"
-                            name="Original CLTV"
-                            tick={axisTick}
-                            ticks={X_TICKS}
-                            axisLine={{ stroke: "#323232" }}
-                            tickLine={{ stroke: "#323232" }}
-                            tickFormatter={(v) => Number(v).toFixed(1)}
-                            domain={X_DOMAIN}
-                            allowDataOverflow
-                            label={{
-                              value: "Original CLTV",
-                              position: "insideBottom",
-                              offset: -14,
-                              fill: "#FCFCFC",
-                              fontSize: 11,
-                              fontFamily: FONT,
-                              fontWeight: 600,
-                            }}
-                          />
-                          <YAxis
-                            type="number"
-                            dataKey="incentive"
-                            name="Refinance Incentive"
-                            tick={axisTick}
-                            ticks={Y_TICKS}
-                            axisLine={{ stroke: "#323232" }}
-                            tickLine={{ stroke: "#323232" }}
-                            domain={Y_DOMAIN}
-                            allowDataOverflow
-                            width={44}
-                            label={{
-                              value: "Refinance Incentive",
-                              angle: -90,
-                              position: "insideLeft",
-                              offset: 8,
-                              fill: "#FCFCFC",
-                              fontSize: 11,
-                              fontFamily: FONT,
-                              fontWeight: 600,
-                            }}
-                          />
-                          <ZAxis range={[POINT_SIZE, POINT_SIZE]} />
-                          <Tooltip
-                            cursor={{
-                              strokeDasharray: "3 3",
-                              stroke: "#323232",
-                            }}
-                            contentStyle={{
-                              background: "#0C0C0C",
-                              border: "1px solid #323232",
-                              borderRadius: 0,
-                              fontSize: 11,
-                              color: "#FCFCFC",
-                              fontFamily: FONT,
-                            }}
-                            labelStyle={{ color: "#808080" }}
-                          />
-                          <Legend
-                            verticalAlign="top"
-                            align="left"
-                            wrapperStyle={{
-                              position: "absolute",
-                              top: 8,
-                              left: 56,
-                              width: "auto",
-                              zIndex: 2,
-                            }}
-                            content={(props) => (
-                              <CustomLegend
-                                {...props}
-                                activeCluster={clusterFilter}
-                                onSelect={selectCluster}
-                                counts={counts}
-                              />
-                            )}
-                          />
-                          <HullFills
-                            hullSeries={hullSeries}
-                            activeCluster={clusterFilter}
-                          />
-                          {CLUSTER_ORDER.map((code) => (
-                            <Scatter
+                      <CohortScatterChart
+                        scatterByCluster={scatterByCluster}
+                        hullSeries={hullSeries}
+                        selected={deferredCohorts}
+                        onToggle={toggleCohort}
+                      />
+                    )}
+                    <p className="muted cohort-method-note">
+                      Clustering Used K-Prototypes. Cohorts Named By HLTV /
+                      LLTV And RI Segment (Strong, Moderate, Weak).
+                    </p>
+                  </div>
+
+                  <div
+                    className="section-cohort-stats"
+                    aria-label="Cohort Statistics"
+                  >
+                    {cohortStatsLoading ? (
+                      <PaneSpinner label="Loading Cohort Statistics…" />
+                    ) : !cohortStats.length ? (
+                      <p className="muted">No Cohort Statistics Loaded.</p>
+                    ) : (
+                      <div
+                        className="cohort-stats-cards"
+                        role="list"
+                        aria-label="Cohort Statistics"
+                      >
+                        {CLUSTER_ORDER.filter((c) =>
+                          cohortIsActive(c, deferredCohorts)
+                        ).map((code) => {
+                          const r = cohortStatsByCode[code];
+                          if (!r) return null;
+                          const wac = r.wac ?? r.avg_rate;
+                          const wam = r.wam ?? r.avg_remaining_term;
+                          return (
+                            <button
                               key={code}
-                              name={code}
-                              data={scatterByCluster[code]}
-                              fill={CLUSTER_COLORS[code]}
-                              fillOpacity={
-                                clusterFilter === "all" ||
-                                clusterFilter === code
-                                  ? 0.75
-                                  : 0.15
-                              }
-                              shape="circle"
-                              onClick={() => selectCluster(code)}
-                              cursor="pointer"
-                              isAnimationActive={false}
-                              legendType="circle"
-                            />
-                          ))}
-                        </ComposedChart>
-                      </ResponsiveContainer>
+                              type="button"
+                              role="listitem"
+                              className="cohort-stats-card"
+                              style={{
+                                "--cluster-color": CLUSTER_COLORS[code],
+                              }}
+                              onClick={() => toggleCohort(code)}
+                              title={`${code} · Toggle Selection`}
+                            >
+                              <div className="cohort-stats-card-head">
+                                <span
+                                  className="cohort-stats-card-swatch"
+                                  aria-hidden="true"
+                                />
+                                <span className="cohort-stats-card-name">
+                                  {code}
+                                </span>
+                              </div>
+                              <div className="cohort-stats-card-metrics">
+                                <div>
+                                  <span className="muted">Loans</span>
+                                  <strong>
+                                    {r.loan_count != null
+                                      ? fmtInt(r.loan_count)
+                                      : "—"}
+                                  </strong>
+                                </div>
+                                <div>
+                                  <span className="muted">UPB</span>
+                                  <strong>
+                                    {r.upb != null
+                                      ? fmtUpbShort(r.upb)
+                                      : "—"}
+                                  </strong>
+                                </div>
+                                <div>
+                                  <span className="muted">WAC</span>
+                                  <strong>
+                                    {wac != null ? fmtWac(wac) : "—"}
+                                  </strong>
+                                </div>
+                                <div>
+                                  <span className="muted">WAM</span>
+                                  <strong>
+                                    {wam != null
+                                      ? `${fmtInt(wam)} Mo`
+                                      : "—"}
+                                  </strong>
+                                </div>
+                                <div>
+                                  <span className="muted">WA LTV</span>
+                                  <strong>
+                                    {r.avg_ltv != null
+                                      ? fmtLtv(r.avg_ltv)
+                                      : "—"}
+                                  </strong>
+                                </div>
+                                <div>
+                                  <span className="muted">WA CLTV</span>
+                                  <strong>
+                                    {r.avg_cltv != null
+                                      ? fmtLtv(r.avg_cltv)
+                                      : "—"}
+                                  </strong>
+                                </div>
+                                <div>
+                                  <span className="muted">WA FICO</span>
+                                  <strong>
+                                    {r.avg_fico != null
+                                      ? fmtInt(r.avg_fico)
+                                      : "—"}
+                                  </strong>
+                                </div>
+                                <div>
+                                  <span className="muted">WA RI</span>
+                                  <strong>
+                                    {r.avg_refi_incentive != null
+                                      ? fmtNum(r.avg_refi_incentive, 1)
+                                      : "—"}
+                                  </strong>
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
-                  <aside
-                    className="cohort-kpi-rail"
-                    role="toolbar"
-                    aria-label="Cohort KPIs"
-                  >
-                    <button
-                      type="button"
-                      className={`qc-kpi cohort-kpi${
-                        clusterFilter === "all" ? " is-active" : ""
-                      }`}
-                      aria-label="Total Loans"
-                      onClick={() => selectCluster("all")}
-                    >
-                      <span className="qc-kpi-label">Total Loans</span>
-                      <span className="qc-kpi-value">
-                        {cohortKpis.loanCount
-                          ? fmtInt(cohortKpis.loanCount)
-                          : "—"}
-                      </span>
-                    </button>
-                    <div className="qc-kpi cohort-kpi" aria-label="UPB">
-                      <span className="qc-kpi-label">UPB</span>
-                      <span className="qc-kpi-value">
-                        {cohortKpis.upb ? fmtUpbShort(cohortKpis.upb) : "—"}
-                      </span>
-                    </div>
-                    <div className="qc-kpi cohort-kpi" aria-label="WAC">
-                      <span className="qc-kpi-label">WAC</span>
-                      <span className="qc-kpi-value">
-                        {cohortKpis.wac != null
-                          ? fmtWac(cohortKpis.wac)
-                          : "—"}
-                      </span>
-                    </div>
-                    <div className="qc-kpi cohort-kpi" aria-label="WAM">
-                      <span className="qc-kpi-label">WAM</span>
-                      <span className="qc-kpi-value">
-                        {cohortKpis.wam != null
-                          ? `${fmtInt(cohortKpis.wam)} Mo`
-                          : "—"}
-                      </span>
-                    </div>
-                    <div className="qc-kpi cohort-kpi" aria-label="Avg LTV">
-                      <span className="qc-kpi-label">Avg LTV</span>
-                      <span className="qc-kpi-value">
-                        {cohortKpis.avgLtv != null
-                          ? fmtPct(cohortKpis.avgLtv, 1)
-                          : "—"}
-                      </span>
-                    </div>
-                    <div className="qc-kpi cohort-kpi" aria-label="Avg FICO">
-                      <span className="qc-kpi-label">Avg FICO</span>
-                      <span className="qc-kpi-value">
-                        {cohortKpis.avgFico != null
-                          ? fmtInt(cohortKpis.avgFico)
-                          : "—"}
-                      </span>
-                    </div>
-                    <div className="qc-kpi cohort-kpi" aria-label="Avg RI">
-                      <span className="qc-kpi-label">Avg RI</span>
-                      <span className="qc-kpi-value">
-                        {cohortKpis.avgRi != null
-                          ? fmtNum(cohortKpis.avgRi, 1)
-                          : "—"}
-                      </span>
-                    </div>
-                  </aside>
                 </div>
               </section>
 
-              <section className="section section-cohort-stats section-fill">
-                <div className="section-head">
-                  <h2 className="section-title">Cohort Statistics</h2>
-                </div>
-                {cohortStatsError ? (
-                  <StatusBanner tone="error">
-                    Cohort Stats: {cohortStatsError}
-                  </StatusBanner>
-                ) : !cohortStats.length ? (
-                  <p className="muted">No Cohort Statistics Loaded.</p>
+              <section
+                className="section section-cohort-pm"
+                aria-label="Cohort Portfolio Analytics"
+              >
+                {(tapeLoading || asfLoading) && !cohortPmCache.poolUpb ? (
+                  <PaneSpinner label="Loading Cohort Analytics…" />
                 ) : (
-                  <DataGrid
-                    rowData={
-                      clusterFilter === "all"
-                        ? cohortStats
-                        : cohortStats.filter(
-                            (r) => cohortLabel(r.cohort) === clusterFilter
-                          )
-                    }
-                    columnDefs={cohortStatsColumnDefs}
-                    getRowId={(p) => String(p.data.cohort)}
-                    onRowDrill={(row) =>
-                      selectCluster(cohortLabel(row.cohort) || "all")
-                    }
-                    heightClass="grid-wrap-cohort-stats"
-                    exportName="cohort-stats"
+                  <CohortPmCharts
+                    cache={cohortPmCache}
+                    selected={deferredCohorts}
                   />
                 )}
               </section>
-            </>
+            </div>
           )}
 
           {pane === "scenarios" && (
-            <section className="section section-fill">
-              <div className="section-head">
-                <p className="section-meta">27 Cells</p>
-              </div>
-              <div className="scenario-layout">
-                <DataGrid
-                  rowData={scenarioRows}
-                  columnDefs={scenarioColumnDefs}
-                  getRowId={(p) => String(p.data.scenario_id)}
-                  heightClass="grid-wrap-fill scenario-grid"
-                  exportName="scenarios"
-                  showToolbar={false}
-                  gridProps={{ suppressRowTransform: true }}
-                />
-                <ScenarioSpeedCharts />
-              </div>
+            <section className="section section-fill section-scenarios">
+              {scenariosBootLoading ? (
+                <PaneSpinner label="Loading Scenarios…" />
+              ) : (
+                <div className="scenario-page">
+                  <div className="scenario-layout">
+                    <DataGrid
+                      rowData={scenarioRows}
+                      columnDefs={scenarioColumnDefs}
+                      getRowId={(p) => String(p.data.cohort)}
+                      heightClass="grid-wrap-fill scenario-grid"
+                      exportName="scenarios"
+                      showToolbar={false}
+                    />
+                    <ScenarioSpeedCharts />
+                  </div>
+                  <div className="scenario-results">
+                    <ScenarioCohortCashChart />
+                    <ScenarioCohortComponentCharts />
+                    <ScenarioGridCashCharts />
+                  </div>
+                </div>
+              )}
             </section>
           )}
 
@@ -1940,7 +2127,7 @@ export default function App() {
               <DrillTrail crumbs={drillCrumbs} onJump={onDrillJump} />
               {cfView === "loanMonth" ? (
                 loanMonthLoading ? (
-                  <p className="muted">Loading Multi-Month CF…</p>
+                  <PaneSpinner label="Loading Multi-Month CF…" />
                 ) : !loanMonthRows.length ? (
                   <p className="muted">
                     No Multi-Month Rows For {selectedLoanId}
@@ -1962,7 +2149,7 @@ export default function App() {
                 )
               ) : cfView === "month1" ? (
                 neonCfLoading ? (
-                  <p className="muted">Loading All-Loan Month 1 CF…</p>
+                  <PaneSpinner label="Loading All-Loan Month 1 CF…" />
                 ) : !neonMonth1Rows.length ? (
                   <StatusBanner tone="muted">
                     No Month 1 Rows For {scenarioDisplayName(selectedScenarioId)}
@@ -1976,11 +2163,12 @@ export default function App() {
                     getRowId={(p) =>
                       `${p.data.scenario_id}|${p.data.loan_id}|${p.data.month}`
                     }
-                    onRowDrill={drillMonth1Loan}
                     heightClass="grid-wrap-fill"
                     exportName="cf-month1-loans"
                   />
                 )
+              ) : scenariosBootLoading ? (
+                <PaneSpinner label="Loading Scenario Aggregates…" />
               ) : !aggregates.length ? (
                 <StatusBanner tone="muted">
                   No Scenario Aggregates Yet. Open Scenarios.
@@ -2006,11 +2194,7 @@ export default function App() {
                 </p>
               </div>
               {assumptionLoading ? (
-                <p className="muted">Loading Assumptions…</p>
-              ) : assumptionError ? (
-                <StatusBanner tone="error">
-                  Assumptions: {assumptionError}
-                </StatusBanner>
+                <PaneSpinner label="Loading Assumptions…" />
               ) : !assumptionRows.length ? (
                 <p className="muted">No Assumptions Loaded.</p>
               ) : (
@@ -2026,6 +2210,7 @@ export default function App() {
           )}
         </main>
       </div>
+      <ToastHost toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

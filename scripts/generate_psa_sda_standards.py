@@ -18,8 +18,9 @@ sys.path.insert(0, str(REPO))
 from app.services.psa_prepay import cpr_at_age  # noqa: E402
 from app.services.sda_default import cdr_at_age  # noqa: E402
 
-PSA_MULTIPLES = (75, 100, 125)
-SDA_MULTIPLES = (50, 100, 200)
+# Distinct multiples from Scenarios cohort speed schedule (src/scenarioSpeeds.js).
+PSA_MULTIPLES = (50, 75, 100, 125, 150, 225)
+SDA_MULTIPLES = (25, 75, 100, 150, 250, 300, 450)
 MONTHS = 360
 
 

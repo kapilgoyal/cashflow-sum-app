@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from fastapi import APIRouter, HTTPException, Query
 
 from app.repositories.env_load import load_dotenv
@@ -67,6 +69,8 @@ def collateral_analysis(
     if not include_loans:
         payload = {**payload, "loans": []}
     payload["source"] = source
+    # Live Neon/excel tape has no snapshot stamp; report serve date as as-of.
+    payload["as_of"] = date.today().isoformat()
     payload["field_inventory"] = FIELD_INVENTORY
     payload["section_refs"] = SECTION_REFS
     return payload

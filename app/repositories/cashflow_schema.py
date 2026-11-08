@@ -216,3 +216,48 @@ MONTH1_DROPPED_COLS = (
     "pca_level",
     "sta_level",
 )
+
+# Aggregate monthly CF for each of the 27 grid scenarios (no loan grain).
+SCENARIO_MONTH_CF_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS public.scenario_month_cf (
+    scenario_id TEXT NOT NULL REFERENCES public.securitization_scenarios (scenario_id),
+    month INTEGER NOT NULL,
+    interest DOUBLE PRECISION,
+    scheduled_principal DOUBLE PRECISION,
+    prepay DOUBLE PRECISION,
+    new_default DOUBLE PRECISION,
+    recovery DOUBLE PRECISION,
+    total_cash DOUBLE PRECISION,
+    principal_cash DOUBLE PRECISION,
+    beginning_balance DOUBLE PRECISION,
+    PRIMARY KEY (scenario_id, month)
+);
+"""
+
+# Idempotent adds for existing Neon tables created before component CF cols.
+SCENARIO_MONTH_CF_ADD_COMPONENT_COLS_SQL = """
+ALTER TABLE public.scenario_month_cf
+    ADD COLUMN IF NOT EXISTS interest DOUBLE PRECISION;
+ALTER TABLE public.scenario_month_cf
+    ADD COLUMN IF NOT EXISTS scheduled_principal DOUBLE PRECISION;
+ALTER TABLE public.scenario_month_cf
+    ADD COLUMN IF NOT EXISTS prepay DOUBLE PRECISION;
+ALTER TABLE public.scenario_month_cf
+    ADD COLUMN IF NOT EXISTS new_default DOUBLE PRECISION;
+ALTER TABLE public.scenario_month_cf
+    ADD COLUMN IF NOT EXISTS recovery DOUBLE PRECISION;
+"""
+
+# WAL + summary per scenario cell and per-cohort AVG of the 9 cells.
+COHORT_SCENARIO_WAL_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS public.cohort_scenario_wal (
+    cohort TEXT NOT NULL,
+    scenario_id TEXT NOT NULL,
+    wal_years DOUBLE PRECISION,
+    total_cash_sum DOUBLE PRECISION,
+    n_loans INTEGER,
+    perform_months INTEGER,
+    horizon_months INTEGER,
+    PRIMARY KEY (cohort, scenario_id)
+);
+"""

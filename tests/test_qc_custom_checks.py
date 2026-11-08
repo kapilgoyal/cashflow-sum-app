@@ -64,3 +64,25 @@ def test_custom_check_save_run_survives_upsert(sqlite_repo: AsfTapeRepository) -
 
     assert repo.delete_custom_check(saved["check_id"]) is True
     assert repo.list_custom_checks() == []
+
+
+def test_disable_standard_check_survives_upsert(sqlite_repo: AsfTapeRepository) -> None:
+    repo = sqlite_repo
+    repo.upsert_check_defs()
+    latest = repo.latest_results()
+    standard = next(
+        (r for r in latest if r.get("source") != "custom"),
+        None,
+    )
+    assert standard is not None
+    check_id = standard["check_id"]
+
+    assert repo.delete_custom_check(check_id) is True
+    assert check_id in repo.list_disabled_check_ids()
+    assert all(r["check_id"] != check_id for r in repo.latest_results())
+
+    repo.upsert_check_defs()
+    assert check_id in repo.list_disabled_check_ids()
+    run = repo.run_qc()
+    assert all(r["check_id"] != check_id for r in run["results"])
+    assert all(r["check_id"] != check_id for r in repo.latest_results())

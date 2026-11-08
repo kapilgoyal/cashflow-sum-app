@@ -1,8 +1,6 @@
-"""English → QC predicate translation (mock path without GROQ_API_KEY)."""
+"""English → QC predicate translation (Groq required; no mock fallback)."""
 
 from __future__ import annotations
-
-import os
 
 import pytest
 
@@ -10,23 +8,59 @@ from app.services.qc_nl_translate import translate_english
 from app.services.qc_predicate import validate_predicate
 
 
-def test_mock_fico_below(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+def test_missing_key_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "app.services.qc_nl_translate.groq_api_key", lambda: None
+    )
+    out = translate_english("Flag loans with FICO below 620")
+    assert out["ok"] is False
+    assert out["mode"] == "error"
+    assert out["sql_predicate"] is None
+    assert "GROQ_API_KEY" in (out["error"] or "")
+
+
+def test_groq_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "app.services.qc_nl_translate.groq_api_key", lambda: "test-key"
+    )
+
+    def fake_call(_key: str, _english: str):
+        return (
+            {
+                "sql_predicate": (
+                    "original_fico IS NOT NULL AND original_fico < 620"
+                ),
+                "required_columns": ["original_fico"],
+            },
+            "openai/gpt-oss-20b",
+        )
+
+    monkeypatch.setattr(
+        "app.services.qc_nl_translate._call_groq", fake_call
+    )
     out = translate_english("Flag loans with FICO below 620")
     assert out["ok"] is True
-    assert out["mode"] == "mock"
-    assert out["warning"]
-    assert "original_fico" in out["sql_predicate"]
+    assert out["mode"] == "groq"
+    assert out["model"] == "openai/gpt-oss-20b"
+    assert out["warning"] is None
     assert "620" in out["sql_predicate"]
     validate_predicate(out["sql_predicate"])
 
 
-def test_mock_ltv_above(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+def test_groq_failure_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "app.services.qc_nl_translate.groq_api_key", lambda: "test-key"
+    )
+
+    def boom(_key: str, _english: str):
+        raise RuntimeError("HTTP 403: blocked")
+
+    monkeypatch.setattr("app.services.qc_nl_translate._call_groq", boom)
     out = translate_english("LTV above 80%")
-    assert out["ok"] is True
-    assert "original_ltv" in out["sql_predicate"]
-    assert "0.8" in out["sql_predicate"]
+    assert out["ok"] is False
+    assert out["mode"] == "error"
+    assert out["sql_predicate"] is None
+    assert "Groq translate failed" in (out["error"] or "")
 
 
 def test_validate_rejects_injection() -> None:
