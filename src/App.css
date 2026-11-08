@@ -3674,27 +3674,53 @@ button.btn,
     font-size: 10px;
   }
 
+  /* Scenarios: stack everything; .main scrolls — do not clip the 27-scenario chart */
+  .section-scenarios.section-fill,
+  .section-scenarios {
+    display: flex;
+    flex-direction: column;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0;
+    overflow: visible !important;
+  }
+
   .scenario-page {
     display: flex;
     flex-direction: column;
-    overflow: auto;
+    flex: 0 0 auto;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0;
+    overflow: visible !important;
     grid-template-rows: none;
     gap: 10px;
-    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
   }
 
   .scenario-results {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    overflow: visible;
+    flex: 0 0 auto;
+    gap: 12px;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0;
+    overflow: visible !important;
     border-top: 1px solid var(--cf-hairline);
     padding-top: 8px;
+  }
+
+  .scenario-results > * {
+    flex: 0 0 auto;
+    min-height: 160px;
+    overflow: visible !important;
   }
 
   .scenario-avg-row {
     grid-template-columns: 1fr;
     height: auto;
+    min-height: 0;
     gap: 8px;
   }
 
@@ -3713,6 +3739,7 @@ button.btn,
     flex: 0 0 auto;
     height: auto;
     min-height: 0;
+    overflow: visible !important;
   }
 
   .scenario-component-grid {
@@ -3721,9 +3748,20 @@ button.btn,
     height: auto;
   }
 
+  /* Last chart — explicit height so Recharts ResponsiveContainer is not 0px */
   .scenario-grid-cash-panel {
-    min-height: 220px;
-    height: 220px;
+    flex: 0 0 auto !important;
+    min-height: 240px !important;
+    height: 260px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .scenario-grid-cash-panel .scenario-component-chart-body,
+  .scenario-grid-cash-panel .scenario-grid-cash-chart {
+    flex: 1 1 auto;
+    min-height: 200px !important;
+    height: 200px !important;
   }
 
   .scenario-cash-meta,
@@ -4959,10 +4997,33 @@ button.btn,
     -webkit-overflow-scrolling: touch;
   }
 
-  /* —— Scenarios —— */
+  /* —— Scenarios —— keep full chart stack scrollable in .main */
+  .section-scenarios.section-fill,
+  .section-scenarios {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
   .scenario-page {
     max-width: 100%;
     overflow-x: hidden;
+    overflow-y: visible !important;
+    height: auto !important;
+  }
+
+  .scenario-results {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .scenario-results > * {
+    overflow: visible !important;
+  }
+
+  .scenario-grid-cash-panel {
+    min-height: 240px !important;
+    height: 260px !important;
   }
 
   .scenario-layout .scenario-grid {
