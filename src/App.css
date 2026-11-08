@@ -747,20 +747,28 @@ body {
   color: var(--cf-accent-bright);
 }
 
-/* Cohort page — fill main; no page scrollbar (like Strats). */
-.main:has(> .cohort-page) {
-  overflow: hidden;
+/* Cohort page — desktop fills main with no page scrollbar (like Strats). */
+@media (min-width: 901px) {
+  .main:has(> .cohort-page) {
+    overflow: hidden;
+  }
+
+  .cohort-page {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 4px;
+    overflow: hidden;
+    width: 100%;
+  }
 }
 
 .cohort-page {
   flex: 1 1 auto;
   min-height: 0;
-  display: grid;
-  /* KPI strip → filter chips → scatter+stats → geo|credit — all fit, no page scroll */
-  grid-template-rows: auto auto minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: 4px;
-  overflow: hidden;
   width: 100%;
+  max-width: 100%;
 }
 
 .cohort-page > .section {
@@ -2126,9 +2134,11 @@ body {
   }
 }
 
-/* Strats owns in-pane chart scroll; main must not double-scroll. */
-.main:has(> .section-strats) {
-  overflow: hidden;
+/* Desktop only: Strats owns in-pane chart scroll; main must not double-scroll. */
+@media (min-width: 901px) {
+  .main:has(> .section-strats) {
+    overflow: hidden;
+  }
 }
 
 .section-strats .strats-scorecard-wrap {
@@ -4520,5 +4530,342 @@ body {
   .ia-top-state,
   .ia-kpi {
     min-height: 44px;
+  }
+}
+
+/* ============================================================
+ * CF-174 — App-wide phone / small-device usability (last wins)
+ * Tap ≥44px · stack · no horizontal page overflow · readable charts
+ * ============================================================ */
+@media (max-width: 900px) {
+  html,
+  body,
+  #root,
+  .app {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .shell,
+  .main {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  /* Pane scroll lives in .main — never double-lock children */
+  .main:has(> .section-strats),
+  .main:has(> .section-collateral),
+  .main:has(> .cohort-page),
+  .main:has(> .section-scenarios),
+  .main:has(> .section-qc),
+  .main:has(> .section-asf) {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* —— Loan Strats —— */
+  .section-strats.section-collateral,
+  .section-strats {
+    display: flex;
+    flex-direction: column;
+    height: auto !important;
+    max-height: none;
+    min-height: 0;
+    overflow: visible !important;
+    padding: 8px 10px 12px;
+    gap: 8px;
+  }
+
+  .section-strats .strats-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .section-strats .strats-kpi-strip,
+  .section-strats .qc-kpi-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+    overflow: visible;
+  }
+
+  .section-strats .strats-kpi-strip .qc-kpi,
+  .section-strats .qc-kpi {
+    flex: 1 1 calc(50% - 6px);
+    min-width: calc(50% - 6px);
+    min-height: var(--cf-tap);
+    padding: 8px 10px;
+  }
+
+  .section-strats .strats-body {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    height: auto;
+    min-height: 0;
+    overflow: visible !important;
+    gap: 8px;
+  }
+
+  .section-strats .strats-charts,
+  .section-strats .collat-grid {
+    display: flex !important;
+    flex-direction: column;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    height: auto !important;
+    min-height: 0;
+    overflow: visible !important;
+    gap: 10px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .section-strats .strats-panel-quad,
+  .section-strats .strats-panel-third,
+  .section-strats .strats-panel-half,
+  .section-strats .strats-panel-half.strats-row-start,
+  .section-strats .collat-panel-full,
+  .section-strats .collat-panel-wide,
+  .section-strats .strats-heatmap-panel.collat-panel {
+    grid-column: auto !important;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: auto !important;
+    min-height: 220px;
+    overflow: hidden;
+  }
+
+  .section-strats .collat-panel {
+    height: auto !important;
+    min-height: 220px;
+    padding: 8px;
+  }
+
+  .section-strats .collat-panel .collat-chart-wrap,
+  .section-strats .collat-panel .collat-chart,
+  .section-strats .strats-panel-compact .collat-chart,
+  .section-strats .strats-panel-compact .collat-chart-wrap {
+    min-height: 180px;
+    height: 200px;
+  }
+
+  .section-strats .strats-heatmap-panel .strats-heatmap {
+    min-height: 220px;
+    height: 240px;
+    overflow: auto;
+  }
+
+  .section-strats .strats-panel-half .collat-geo {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    height: auto;
+    min-height: 260px;
+  }
+
+  .section-strats .strats-panel-half .choropleth,
+  .section-strats .strats-panel-half .choropleth-svg {
+    height: 220px !important;
+    max-height: 240px;
+    min-height: 180px;
+  }
+
+  .section-strats .strats-chip,
+  .section-strats .strats-seg-btn,
+  .section-strats .strats-reset,
+  .section-strats .collat-info {
+    min-height: var(--cf-tap);
+    min-width: var(--cf-tap);
+  }
+
+  /* —— Cohort Analysis —— */
+  .main:has(> .cohort-page) {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .cohort-page {
+    display: flex !important;
+    flex-direction: column;
+    grid-template-rows: none !important;
+    height: auto !important;
+    min-height: 0;
+    overflow: visible !important;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .cohort-page > .section {
+    flex: 0 0 auto;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .cohort-kpi-rail {
+    flex-wrap: wrap !important;
+    overflow: visible !important;
+    gap: 6px;
+  }
+
+  .cohort-kpi-rail .qc-kpi.cohort-kpi {
+    flex: 1 1 calc(33.33% - 6px);
+    min-width: 96px;
+    min-height: var(--cf-tap);
+    padding: 8px 8px;
+  }
+
+  .cohort-filter-bar,
+  .cohort-btn-group {
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+    gap: 8px;
+  }
+
+  .cohort-btn-group-btn {
+    min-height: var(--cf-tap);
+    padding: 10px 14px;
+    font-size: 11px;
+  }
+
+  .cohort-chart-row,
+  .section-cohort-chart .cohort-chart-row {
+    display: flex !important;
+    flex-direction: column;
+    grid-template-columns: none !important;
+    height: auto !important;
+    gap: 10px;
+  }
+
+  .chart-wrap-scatter {
+    height: min(320px, 55vw) !important;
+    min-height: 240px !important;
+    max-height: none;
+    width: 100%;
+    aspect-ratio: auto;
+  }
+
+  .cohort-chart-row > .section-cohort-stats,
+  .section-cohort-stats {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    width: 100%;
+  }
+
+  .cohort-stats-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cohort-stats-card {
+    width: 100%;
+    min-height: 0;
+  }
+
+  /* —— Loan QC —— */
+  .section-qc {
+    height: auto;
+    overflow: visible;
+    max-width: 100%;
+  }
+
+  .section-qc .qc-kpi-strip {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .section-qc .qc-kpi {
+    flex: 1 1 calc(50% - 6px);
+    min-width: calc(50% - 6px);
+    min-height: 64px;
+  }
+
+  .qc-toolbar button,
+  .qc-composer-actions button,
+  .section-qc .cf-grid-icon-btn,
+  .btn,
+  .linkish {
+    min-height: var(--cf-tap);
+  }
+
+  /* —— Investor Tape —— */
+  .section-asf {
+    height: auto;
+    overflow: visible;
+    max-width: 100%;
+  }
+
+  .section-asf .cf-grid-host,
+  .section-asf .grid-wrap-fill {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* —— Scenarios —— */
+  .scenario-page {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .scenario-layout .scenario-grid {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .topbar-page {
+    display: inline-block;
+    max-width: min(48vw, 160px);
+  }
+
+  .section-strats .strats-kpi-strip .qc-kpi,
+  .section-strats .qc-kpi,
+  .section-qc .qc-kpi {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+
+  .cohort-kpi-rail .qc-kpi.cohort-kpi {
+    flex: 1 1 calc(50% - 6px);
+  }
+
+  .section-strats .collat-panel,
+  .section-strats .strats-panel-quad,
+  .section-strats .strats-panel-third,
+  .section-strats .strats-panel-half {
+    min-height: 200px;
+  }
+
+  .section-strats .collat-panel .collat-chart-wrap,
+  .section-strats .collat-panel .collat-chart {
+    height: 180px;
+    min-height: 160px;
+  }
+
+  .chart-wrap-scatter {
+    height: 260px !important;
+    min-height: 220px !important;
+  }
+
+  .scenario-component-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .scenario-speed-rail {
+    grid-template-columns: 1fr !important;
   }
 }
