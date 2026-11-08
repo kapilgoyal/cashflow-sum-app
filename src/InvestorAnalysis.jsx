@@ -24,6 +24,8 @@ import {
   StatusBanner,
   fmtInt,
   fmtLtv,
+  chartNum,
+  chartPct,
   fmtNum,
   fmtPct,
   fmtUpbShort,
@@ -314,7 +316,7 @@ export default function InvestorAnalysis() {
           <div className="ia-kpi">
             <span className="ia-kpi-label">WA RI</span>
             <span className="ia-kpi-value">
-              {kpis.wa_ri != null ? fmtNum(kpis.wa_ri, 2) : "—"}
+              {kpis.wa_ri != null ? chartNum(kpis.wa_ri) : "—"}
             </span>
           </div>
         </div>
@@ -401,7 +403,7 @@ export default function InvestorAnalysis() {
                         {r.wac != null ? fmtWac(r.wac) : "—"}
                       </td>
                       <td className="ia-num">
-                        {r.wa_ri != null ? fmtNum(r.wa_ri, 2) : "—"}
+                        {r.wa_ri != null ? chartNum(r.wa_ri) : "—"}
                       </td>
                     </tr>
                   ))}
@@ -480,7 +482,7 @@ export default function InvestorAnalysis() {
                   <Tooltip
                     contentStyle={tipStyle}
                     formatter={(v, name) => [
-                      `${Number(v).toFixed(1)}%`,
+                      chartPct(v, { alreadyPercent: true }),
                       name === "wa_cltv_pct" ? "WA CLTV" : "≥80% CLTV UPB",
                     ]}
                     labelFormatter={(v) => `HPA ${v}%`}
@@ -787,7 +789,7 @@ export default function InvestorAnalysis() {
                   <YAxis tick={tick} tickFormatter={(v) => `${v}%`} />
                   <Tooltip
                     contentStyle={tipStyle}
-                    formatter={(v) => `${Number(v).toFixed(1)}%`}
+                    formatter={(v) => chartPct(v, { alreadyPercent: true })}
                   />
                   <Legend
                     wrapperStyle={{

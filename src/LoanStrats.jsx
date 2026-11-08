@@ -18,6 +18,9 @@ import { apiUrl } from "./apiBase";
 import {
   FONT,
   PaneSpinner,
+  chartMoney,
+  chartNum,
+  chartPct,
   fmtInt,
   fmtLtv,
   fmtNum,
@@ -74,19 +77,17 @@ const DSCR_ORDER = ["<1.0", "1.0-1.25", "1.25-1.5", "1.5+", "missing"];
 
 function fmtUpbShort(v) {
   if (v == null || Number.isNaN(Number(v))) return "—";
-  const n = Number(v);
-  if (Math.abs(n) >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
-  if (Math.abs(n) >= 1e3) return `$${(n / 1e3).toFixed(0)}k`;
-  return `$${n.toFixed(0)}`;
+  return chartMoney(v);
 }
 
 /** Heatmap cell UPB — millions/k without `$` (e.g. 1.5M). */
 function fmtHeatUpb(v) {
   if (v == null || Number.isNaN(Number(v)) || !Number(v)) return "0";
   const n = Number(v);
-  if (Math.abs(n) >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
-  if (Math.abs(n) >= 1e3) return `${(n / 1e3).toFixed(0)}k`;
-  return n.toFixed(0);
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return `${chartNum(n / 1e6)}M`;
+  if (abs >= 1e3) return `${Math.round(n / 1e3)}k`;
+  return `${Math.round(n)}`;
 }
 
 function InfoIcon({ title, refs }) {
@@ -209,11 +210,10 @@ function upbWeightedMean(loans, field) {
   return den > 0 ? num / den : null;
 }
 
-/** WAC KPI — 2 decimals so UPB-weighting is visible vs a rounded simple avg. */
+/** WAC KPI — 1 decimal (chart/KPI display convention). */
 function fmtWacKpi(v) {
   if (v == null || Number.isNaN(Number(v))) return "—";
-  const fixed = (Number(v) * 100).toFixed(2);
-  return `${fixed.replace(/\.?0+$/, "")}%`;
+  return chartPct(v);
 }
 
 function aggregate(loans, field, order, { hideMissing = false } = {}) {
@@ -390,7 +390,7 @@ function AgeWacChart({ rows, selected, onSelect }) {
               yAxisId="wac"
               orientation="right"
               tick={{ fill: MUTED, fontSize: 10, fontFamily: FONT }}
-              tickFormatter={(v) => `${(Number(v) * 100).toFixed(1)}%`}
+              tickFormatter={(v) => chartPct(v)}
             />
             <Tooltip
               cursor={TIP_CURSOR}
@@ -399,9 +399,7 @@ function AgeWacChart({ rows, selected, onSelect }) {
               itemStyle={TIP_ITEM}
               wrapperStyle={{ outline: "none" }}
               formatter={(v, name) =>
-                name === "wac"
-                  ? `${(Number(v) * 100).toFixed(2)}%`
-                  : fmtUpbShort(v)
+                name === "wac" ? chartPct(v) : fmtUpbShort(v)
               }
             />
             <Bar
@@ -813,7 +811,7 @@ export default function LoanStrats() {
           >
             <span className="qc-kpi-label">WA RI</span>
             <span className="qc-kpi-value">
-              {kpis.wa_ri != null ? fmtNum(kpis.wa_ri, 2) : "—"}
+              {kpis.wa_ri != null ? chartNum(kpis.wa_ri) : "—"}
             </span>
           </div>
         </div>

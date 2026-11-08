@@ -383,7 +383,7 @@ const CohortScatterChart = memo(function CohortScatterChart({
             ticks={X_TICKS}
             axisLine={{ stroke: "#323232" }}
             tickLine={{ stroke: "#323232" }}
-            tickFormatter={(v) => Number(v).toFixed(1)}
+            tickFormatter={(v) => `${Math.round(Number(v) * 100)}`}
             domain={X_DOMAIN}
             allowDataOverflow
             label={{
@@ -923,7 +923,7 @@ export default function App() {
         headerName: "Refinance Incentive",
         width: 172,
         minWidth: 172,
-        valueFormatter: (p) => fmtNum(p.value, 2),
+        valueFormatter: (p) => fmtNum(p.value, 1),
         cellClass: "cf-num",
       },
       /* Cohort omitted: derived HLTV/LLTV × RI segment (not a native tape field). */
@@ -1185,7 +1185,7 @@ export default function App() {
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
             ? "—"
-            : `${Number(p.value).toFixed(2)}Y`,
+            : `${fmtNum(p.value, 1)}Y`,
       }),
     ];
   }, []);
@@ -1934,8 +1934,10 @@ export default function App() {
                       />
                     )}
                     <p className="muted cohort-method-note">
-                      Clustering Used K-Prototypes. Cohorts Named By HLTV /
-                      LLTV And RI Segment (Strong, Moderate, Weak).
+                      Clustering used k-prototypes (mixed numeric + categorical).
+                      Cohorts are named by HLTV / LLTV and RI segment (Strong,
+                      Moderate, Weak) — labels describe the cluster, not a
+                      hard rule filter.
                     </p>
                   </div>
 

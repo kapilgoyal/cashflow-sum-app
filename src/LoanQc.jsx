@@ -256,8 +256,12 @@ export default function LoanQc() {
       {
         field: "nl_description",
         headerName: description,
-        flex: 1,
-        minWidth: 240,
+        flex: 1.4,
+        minWidth: 160,
+        wrapText: true,
+        autoHeight: true,
+        tooltipField: "nl_description",
+        cellClass: "qc-desc-cell",
       },
       {
         field: "status_label",

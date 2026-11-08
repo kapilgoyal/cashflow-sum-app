@@ -3179,12 +3179,28 @@ button.btn,
 
 @media (max-width: 900px) {
   .cohort-page {
+    display: flex;
+    flex-direction: column;
     overflow: auto;
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: none;
+    gap: 8px;
   }
 
   .main:has(> .cohort-page) {
     overflow: auto;
+  }
+
+  .cohort-kpi-rail {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 0;
+  }
+
+  .cohort-filter-bar {
+    flex: 0 0 auto;
   }
 
   .cohort-pm-grid {
@@ -4066,11 +4082,18 @@ button.btn,
     flex: 1 1 auto;
   }
 
+  .section-qc .qc-kpi-strip {
+    flex-wrap: nowrap;
+    gap: 6px;
+    width: 100%;
+  }
+
   .section-qc .qc-kpi {
-    flex: 0 0 auto;
-    min-width: 104px;
-    min-height: 64px;
-    padding: 6px 10px 8px;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 48px;
+    padding: 4px 8px;
+    gap: 2px;
     background: #1a1a1a;
     border-color: var(--cf-hairline);
   }
@@ -4080,13 +4103,13 @@ button.btn,
   }
 
   .section-qc .qc-kpi-value {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--cf-accent);
   }
 
   .section-qc .qc-kpi-label {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 600;
     color: var(--cf-muted);
   }
@@ -4123,7 +4146,16 @@ button.btn,
   .section-qc .ag-theme-cashflow .ag-root-wrapper,
   .section-qc .ag-theme-cashflow .ag-center-cols-viewport,
   .section-qc .ag-theme-cashflow .ag-body-viewport {
-    min-width: 640px;
+    min-width: 0;
+  }
+
+  /* Description: allow wrap so rule text is readable on phones */
+  .section-qc .ag-theme-cashflow .ag-cell.qc-desc-cell,
+  .section-qc .ag-theme-cashflow .ag-cell.qc-desc-cell .ag-cell-value {
+    white-space: normal !important;
+    line-height: 1.35;
+    overflow: visible;
+    text-overflow: clip;
   }
 
   .field-inline {
@@ -4785,7 +4817,8 @@ button.btn,
   .main:has(> .cohort-page),
   .main:has(> .section-scenarios),
   .main:has(> .section-qc),
-  .main:has(> .section-asf) {
+  .main:has(> .section-asf),
+  .main:has(> .section-valuation) {
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -4821,10 +4854,22 @@ button.btn,
 
   .section-strats .strats-kpi-strip .qc-kpi,
   .section-strats .qc-kpi {
-    flex: 1 1 calc(50% - 6px);
-    min-width: calc(50% - 6px);
-    min-height: var(--cf-tap);
-    padding: 8px 10px;
+    flex: 1 1 calc(33.33% - 6px);
+    min-width: calc(33.33% - 6px);
+    max-width: none;
+    min-height: 48px;
+    padding: 4px 8px;
+    gap: 2px;
+  }
+
+  .section-strats .strats-kpi-strip .qc-kpi-label,
+  .section-strats .qc-kpi-label {
+    font-size: 9px;
+  }
+
+  .section-strats .strats-kpi-strip .qc-kpi-value,
+  .section-strats .qc-kpi-value {
+    font-size: 14px;
   }
 
   .section-strats .strats-body {
@@ -4937,17 +4982,44 @@ button.btn,
     max-width: 100%;
   }
 
+  /* KPI strip stays one row (scroll) so it never stacks over cohort chips. */
   .cohort-kpi-rail {
-    flex-wrap: wrap !important;
-    overflow: visible !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
     gap: 6px;
+    margin-bottom: 10px;
+    padding-bottom: 2px;
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 1;
   }
 
   .cohort-kpi-rail .qc-kpi.cohort-kpi {
-    flex: 1 1 calc(33.33% - 6px);
-    min-width: 96px;
-    min-height: var(--cf-tap);
-    padding: 8px 8px;
+    flex: 0 0 auto;
+    min-width: 72px;
+    width: auto;
+    min-height: 44px;
+    padding: 4px 8px;
+    gap: 2px;
+  }
+
+  .cohort-kpi-rail .qc-kpi-label {
+    font-size: 9px;
+  }
+
+  .cohort-kpi-rail .qc-kpi-value {
+    font-size: 13px;
+  }
+
+  .cohort-filter-bar {
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    padding-top: 2px;
+    clear: both;
   }
 
   .cohort-filter-bar,
@@ -4962,6 +5034,25 @@ button.btn,
     min-height: var(--cf-tap);
     padding: 10px 14px;
     font-size: 11px;
+  }
+
+  .cohort-method-note {
+    padding: 6px 8px 8px;
+    font-size: 11px;
+    line-height: 1.4;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .cohort-stats-card {
+    flex: 0 0 auto;
+    min-height: 0;
+    gap: 6px;
+  }
+
+  .cohort-stats-card-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 10px;
   }
 
   .cohort-chart-row,
@@ -5008,14 +5099,24 @@ button.btn,
   }
 
   .section-qc .qc-kpi-strip {
-    flex-wrap: wrap;
+    display: flex;
+    flex-wrap: nowrap;
     gap: 6px;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .section-qc .qc-kpi {
-    flex: 1 1 calc(50% - 6px);
-    min-width: calc(50% - 6px);
-    min-height: 64px;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 48px;
+    padding: 4px 8px;
+    gap: 2px;
+  }
+
+  .section-qc .qc-kpi-value {
+    font-size: 16px;
   }
 
   .qc-toolbar button,
@@ -5081,15 +5182,40 @@ button.btn,
     max-width: min(48vw, 160px);
   }
 
+  /* Keep KPI strips horizontal on phones — full-width stack was too tall. */
   .section-strats .strats-kpi-strip .qc-kpi,
-  .section-strats .qc-kpi,
+  .section-strats .qc-kpi {
+    flex: 1 1 calc(33.33% - 6px);
+    min-width: calc(33.33% - 6px);
+    min-height: 44px;
+    padding: 4px 6px;
+    gap: 2px;
+  }
+
+  .section-strats .strats-kpi-strip .qc-kpi-value,
+  .section-strats .qc-kpi-value {
+    font-size: 14px;
+  }
+
   .section-qc .qc-kpi {
-    flex: 1 1 100%;
-    min-width: 100%;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding: 4px 6px;
+    gap: 2px;
+  }
+
+  .section-qc .qc-kpi-value {
+    font-size: 15px;
+  }
+
+  .section-qc .qc-kpi-label {
+    font-size: 9px;
   }
 
   .cohort-kpi-rail .qc-kpi.cohort-kpi {
-    flex: 1 1 calc(50% - 6px);
+    flex: 0 0 auto;
+    min-width: 68px;
   }
 
   .section-strats .collat-panel,
@@ -5120,13 +5246,18 @@ button.btn,
 }
 
 /* —— Valuation —— */
+/* Beat .section-fill overflow:hidden so the tab scrolls as one pane. */
+.section-fill.section-valuation,
 .section-valuation {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-height: 0;
-  overflow: hidden;
+  flex: 1 1 auto;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 8px 10px 10px;
 }
 
@@ -5257,9 +5388,9 @@ button.btn,
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 0 0 auto;
   min-height: 0;
-  flex: 1 1 auto;
-  overflow: auto;
+  overflow: visible;
 }
 
 .valuation-charts {
@@ -5267,7 +5398,7 @@ button.btn,
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   min-height: 200px;
-  flex: 1 1 42%;
+  flex: 0 0 auto;
 }
 
 .valuation-matrix-panel {
@@ -5435,14 +5566,31 @@ button.btn,
 }
 
 @media (max-width: 900px) {
+  .section-fill.section-valuation,
   .section-valuation {
     overflow: auto;
+    -webkit-overflow-scrolling: touch;
     padding: 8px;
     gap: 10px;
+    /* Grow with content so the section (not a nested pane) scrolls. */
+    height: auto;
+    max-height: none;
+    flex: 1 1 auto;
+  }
+
+  .valuation-body {
+    overflow: visible;
+    flex: 0 0 auto;
+    min-height: auto;
   }
 
   .valuation-toolbar {
     gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--cf-bg, #0a0a0a);
+    padding-bottom: 4px;
   }
 
   .valuation-z-input,
@@ -5459,7 +5607,13 @@ button.btn,
 
   .valuation-charts {
     grid-template-columns: 1fr;
-    flex: none;
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+
+  .valuation-matrix-panel {
+    flex: 0 0 auto;
+    padding-bottom: 24px;
   }
 
   .valuation-matrix-grid {
@@ -5471,11 +5625,13 @@ button.btn,
   .valuation-chart-wrap {
     height: 220px;
     min-height: 200px;
+    flex: none;
   }
 
   .section-valuation .qc-kpi-strip.valuation-kpi-strip {
     flex-wrap: wrap;
     overflow-x: visible;
+    flex-shrink: 0;
   }
 
   .section-valuation .qc-kpi {

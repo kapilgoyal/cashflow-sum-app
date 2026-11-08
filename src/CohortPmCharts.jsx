@@ -14,7 +14,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { FONT, fmtInt, fmtLtv, fmtUpbShort } from "./cashflowGrid";
+import { FONT, chartPct, fmtInt, fmtLtv, fmtUpbShort } from "./cashflowGrid";
 import {
   CLUSTER_COLORS,
   CLUSTER_ORDER,
@@ -239,10 +239,13 @@ const CohortPmCharts = memo(function CohortPmCharts({ cache, selected }) {
               contentStyle={TIP_STYLE}
               formatter={(v, name) => {
                 if (name === "lowFicoPct") {
-                  return [`${Number(v).toFixed(1)}%`, "FICO <660 UPB"];
+                  return [chartPct(v, { alreadyPercent: true }), "FICO <660 UPB"];
                 }
                 if (name === "highCltvPct") {
-                  return [`${Number(v).toFixed(1)}%`, "CLTV ≥80% UPB"];
+                  return [
+                    chartPct(v, { alreadyPercent: true }),
+                    "CLTV ≥80% UPB",
+                  ];
                 }
                 return [v, name];
               }}

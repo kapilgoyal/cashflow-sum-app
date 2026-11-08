@@ -20,6 +20,9 @@ import {
   DataGrid,
   FONT,
   StatusBanner,
+  chartMoney,
+  chartNum,
+  chartPct,
   fmtLtv,
   fmtNum,
   fmtPct,
@@ -42,10 +45,7 @@ const LTV_ORDER = ["<60", "60-70", "70-80", "80-90", "90+", "missing"];
 
 function fmtUpbShort(v) {
   if (v == null || Number.isNaN(Number(v))) return "—";
-  const n = Number(v);
-  if (Math.abs(n) >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
-  if (Math.abs(n) >= 1e3) return `$${(n / 1e3).toFixed(0)}k`;
-  return `$${n.toFixed(0)}`;
+  return chartMoney(v);
 }
 
 function InfoIcon({ title, refs }) {
@@ -280,7 +280,7 @@ function liveObservations(loans, kpis) {
 
   const couponObs =
     kpis.wac != null && kpis.wa_ri != null && kpis.wa_age != null
-      ? `WAC ${(kpis.wac * 100).toFixed(2)}%; WA RI ${kpis.wa_ri.toFixed(2)}; WA Age ${kpis.wa_age.toFixed(1)} Mo`
+      ? `WAC ${chartPct(kpis.wac)}; WA RI ${chartNum(kpis.wa_ri)}; WA Age ${chartNum(kpis.wa_age)} Mo`
       : "Coupon / RI / Age Incomplete For Weighted Averages";
 
   const states = aggregate(loans, "state");
@@ -407,13 +407,11 @@ function AgeWacChart({ rows, selected, onSelect }) {
               yAxisId="wac"
               orientation="right"
               tick={{ fill: MUTED, fontSize: 10, fontFamily: FONT }}
-              tickFormatter={(v) => `${(Number(v) * 100).toFixed(1)}%`}
+              tickFormatter={(v) => chartPct(v)}
             />
             <Tooltip
               formatter={(v, name) =>
-                name === "wac"
-                  ? `${(Number(v) * 100).toFixed(2)}%`
-                  : fmtUpbShort(v)
+                name === "wac" ? chartPct(v) : fmtUpbShort(v)
               }
               labelStyle={{ color: TEXT }}
             />
@@ -545,13 +543,13 @@ const explorerCols = [
     headerName: "Rate",
     field: "current_interest_rate",
     width: 80,
-    valueFormatter: (p) => fmtPct(p.value, 2),
+    valueFormatter: (p) => fmtPct(p.value, 1),
   },
   {
     headerName: "RI",
     field: "refinance_incentive",
     width: 70,
-    valueFormatter: (p) => fmtNum(p.value, 2),
+    valueFormatter: (p) => fmtNum(p.value, 1),
   },
   { headerName: "State", field: "state", width: 70 },
   { headerName: "Documentation", field: "documentation_type", minWidth: 140 },
@@ -567,7 +565,7 @@ const explorerCols = [
     headerName: "DSCR",
     field: "dscr",
     width: 80,
-    valueFormatter: (p) => fmtNum(p.value, 2),
+    valueFormatter: (p) => fmtNum(p.value, 1),
   },
   intCol("days_delinquent", "Days DQ"),
   intCol("risk_flag_count", "Flags"),
@@ -836,7 +834,7 @@ export default function LoanLevelCollateral() {
         <div className="collat-kpi" aria-label="WAC" title="UPB-Weighted Average Coupon">
           <span className="collat-kpi-label">WAC</span>
           <span className="collat-kpi-value">
-            {kpis.wac != null ? `${(kpis.wac * 100).toFixed(2)}%` : "—"}
+            {kpis.wac != null ? chartPct(kpis.wac) : "—"}
           </span>
         </div>
         <div className="collat-kpi" aria-label="WA FICO">
