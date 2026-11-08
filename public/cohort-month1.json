@@ -42,7 +42,7 @@
       },
       "note": "PCA=PSA, STA=SDA. Down/Base/Up from CF-41 grid. Each of 27 cells runs its cohort loans for month 1 only. Recovery + lag on aggregates are UPB-weighted from loans (Urban/severity recovery; FNMA state lag); cohort 60/55/75 is only the no-MI / missing-cell fallback. https://singlefamily.fanniemae.com/media/6726/display",
       "engine_version": "1.1.0-cf175",
-      "assumptions_fingerprint": "assumptions:56fd9d4a322f53ee1168",
+      "assumptions_fingerprint": "assumptions:6aa58643d4a8143061f5",
       "same_engine_as": "POST /api/run-loan (project_loan_cashflows)"
     },
     "ran_scenario_ids": [
@@ -75,12 +75,12 @@
       "S27"
     ],
     "engine_version": "1.1.0-cf175",
-    "assumptions_fingerprint": "assumptions:56fd9d4a322f53ee1168",
+    "assumptions_fingerprint": "assumptions:6aa58643d4a8143061f5",
     "tape_hash": "tape:sha256:0ffff997e97c7ae701f08ea52059711015b37af98e78d9cd16fd8a993fe4d849",
     "cache": {
-      "cache_key": "kind:month1_cf|engine:1.1.0-cf175|assumptions:56fd9d4a322f53ee1168|tape:sha256:0ffff997e97c7ae701f08ea52059711015b37af98e78d9cd16fd8a993fe4d849|scenario:5664c1d2de84a814|months:1",
+      "cache_key": "kind:month1_cf|engine:1.1.0-cf175|assumptions:6aa58643d4a8143061f5|tape:sha256:0ffff997e97c7ae701f08ea52059711015b37af98e78d9cd16fd8a993fe4d849|scenario:5664c1d2de84a814|months:1",
       "engine_version": "1.1.0-cf175",
-      "assumptions_fingerprint": "assumptions:56fd9d4a322f53ee1168",
+      "assumptions_fingerprint": "assumptions:6aa58643d4a8143061f5",
       "tape_hash": "tape:sha256:0ffff997e97c7ae701f08ea52059711015b37af98e78d9cd16fd8a993fe4d849",
       "scenario_fingerprint": "scenario:5664c1d2de84a814",
       "months": 1,
@@ -927,12 +927,12 @@
     }
   ],
   "engine_version": "1.1.0-cf175",
-  "assumptions_fingerprint": "assumptions:56fd9d4a322f53ee1168",
+  "assumptions_fingerprint": "assumptions:6aa58643d4a8143061f5",
   "tape_hash": "tape:sha256:0ffff997e97c7ae701f08ea52059711015b37af98e78d9cd16fd8a993fe4d849",
   "cache": {
-    "cache_key": "kind:month1_cf|engine:1.1.0-cf175|assumptions:56fd9d4a322f53ee1168|tape:sha256:0ffff997e97c7ae701f08ea52059711015b37af98e78d9cd16fd8a993fe4d849|scenario:5664c1d2de84a814|months:1",
+    "cache_key": "kind:month1_cf|engine:1.1.0-cf175|assumptions:6aa58643d4a8143061f5|tape:sha256:0ffff997e97c7ae701f08ea52059711015b37af98e78d9cd16fd8a993fe4d849|scenario:5664c1d2de84a814|months:1",
     "engine_version": "1.1.0-cf175",
-    "assumptions_fingerprint": "assumptions:56fd9d4a322f53ee1168",
+    "assumptions_fingerprint": "assumptions:6aa58643d4a8143061f5",
     "tape_hash": "tape:sha256:0ffff997e97c7ae701f08ea52059711015b37af98e78d9cd16fd8a993fe4d849",
     "scenario_fingerprint": "scenario:5664c1d2de84a814",
     "months": 1,

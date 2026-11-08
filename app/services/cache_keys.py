@@ -30,23 +30,32 @@ def file_sha256(path: Path | str, *, chunk: int = 1 << 20) -> str:
     return h.hexdigest()
 
 
+def text_file_sha256_normalized(path: Path | str) -> str:
+    """SHA256 of UTF-8 text with newlines normalized to ``\\n`` (CRLF-safe)."""
+    p = Path(path)
+    text = p.read_text(encoding="utf-8")
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
 def tape_hash(path: Path | str | None) -> str:
     if path is None:
         return "tape:none"
     p = Path(path)
     if not p.exists():
         return f"tape:missing:{p.name}"
+    # Binary tape (xlsx) — raw bytes are fine.
     return f"tape:sha256:{file_sha256(p)}"
 
 
 def assumptions_fingerprint() -> str:
     """Hash modeling assumptions that affect engine outputs (CF-176).
 
-    Includes assumptions.csv, severity grid path/year, Fannie lag path,
-    has_mi default, scenario_config.json, and ENGINE_VERSION so month-1 /
-    grid caches cannot outlive a CF-175 engine or assumption change.
+    Uses ENGINE_VERSION + semantic assumption values + CRLF-normalized text
+    hashes so Windows-stamped JSON stays fresh inside Linux containers.
     """
     from app.services.assumptions import resolve_data_path
+    from app.services.scenario_config import load_scenario_config
 
     parts: dict[str, Any] = {
         "engine_version": ENGINE_VERSION,
@@ -54,6 +63,7 @@ def assumptions_fingerprint() -> str:
         "severity_year_band": severity_default_year_band(),
         "severity_grid_path": severity_grid_relpath(),
         "fannie_lag_path": fannie_lag_relpath(),
+        "scenario_config_version": load_scenario_config().get("version"),
     }
     files = {
         "assumptions_csv": assumptions_csv_path(),
@@ -63,7 +73,7 @@ def assumptions_fingerprint() -> str:
     }
     for label, p in files.items():
         if p.exists():
-            parts[f"{label}_sha256"] = file_sha256(p)
+            parts[f"{label}_sha256"] = text_file_sha256_normalized(p)
         else:
             parts[f"{label}_sha256"] = f"missing:{p.name}"
     blob = json.dumps(parts, sort_keys=True, separators=(",", ":"))
