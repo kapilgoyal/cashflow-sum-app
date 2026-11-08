@@ -69,13 +69,20 @@ def age_at_cutoff(
     origination_date: Any = None,
     cutoff_date: Any = None,
 ) -> int:
-    """Seasoning at cutoff: prefer tape ``loan_age_months``, else origination span."""
-    if loan_age_months is not None:
-        return max(0, int(loan_age_months))
+    """Seasoning at cutoff: prefer tape ``loan_age_months``, else origination span.
+
+    ``loan_age_months is None`` or ``0`` with usable orig→cutoff dates falls
+    back to the date span (CF-178: tape zeros were blocking seasoning).
+    Explicit positive ages win. Age 0 with no dates stays 0 (true unseasoned).
+    """
     derived = months_since_origination(origination_date, cutoff_date)
-    if derived is not None:
+    if loan_age_months is None:
+        return max(0, int(derived)) if derived is not None else 0
+    age = max(0, int(loan_age_months))
+    # Sentinel / missing zero on tape: prefer derived seasoning when dates exist.
+    if age == 0 and derived is not None and derived > 0:
         return max(0, int(derived))
-    return 0
+    return age
 
 
 def curve_age(age_at_cutoff_months: int, projection_month: int) -> int:

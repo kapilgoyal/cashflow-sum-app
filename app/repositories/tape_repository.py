@@ -95,15 +95,13 @@ class TapeRepository:
         orig = as_date(row["ORIGINATION_DATE"]) if "ORIGINATION_DATE" in row.index else None
         cutoff = as_date(row["CUTOFF_DATE"]) if "CUTOFF_DATE" in row.index else None
         raw_age = row.get("LOAN_AGE_MONTHS")
-        if raw_age is not None and pd.notna(raw_age):
-            age_months = int(raw_age)
-        else:
-            # Fall back to months since origination (standard seasoning proxy).
-            age_months = age_at_cutoff(
-                loan_age_months=None,
-                origination_date=orig,
-                cutoff_date=cutoff,
-            )
+        tape_age = int(raw_age) if raw_age is not None and pd.notna(raw_age) else None
+        # age_at_cutoff treats 0 + dates as missing (CF-178) and derives seasoning.
+        age_months = age_at_cutoff(
+            loan_age_months=tape_age,
+            origination_date=orig,
+            cutoff_date=cutoff,
+        )
         fico = row.get("ORIGINAL_FICO")
         ltv = row.get("ORIGINAL_LTV")
         arm_idx = row.get("ARM_INDEX")

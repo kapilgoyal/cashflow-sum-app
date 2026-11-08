@@ -175,3 +175,35 @@ def test_mi_severity_vintage_documented_not_invented() -> None:
         "not" in notes["severity_year_rationale"].lower()
         and "origination" in notes["severity_year_rationale"].lower()
     )
+
+
+def test_loan_age_zero_falls_back_to_orig_cutoff() -> None:
+    """CF-178: tape age 0 + dates must not block seasoning (146 loans on tape)."""
+    from datetime import date
+
+    from app.services.seasoning import age_at_cutoff
+
+    assert (
+        age_at_cutoff(
+            loan_age_months=0,
+            origination_date=date(2019, 11, 1),
+            cutoff_date=date(2024, 11, 1),
+        )
+        == 60
+    )
+    assert (
+        age_at_cutoff(
+            loan_age_months=0,
+            origination_date=None,
+            cutoff_date=None,
+        )
+        == 0
+    )
+    assert (
+        age_at_cutoff(
+            loan_age_months=24,
+            origination_date=date(2019, 11, 1),
+            cutoff_date=date(2024, 11, 1),
+        )
+        == 24
+    )
