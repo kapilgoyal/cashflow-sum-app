@@ -271,7 +271,9 @@ def get_base_cohort_cashflow() -> dict:
         status_code=404,
         detail=(
             "No fresh base cohort CF for engine "
-            f"{ENGINE_VERSION} — POST /api/cashflows/run-base-cohort?force=true"
+            f"{ENGINE_VERSION} (assumptions={assumptions_fingerprint()}). "
+            "Static JSON is not served when fingerprints are stale. "
+            "Recompute: POST /api/cashflows/run-base-cohort?force=true"
         ),
     )
 
@@ -348,17 +350,44 @@ def _load_scenario_grid_cf() -> dict | None:
     return None
 
 
+def _scenario_grid_cache_ok(payload: dict | None, *, months: int) -> bool:
+    """Fresh fingerprints + full 27 cells + recovery tail (CF-191)."""
+    if not payload or not cache_is_fresh(payload, tape_path=_tape_path()):
+        return False
+    if int(payload.get("perform_months") or payload.get("horizon_months") or 0) < months:
+        return False
+    if not payload.get("recovery_tail") or not payload.get("scenarios"):
+        return False
+    scenarios = payload.get("scenarios") or {}
+    if len(scenarios) != 27:
+        return False
+    if any((m or {}).get("status") not in (None, "ok") for m in scenarios.values()):
+        # Legacy caches may omit status; treat missing as ok, explicit error as bad.
+        if any((m or {}).get("status") == "error" for m in scenarios.values()):
+            return False
+    cohort_avg = payload.get("cohort_avg") or {}
+    if len(cohort_avg) < 3:
+        return False
+    for meta in cohort_avg.values():
+        n_cells = meta.get("n_cells")
+        if n_cells is not None and int(n_cells) != 9:
+            return False
+    return True
+
+
 @router.get("/cashflows/scenario-grid")
 def get_scenario_grid_cashflow() -> dict:
     """Monthly total cash for all 27 grid scenarios (+ cohort averages / WAL)."""
     payload = _load_scenario_grid_cf()
-    if payload and cache_is_fresh(payload, tape_path=_tape_path()):
+    if _scenario_grid_cache_ok(payload, months=1):
         return {**payload, "cached": True}
     raise HTTPException(
         status_code=404,
         detail=(
             "No fresh scenario-grid CF for engine "
-            f"{ENGINE_VERSION} — POST /api/cashflows/run-scenario-grid?force=true"
+            f"{ENGINE_VERSION} (assumptions={assumptions_fingerprint()}). "
+            "Static JSON is not served when fingerprints are stale. "
+            "Recompute: POST /api/cashflows/run-scenario-grid?force=true"
         ),
     )
 
@@ -376,20 +405,21 @@ def run_scenario_grid(
         description="Recompute even when cached scenario-grid JSON exists",
     ),
 ) -> dict:
-    """Project all 27 grid cells (full horizon); write aggregate JSON (+ Neon)."""
-    if not force:
-        cached = _load_scenario_grid_cf()
-        if (
-            cached
-            and cache_is_fresh(cached, tape_path=_tape_path())
-            and int(cached.get("perform_months") or cached.get("horizon_months") or 0)
-            >= months
-            and cached.get("recovery_tail")
-            and cached.get("scenarios")
-        ):
-            return {**cached, "cached": True}
+    """Project all 27 grid cells (full horizon); write aggregate JSON (+ Neon).
 
-    from app.services.scenario_grid_cf import run_scenario_grid_cf, ui_payload
+    CF-191: incomplete runs (≠27 ok / ≠9 per cohort avg) do **not** overwrite a
+    prior valid cache; the error payload sets ``cache_retained``.
+    """
+    prior = _load_scenario_grid_cf()
+    if not force and _scenario_grid_cache_ok(prior, months=months):
+        return {**prior, "cached": True}
+
+    from app.services.scenario_grid_cf import (
+        assert_grid_complete,
+        grid_failure_payload,
+        run_scenario_grid_cf,
+        ui_payload,
+    )
 
     tape_path = _tape_path()
     tape = TapeRepository(tape_path)
@@ -412,12 +442,24 @@ def run_scenario_grid(
         max_workers=max_workers,
         keep_month1=False,
     )
+    try:
+        assert_grid_complete(result)
+    except RuntimeError as exc:
+        # Keep prior valid cache on disk; surface failure clearly.
+        fail = grid_failure_payload(
+            error=str(exc),
+            prior=prior if prior and cache_is_fresh(prior, tape_path=tape_path) else None,
+            result=result,
+        )
+        raise HTTPException(status_code=409, detail=fail) from exc
+
     payload = ui_payload(result)
     stamp = _freshness_stamp(
         kind="scenario_grid_cf", months=months, scenario=scenarios[0]
     )
     payload.update(stamp)
     payload["cached"] = False
+    payload["ok"] = True
 
     text = json.dumps(payload, indent=2)
     DATA.mkdir(parents=True, exist_ok=True)

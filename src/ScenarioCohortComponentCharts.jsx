@@ -12,7 +12,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { apiUrl } from "./apiBase";
 import { FONT, chartMoney } from "./cashflowGrid";
 import {
   CLUSTER_COLORS,
@@ -256,16 +255,8 @@ export default function ScenarioCohortComponentCharts() {
       setLoading(true);
       setError(null);
       try {
-        let res = await fetch(apiUrl("/api/cashflows/scenario-grid")).catch(
-          () => null
-        );
-        if (!res || !res.ok) {
-          res = await fetch("/scenario-grid-cashflow.json").catch(() => null);
-        }
-        if (!res || !res.ok) {
-          throw new Error("27-scenario cashflow not loaded yet");
-        }
-        const data = await res.json();
+        const { fetchScenarioGridCf } = await import("./cfCache");
+        const data = await fetchScenarioGridCf();
         if (!cancelled) setPayload(data);
       } catch (err) {
         if (!cancelled) setError(err.message || String(err));

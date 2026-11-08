@@ -106,10 +106,16 @@ def run_base_case_cohort_cf(
         if key in scenarios:
             by_cohort_loans[key].append(loan)
 
-    # month → cohort → total_cash / beginning_balance / recovery principal
+    # month → cohort → total_cash / beginning_balance / returned principal
     cash: dict[int, dict[str, float]] = defaultdict(lambda: defaultdict(float))
     beg: dict[int, dict[str, float]] = defaultdict(lambda: defaultdict(float))
     recovery: dict[int, dict[str, float]] = defaultdict(
+        lambda: defaultdict(float)
+    )
+    sched_prin: dict[int, dict[str, float]] = defaultdict(
+        lambda: defaultdict(float)
+    )
+    prepay: dict[int, dict[str, float]] = defaultdict(
         lambda: defaultdict(float)
     )
     cohort_meta: dict[str, dict[str, Any]] = {}
@@ -172,8 +178,12 @@ def run_base_case_cohort_cf(
                 max_month = max(max_month, m)
                 tc = float(r.total_cash or 0.0)
                 rc = float(r.recovery or 0.0)
+                sp = float(r.scheduled_principal or 0.0)
+                pp = float(r.prepay or 0.0)
                 cash[m][cohort] += tc
                 recovery[m][cohort] += rc
+                sched_prin[m][cohort] += sp
+                prepay[m][cohort] += pp
                 beg[m][cohort] += float(r.beginning_balance or 0.0)
                 sum_cash += tc
                 sum_recovery += rc
@@ -195,23 +205,41 @@ def run_base_case_cohort_cf(
     chart_horizon = max(max_month, perform_months)
     months_out: list[dict[str, Any]] = []
     recovery_months_out: list[dict[str, Any]] = []
+    principal_months_out: list[dict[str, Any]] = []
     for m in range(1, chart_horizon + 1):
         row: dict[str, Any] = {"month": m}
         rec_row: dict[str, Any] = {"month": m}
+        prin_row: dict[str, Any] = {"month": m}
         pool = 0.0
         pool_rec = 0.0
+        pool_sched = 0.0
+        pool_prepay = 0.0
         for cohort in COHORT_ORDER:
             v = round(float(cash[m].get(cohort) or 0.0), 2)
             rv = round(float(recovery[m].get(cohort) or 0.0), 2)
+            sp = round(float(sched_prin[m].get(cohort) or 0.0), 2)
+            pp = round(float(prepay[m].get(cohort) or 0.0), 2)
             row[cohort] = v
             rec_row[cohort] = rv
             pool += v
             pool_rec += rv
+            pool_sched += sp
+            pool_prepay += pp
             row[f"{cohort}__beg"] = round(float(beg[m].get(cohort) or 0.0), 2)
         row["Pool"] = round(pool, 2)
         rec_row["Pool"] = round(pool_rec, 2)
+        pool_sched_r = round(pool_sched, 2)
+        pool_prepay_r = round(pool_prepay, 2)
+        pool_rec_r = round(pool_rec, 2)
+        prin_row["scheduled_principal"] = pool_sched_r
+        prin_row["prepay"] = pool_prepay_r
+        prin_row["recovery"] = pool_rec_r
+        prin_row["principal_cash"] = round(
+            pool_sched_r + pool_prepay_r + pool_rec_r, 2
+        )
         months_out.append(row)
         recovery_months_out.append(rec_row)
+        principal_months_out.append(prin_row)
 
     wall_ms = (time.perf_counter() - t0) * 1000.0
     return {
@@ -237,6 +265,7 @@ def run_base_case_cohort_cf(
         "cohorts": cohort_meta,
         "months": months_out,
         "recovery_months": recovery_months_out,
+        "principal_months": principal_months_out,
         "loan_month1": loan_month1,
         "parallelism": {
             "executor": "serial-base",

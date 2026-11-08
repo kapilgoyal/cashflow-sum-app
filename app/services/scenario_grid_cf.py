@@ -36,7 +36,10 @@ MAX_WORKERS = 27
 
 
 def _wal_years(month_principal: dict[int, float]) -> float | None:
-    """WAL_years = sum(month * principal_cash) / sum(principal_cash) / 12."""
+    """WAL from returned principal only (sched+prepay+recovery), years.
+
+    ``principal_cash`` must already exclude interest and new defaults.
+    """
     num = 0.0
     den = 0.0
     for m, pc in month_principal.items():
@@ -48,6 +51,71 @@ def _wal_years(month_principal: dict[int, float]) -> float | None:
     if den == 0.0:
         return None
     return round(num / den / 12.0, 6)
+
+
+def assert_grid_complete(result: dict[str, Any]) -> None:
+    """CF-191: require 27 ok cells and 9-cell averages for each of 3 cohorts."""
+    ok_ids = list(result.get("ran_scenario_ids") or [])
+    n_ok = len(ok_ids)
+    n_err = int((result.get("parallelism") or {}).get("error") or 0)
+    if n_ok != 27:
+        failed = [
+            sid
+            for sid, meta in (result.get("scenarios") or {}).items()
+            if (meta or {}).get("status") != "ok"
+        ]
+        raise RuntimeError(
+            f"Scenario grid incomplete: {n_ok}/27 ok"
+            + (f", {n_err} errors" if n_err else "")
+            + (f" (failed: {', '.join(failed[:8])})" if failed else "")
+            + ". Prior valid cache retained; recompute after fixing failures."
+        )
+    cohort_avg = result.get("cohort_avg") or {}
+    if len(cohort_avg) != len(COHORTS):
+        raise RuntimeError(
+            f"Scenario grid incomplete: expected {len(COHORTS)} cohort averages, "
+            f"got {len(cohort_avg)}. Prior valid cache retained."
+        )
+    for cohort in COHORTS:
+        meta = cohort_avg.get(cohort) or {}
+        n_cells = int(meta.get("n_cells") or 0)
+        if n_cells != 9:
+            raise RuntimeError(
+                f"Scenario grid incomplete: cohort {cohort!r} avg has "
+                f"{n_cells}/9 cells. Prior valid cache retained."
+            )
+
+
+def grid_failure_payload(
+    *,
+    error: str,
+    prior: dict[str, Any] | None,
+    result: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Surface a failed run without overwriting a prior fresh cache."""
+    return {
+        "ok": False,
+        "cached": False,
+        "cache_retained": bool(prior),
+        "error": error,
+        "parallelism": (result or {}).get("parallelism"),
+        "ran_scenario_ids": (result or {}).get("ran_scenario_ids") or [],
+        "failed_scenario_ids": [
+            sid
+            for sid, meta in ((result or {}).get("scenarios") or {}).items()
+            if (meta or {}).get("status") != "ok"
+        ],
+        "prior_cache": {
+            "engine_version": (prior or {}).get("engine_version"),
+            "assumptions_fingerprint": (prior or {}).get(
+                "assumptions_fingerprint"
+            ),
+            "n_scenarios": len((prior or {}).get("scenarios") or {}),
+            "perform_months": (prior or {}).get("perform_months"),
+        }
+        if prior
+        else None,
+    }
 
 
 def _worker(payload: dict[str, Any]) -> dict[str, Any]:
@@ -237,6 +305,9 @@ def _cohort_average(
 ) -> dict[str, Any]:
     """Simple mean of the 9 scenario monthly CF component series."""
     cells = [r for r in cell_results if r.get("status") == "ok"]
+    if len(cells) != 9:
+        # Caller (assert_grid_complete) rejects incomplete avgs; keep math honest.
+        pass
     max_m = max((int(r.get("horizon_months") or 0) for r in cells), default=0)
     max_m = max(max_m, perform_months)
     n = len(cells) or 1

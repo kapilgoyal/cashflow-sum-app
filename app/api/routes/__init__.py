@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     asf_tape,
+    ask_data,
     assumptions,
     cashflows,
     collateral,
@@ -28,5 +29,6 @@ api_router.include_router(investor_analysis.router)
 api_router.include_router(qc.router)
 api_router.include_router(assumptions.router)
 api_router.include_router(valuation.router)
+api_router.include_router(ask_data.router)
 
 __all__ = ["api_router"]

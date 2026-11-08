@@ -8,6 +8,7 @@ from app.services.fred_treasury import get_treasury_curve
 from app.services.valuation import (
     DEFAULT_SERVICING_BP,
     DEFAULT_Z_SPREAD_BP,
+    StaleCashflowCacheError,
     build_valuation,
 )
 
@@ -40,6 +41,8 @@ def valuation(
             z_spread_bp=z_spread_bp,
             refresh_fred=refresh_fred,
         )
+    except StaleCashflowCacheError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001
