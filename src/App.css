@@ -5907,3 +5907,83 @@ button.btn,
     min-width: 68px;
   }
 }
+
+/* ==========================================================================
+ * Mobile polish — Strats PMMS→KPI gap + Investor Tape fill remaining height
+ * Trailing so it wins over CF-193 / earlier max-width:900px fragments.
+ * ========================================================================== */
+@media (max-width: 900px) {
+  /* Strats: caption sits tight above KPI rail (no flex-grown empty black). */
+  .section-strats .strats-topbar {
+    flex: 0 0 auto !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px !important;
+    margin: 0;
+    min-height: 0;
+  }
+
+  .section-strats .strats-topbar-start {
+    flex: 0 0 auto !important;
+    width: 100%;
+    gap: 2px;
+    min-height: 0;
+  }
+
+  .section-strats .strats-active-chips[aria-hidden="true"] {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .section-strats .strats-tape-meta {
+    margin: 0 0 2px !important;
+    line-height: 1.25;
+  }
+
+  .section-strats .strats-kpi-strip,
+  .section-strats .qc-kpi-strip {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    margin-top: 0 !important;
+    padding-top: 0;
+  }
+
+  /* Investor Tape: keep section filling .main; grid eats remaining height. */
+  .main:has(> .section-asf) {
+    overflow: hidden !important;
+  }
+
+  .section-fill.section-asf,
+  .section-asf {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1 1 auto !important;
+    height: 100% !important;
+    max-height: none;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding-bottom: 0;
+  }
+
+  .section-asf .grid-wrap,
+  .section-asf .grid-wrap-fill {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .section-asf .cf-grid-host {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+  }
+
+  .section-asf .cf-grid-host .ag-root-wrapper {
+    height: 100% !important;
+  }
+}

@@ -49,8 +49,10 @@ Domain glossary:
 Rules:
 - Every number from a tool. Never invent rates, UPB, NPV, WAL, or counts.
 - Prefer the fewest tools; honor the Intent / Playbook hints in the user message.
-- Title Case. Brief. If recompute_required, quote the recompute hint from the tool.
+- Title Case. Brief prose (2–4 short lines). UI already shows metric tiles — do not paste a raw label+value dump.
+- Space labels from values in prose: "Price 108.7 Pts", "WAL 11.1 Years", "UPB $411.3M", "Mort Ref 6.86%".
 - Use session memory (active Z-spread / scenario) when the user says "that" / "again" / follow-ups.
+- If recompute_required, quote the recompute hint from the tool.
 """
 
 _tape_cache: dict[str, Any] = {"key": None, "payload": None, "ts": 0.0}
@@ -511,9 +513,9 @@ _METRIC_KEYS: dict[str, list[tuple[str, str, str]]] = {
         ("total_upb", "UPB", "money"),
     ],
     "get_valuation_kpis": [
-        ("price_pts", "Price", "num1"),
-        ("wal_years", "WAL", "num1"),
-        ("duration", "Duration", "num1"),
+        ("price_pts", "Price", "price"),
+        ("wal_years", "WAL", "wal"),
+        ("duration", "Duration", "yrs"),
         ("npv", "NPV", "money"),
         ("z_spread_bp", "Z-Spread", "bp"),
         ("cs01", "CS01", "money"),
@@ -521,8 +523,9 @@ _METRIC_KEYS: dict[str, list[tuple[str, str, str]]] = {
     ],
     "whatif_z_spread": [
         ("z_spread_bp", "What-If Z", "bp"),
-        ("price_pts", "Price", "num1"),
+        ("price_pts", "Price", "price"),
         ("npv", "NPV", "money"),
+        ("wal_years", "WAL", "wal"),
     ],
     "get_qc_rule_counts": [
         ("total_rules", "Rules", "int"),
@@ -538,6 +541,48 @@ _METRIC_KEYS: dict[str, list[tuple[str, str, str]]] = {
 }
 
 
+def _fmt_money(raw: Any) -> str:
+    """Compact currency: $411.3M / $12.4K / $850."""
+    try:
+        n = float(raw)
+    except (TypeError, ValueError):
+        return str(raw)
+    sign = "-" if n < 0 else ""
+    n = abs(n)
+    if n >= 1_000_000_000:
+        return f"{sign}${n / 1_000_000_000:.1f}B"
+    if n >= 1_000_000:
+        return f"{sign}${n / 1_000_000:.1f}M"
+    if n >= 10_000:
+        return f"{sign}${n / 1_000:.1f}K"
+    if n >= 1_000:
+        return f"{sign}${n:,.0f}"
+    return f"{sign}${n:,.2f}"
+
+
+def _format_metric(fmt: str, raw: Any) -> str:
+    if fmt == "pct1":
+        # Keep two decimals for PMMS-style rates (6.86%).
+        return f"{float(raw):.2f}%"
+    if fmt == "num1":
+        return f"{float(raw):.1f}"
+    if fmt == "price":
+        return f"{float(raw):.1f}"
+    if fmt == "wal":
+        return f"{float(raw):.1f} yrs"
+    if fmt == "yrs":
+        return f"{float(raw):.1f}"
+    if fmt == "int":
+        return f"{int(raw):,}"
+    if fmt == "money":
+        return _fmt_money(raw)
+    if fmt == "bp":
+        return f"{float(raw):.0f} bp"
+    if fmt == "bool":
+        return "Yes" if raw else "No"
+    return str(raw)
+
+
 def metrics_from_tools(tools: list[dict[str, Any]]) -> list[dict[str, str]]:
     cards: list[dict[str, str]] = []
     for t in tools or []:
@@ -546,7 +591,7 @@ def metrics_from_tools(tools: list[dict[str, Any]]) -> list[dict[str, str]]:
         if result.get("ok") is False:
             cards.append(
                 {
-                    "label": name,
+                    "label": name.replace("_", " ").title(),
                     "value": str(result.get("error") or "Tool error"),
                     "tool": name,
                     "kind": "error",
@@ -556,21 +601,7 @@ def metrics_from_tools(tools: list[dict[str, Any]]) -> list[dict[str, str]]:
         for field, label, fmt in _METRIC_KEYS.get(name, []):
             if field not in result or result[field] is None:
                 continue
-            raw = result[field]
-            if fmt == "pct1":
-                val = f"{float(raw):.1f}%"
-            elif fmt == "num1":
-                val = f"{float(raw):.1f}"
-            elif fmt == "int":
-                val = f"{int(raw):,}"
-            elif fmt == "money":
-                val = f"${float(raw):,.0f}"
-            elif fmt == "bp":
-                val = f"{float(raw):.0f} bp"
-            elif fmt == "bool":
-                val = "Yes" if raw else "No"
-            else:
-                val = str(raw)
+            val = _format_metric(fmt, result[field])
             cards.append({"label": label, "value": val, "tool": name, "kind": "metric"})
     return cards
 
