@@ -1,8 +1,7 @@
 /**
- * Ask Your Data — Bloomberg-style chat over real backend tools.
- * Metric cards from API; tool JSON collapsed; session memory + follow-ups.
+ * Ask Your Data — readable chat: metric tiles, light markdown, subtle meta.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiUrl } from "./apiBase";
 import "./AskYourData.css";
 
@@ -14,6 +13,48 @@ const STARTER_CHIPS = [
   "Is The Scenario Grid Cache Fresh?",
 ];
 
+/** Light markdown → React nodes (bold / italics / strip leftovers). */
+function formatAnswer(text) {
+  const raw = (text || "").replace(/\r\n/g, "\n").trim();
+  if (!raw) return null;
+  const lines = raw.split("\n");
+  return lines.map((line, li) => {
+    const parts = [];
+    const re = /(\*\*([^*]+)\*\*|\*([^*]+)\*|__([^_]+)__|_([^_]+)_)/g;
+    let last = 0;
+    let m;
+    while ((m = re.exec(line)) !== null) {
+      if (m.index > last) parts.push(line.slice(last, m.index));
+      if (m[2] != null || m[4] != null) {
+        parts.push(
+          <strong key={`${li}-b-${m.index}`}>{m[2] ?? m[4]}</strong>
+        );
+      } else {
+        parts.push(<em key={`${li}-i-${m.index}`}>{m[3] ?? m[5]}</em>);
+      }
+      last = m.index + m[0].length;
+    }
+    if (last < line.length) parts.push(line.slice(last));
+    // Drop leftover lone ** / __ markers if model mismatched.
+    const cleaned = parts.map((p) =>
+      typeof p === "string" ? p.replace(/\*\*|__/g, "") : p
+    );
+    return (
+      <span key={`ln-${li}`}>
+        {li > 0 ? "\n" : null}
+        {cleaned}
+      </span>
+    );
+  });
+}
+
+function shortModel(model) {
+  if (!model) return null;
+  const s = String(model);
+  const slash = s.lastIndexOf("/");
+  return slash >= 0 ? s.slice(slash + 1) : s;
+}
+
 function MetricCards({ cards }) {
   if (!cards?.length) return null;
   return (
@@ -23,6 +64,7 @@ function MetricCards({ cards }) {
           key={`${c.label}-${i}`}
           role="listitem"
           className={`ask-metric${c.kind === "error" ? " is-error" : ""}`}
+          title={c.tool ? String(c.tool) : undefined}
         >
           <span className="ask-metric-label">{c.label}</span>
           <span className="ask-metric-value">{c.value}</span>
@@ -39,6 +81,26 @@ function ToolDrawer({ tools }) {
       <summary>Tool Trace ({tools.length})</summary>
       <pre>{JSON.stringify(tools, null, 2)}</pre>
     </details>
+  );
+}
+
+function AssistantMeta({ model, elapsed, intent, tools }) {
+  const bits = useMemo(() => {
+    const out = [];
+    const m = shortModel(model);
+    if (m) out.push(m);
+    if (elapsed != null && Number.isFinite(Number(elapsed))) {
+      out.push(`${Math.round(Number(elapsed))} ms`);
+    }
+    if (intent) out.push(String(intent).replace(/_/g, " "));
+    if (tools?.length) out.push(`${tools.length} tool${tools.length === 1 ? "" : "s"}`);
+    return out;
+  }, [model, elapsed, intent, tools]);
+  if (!bits.length) return null;
+  return (
+    <span className="ask-sub" aria-label="Response meta">
+      {bits.join(" · ")}
+    </span>
   );
 }
 
@@ -138,8 +200,10 @@ export default function AskYourData() {
         ]);
         setStatusLine(
           data.ok
-            ? `Ready${data.model ? ` · ${data.model}` : ""}${
-                data.elapsed_ms != null ? ` · ${data.elapsed_ms} ms` : ""
+            ? `Ready${data.model ? ` · ${shortModel(data.model)}` : ""}${
+                data.elapsed_ms != null
+                  ? ` · ${Math.round(data.elapsed_ms)} ms`
+                  : ""
               }`
             : "Error — See Message"
         );
@@ -196,7 +260,7 @@ export default function AskYourData() {
             <p className="ask-empty-title">Ask The Tape, Valuation, Or Scenarios</p>
             <p className="ask-empty-body">
               Answers use live tools only — Mort Ref (PMMS), UPB, Valuation KPIs,
-              sandbox Z-spread what-ifs. No invented numbers.
+              sandbox Z-spread what-ifs. Numbers show as metric tiles.
             </p>
           </div>
         ) : null}
@@ -212,13 +276,18 @@ export default function AskYourData() {
               <span className="ask-role">
                 {t.role === "user" ? "You" : "Assistant"}
               </span>
-              {t.model ? <span className="ask-sub">{t.model}</span> : null}
-              {t.elapsed != null ? (
-                <span className="ask-sub">{t.elapsed} ms</span>
+              {t.role === "assistant" ? (
+                <AssistantMeta
+                  model={t.model}
+                  elapsed={t.elapsed}
+                  intent={t.intent}
+                  tools={t.tools}
+                />
               ) : null}
-              {t.intent ? <span className="ask-sub">{t.intent}</span> : null}
             </div>
-            <div className="ask-bubble-text">{t.text}</div>
+            <div className="ask-bubble-text">
+              {t.role === "assistant" ? formatAnswer(t.text) : t.text}
+            </div>
             <MetricCards cards={t.cards} />
             {t.assumptions ? (
               <p className="ask-assumptions">{t.assumptions}</p>

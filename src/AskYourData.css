@@ -1,4 +1,5 @@
-/* Ask Your Data layout only — type tokens come from App.css variables. */
+/* Ask Your Data — friendly chat; metric tiles; subtle meta. */
+
 .section-ask-data {
   display: flex;
   flex-direction: column;
@@ -19,22 +20,41 @@
 }
 
 .ask-data-meta {
-  font-size: var(--cf-font-sm);
+  font-size: var(--cf-font-sm, 11px);
+  color: var(--cf-muted);
+  font-weight: var(--cf-weight-label, 600);
 }
 
-.ask-data-examples {
+.ask-data-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   flex: 0 0 auto;
 }
 
-.ask-data-chip {
+.ask-chip {
   text-align: left;
   max-width: 100%;
   white-space: normal;
   line-height: 1.25;
-  padding: 8px 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--cf-hairline);
+  background: #141414;
+  color: var(--cf-text);
+  font-family: var(--cf-font);
+  font-size: var(--cf-font-sm, 11px);
+  font-weight: var(--cf-weight-label, 600);
+  cursor: pointer;
+}
+
+.ask-chip:hover:not(:disabled) {
+  border-color: var(--cf-accent, #fd9d24);
+  color: var(--cf-accent, #fd9d24);
+}
+
+.ask-chip:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .ask-data-thread {
@@ -43,74 +63,198 @@
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   padding: 4px 2px 8px;
   -webkit-overflow-scrolling: touch;
 }
 
-.ask-data-empty {
-  margin: 12px 4px;
+.ask-empty {
+  margin: 16px 4px;
+  max-width: 560px;
 }
 
-.ask-data-bubble {
+.ask-empty-title {
+  margin: 0 0 6px;
+  font-size: var(--cf-font-md, 13px);
+  font-weight: var(--cf-weight-kpi, 600);
+  color: var(--cf-text);
+}
+
+.ask-empty-body {
+  margin: 0;
+  font-size: var(--cf-font-sm, 11px);
+  line-height: 1.45;
+  color: var(--cf-muted);
+}
+
+.ask-bubble {
   border: 1px solid var(--cf-hairline);
-  background: var(--cf-panel);
-  padding: 8px 10px;
+  background: var(--cf-panel, #121212);
+  padding: 10px 12px;
   max-width: 920px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.ask-data-user {
+.ask-user {
   align-self: flex-end;
   background: #1a1a1a;
 }
 
-.ask-data-assistant {
+.ask-assistant {
   align-self: flex-start;
 }
 
-.ask-data-assistant.is-error {
-  border-color: var(--cf-down);
+.ask-assistant.is-error {
+  border-color: var(--cf-down, #c44);
 }
 
-.ask-data-role {
+.ask-bubble-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+}
+
+.ask-role {
+  color: var(--cf-text);
+  font-size: var(--cf-font-sm, 11px);
+  font-weight: var(--cf-weight-label, 600);
+  letter-spacing: 0.02em;
+}
+
+.ask-sub {
   color: var(--cf-muted);
-  font-size: var(--cf-font-sm);
-  font-weight: var(--cf-weight-label);
-  margin-bottom: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.85;
 }
 
-.ask-data-text {
+.ask-bubble-text {
   white-space: pre-wrap;
-  font-size: var(--cf-font-md);
-  line-height: 1.4;
+  font-size: var(--cf-font-md, 13px);
+  line-height: 1.45;
+  color: var(--cf-text);
 }
 
-.ask-data-tools {
-  margin-top: 8px;
+.ask-bubble-text strong {
+  font-weight: var(--cf-weight-kpi, 600);
+  color: var(--cf-text);
+}
+
+.ask-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 6px;
+  margin: 0;
+}
+
+.ask-metric {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.ask-data-tool {
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  box-sizing: border-box;
+  min-height: 52px;
+  padding: 6px 8px;
   border: 1px solid var(--cf-hairline);
   background: #0c0c0c;
-  padding: 4px 6px;
-  font-size: var(--cf-font-sm);
 }
 
-.ask-data-tool summary {
+.ask-metric.is-error {
+  border-color: var(--cf-down, #c44);
+}
+
+.ask-metric-label {
+  display: block;
+  font-size: 9px;
+  font-weight: var(--cf-weight-label, 600);
+  line-height: 1.2;
+  color: var(--cf-muted);
+  letter-spacing: 0.02em;
+}
+
+.ask-metric-value {
+  display: block;
+  font-size: 14px;
+  font-weight: var(--cf-weight-kpi, 600);
+  line-height: 1.15;
+  color: var(--cf-accent, #fd9d24);
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+
+.ask-assumptions {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--cf-muted);
+}
+
+.ask-tool-drawer {
+  border: 1px solid var(--cf-hairline);
+  background: #0c0c0c;
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+.ask-tool-drawer summary {
   cursor: pointer;
-  color: var(--cf-accent);
-  font-weight: var(--cf-weight-label);
+  color: var(--cf-muted);
+  font-weight: var(--cf-weight-label, 600);
+  list-style: none;
 }
 
-.ask-data-tool pre {
+.ask-tool-drawer summary::-webkit-details-marker {
+  display: none;
+}
+
+.ask-tool-drawer summary::before {
+  content: "▶ ";
+  font-size: 9px;
+}
+
+.ask-tool-drawer[open] summary::before {
+  content: "▼ ";
+}
+
+.ask-tool-drawer pre {
   margin: 6px 0 2px;
   overflow: auto;
-  max-height: 220px;
+  max-height: 200px;
   font-size: 10px;
-  color: var(--cf-text);
+  color: var(--cf-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ask-loading-bar {
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--cf-accent, #fd9d24),
+    transparent
+  );
+  background-size: 40% 100%;
+  animation: ask-load 1.1s linear infinite;
+}
+
+@keyframes ask-load {
+  0% {
+    background-position: -40% 0;
+  }
+  100% {
+    background-position: 140% 0;
+  }
+}
+
+.ask-loading-copy {
+  color: var(--cf-muted);
+  margin: 0;
 }
 
 .ask-data-composer {
@@ -118,7 +262,7 @@
   display: flex;
   gap: 8px;
   align-items: stretch;
-  padding-top: 4px;
+  padding-top: 6px;
   border-top: 1px solid var(--cf-hairline);
 }
 
@@ -131,17 +275,27 @@
   color: var(--cf-text);
   border: 1px solid var(--cf-hairline);
   font-family: var(--cf-font);
-  font-size: var(--cf-font-md);
-  font-weight: var(--cf-weight-input);
+  font-size: var(--cf-font-md, 13px);
+  font-weight: var(--cf-weight-input, 500);
   padding: 8px 10px;
 }
 
+.ask-send {
+  flex: 0 0 auto;
+  min-width: 72px;
+}
+
 @media (max-width: 720px) {
+  .ask-metrics {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  }
+
   .ask-data-composer {
     flex-direction: column;
   }
 
-  .ask-data-composer .btn {
-    min-height: var(--cf-tap);
+  .ask-data-composer .btn,
+  .ask-send {
+    min-height: var(--cf-tap, 44px);
   }
 }
