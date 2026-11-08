@@ -1089,13 +1089,12 @@ export default function App() {
   }, [cohortStatsByCode, deferredCohorts]);
 
   const scenarioColumnDefs = useMemo(() => {
-    /* Compact speed cols; last 3 (Recov / Lag / WAL) keep fixed readable width. */
+    /* Flex all cols (no maxWidth) so the schedule fills the grid — no dead gap after WAL. */
     const speedCol = (field, headerName) => ({
       field,
       headerName,
       flex: 1,
-      minWidth: 44,
-      maxWidth: 72,
+      minWidth: 48,
       sortable: false,
       filter: false,
       type: "numericColumn",
@@ -1107,10 +1106,8 @@ export default function App() {
     const tailCol = (field, headerName, opts = {}) => ({
       field,
       headerName,
-      width: opts.width ?? 76,
-      minWidth: opts.width ?? 76,
-      maxWidth: opts.width ?? 76,
-      flex: 0,
+      flex: opts.flex ?? 1.1,
+      minWidth: opts.minWidth ?? 72,
       sortable: false,
       filter: false,
       spanHeaderHeight: true,
@@ -1127,9 +1124,8 @@ export default function App() {
       {
         field: "cohort",
         headerName: "Cohort",
-        flex: 1.4,
-        minWidth: 108,
-        maxWidth: 160,
+        flex: 1.8,
+        minWidth: 120,
         sortable: false,
         filter: false,
         spanHeaderHeight: true,
@@ -1157,12 +1153,14 @@ export default function App() {
         ],
       },
       tailCol("recovery", "Recov", {
-        width: 72,
+        flex: 1.15,
+        minWidth: 72,
         tooltip: "UPB-weighted recovery rate",
         valueFormatter: (p) => fmtPct(p.value, 1),
       }),
       tailCol("lag", "Lag", {
-        width: 64,
+        flex: 1.05,
+        minWidth: 64,
         tooltip: "UPB-weighted FNMA lag (months)",
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
@@ -1170,7 +1168,8 @@ export default function App() {
             : Number(p.value).toFixed(1),
       }),
       tailCol("wal_years", "WAL", {
-        width: 72,
+        flex: 1.15,
+        minWidth: 72,
         wal: true,
         tooltip: "Cohort-avg WAL · prin = sched + prepay + recovery",
         valueFormatter: (p) =>
