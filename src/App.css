@@ -3433,7 +3433,8 @@ body {
   .main:has(> .section-scenarios),
   .main:has(> .cohort-page),
   .main:has(> .section-strats),
-  .main:has(> .section-qc) {
+  .main:has(> .section-qc),
+  .main:has(> .section-collateral) {
     overflow: auto;
   }
 
@@ -3444,6 +3445,56 @@ body {
     height: auto;
     grid-template-rows: none;
     gap: 8px;
+  }
+
+  /* Loan Strats — stack charts; allow page scroll on tablet/phone */
+  .section-strats {
+    overflow: visible;
+    height: auto;
+    min-height: 0;
+  }
+
+  .section-strats .strats-body,
+  .section-strats .strats-charts,
+  .section-strats .collat-grid {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .section-strats .collat-panel,
+  .section-strats .strats-heatmap-panel.collat-panel {
+    width: 100%;
+    min-height: 200px;
+    height: auto;
+  }
+
+  .section-strats .qc-kpi-strip,
+  .section-strats .strats-kpi-strip {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .section-strats .qc-kpi,
+  .section-strats .strats-kpi-strip .qc-kpi {
+    flex: 1 1 5.5rem;
+    min-width: 5.25rem;
+    min-height: var(--cf-tap);
+  }
+
+  .section-strats .strats-topbar,
+  .section-strats .strats-filters {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .section-strats .strats-seg-btn,
+  .section-strats .strats-reset,
+  .section-strats .strats-chip {
+    min-height: var(--cf-tap);
+    padding: 8px 12px;
   }
 
   /* Shared heads / tiles — consistent across QC / Strats / Cohort / Scenarios */

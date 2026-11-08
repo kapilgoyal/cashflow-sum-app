@@ -1,4 +1,6 @@
 import {
+  Suspense,
+  lazy,
   memo,
   startTransition,
   useCallback,
@@ -53,7 +55,6 @@ import {
   remappedKeyedObject,
 } from "./cohortLabels";
 import { COHORT_SPEED_SCHEDULE } from "./scenarioSpeeds";
-import LoanStrats from "./LoanStrats";
 import LoanQc from "./LoanQc";
 import ScenarioSpeedCharts from "./ScenarioSpeedCharts";
 import ScenarioCohortCashChart from "./ScenarioCohortCashChart";
@@ -61,6 +62,14 @@ import ScenarioCohortComponentCharts from "./ScenarioCohortComponentCharts";
 import ScenarioGridCashCharts from "./ScenarioGridCashCharts";
 import CohortPmCharts, { buildCohortPmCache } from "./CohortPmCharts";
 import "./App.css";
+
+const LoanStrats = lazy(() =>
+  import("./LoanStrats").then((m) => {
+    /* Warm tape after chunk loads even if user is not on Strats yet. */
+    m.prefetchLoanStrats?.();
+    return { default: m.default };
+  })
+);
 
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -708,6 +717,20 @@ export default function App() {
         /* WAL column stays blank until CF JSON is present */
       } finally {
         if (!cancelled) setScenariosBootLoading(false);
+      }
+
+      /* Prefetch Strats chunk + slim tape while user is elsewhere. */
+      if (!cancelled) {
+        const warm = () => {
+          import("./LoanStrats")
+            .then((m) => m.prefetchLoanStrats?.())
+            .catch(() => {});
+        };
+        if (typeof requestIdleCallback === "function") {
+          requestIdleCallback(warm, { timeout: 2500 });
+        } else {
+          setTimeout(warm, 800);
+        }
       }
     })();
     return () => {
@@ -1777,7 +1800,11 @@ export default function App() {
 
           {pane === "qc" && <LoanQc />}
 
-          {pane === "strats" && <LoanStrats />}
+          {pane === "strats" && (
+            <Suspense fallback={<PaneSpinner label="Loading Loan Strats…" />}>
+              <LoanStrats />
+            </Suspense>
+          )}
 
           {pane === "cohort" && (
             <div className="cohort-page">

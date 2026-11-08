@@ -487,25 +487,56 @@ function Heatmap({ cells, onSelectCell, onSelectFico, onSelectLtv, selectedFico,
   );
 }
 
+/** Session cache — revisiting Strats should not re-download the tape. */
+let stratsCache = null;
+let stratsInflight = null;
+
+async function loadStratsCollateral() {
+  if (stratsCache) return stratsCache;
+  if (stratsInflight) return stratsInflight;
+  stratsInflight = (async () => {
+    const collatRes = await fetch(
+      apiUrl("/api/asf/collateral?include_loans=true&slim=true")
+    );
+    if (!collatRes.ok) throw new Error(await collatRes.text());
+    const data = await collatRes.json();
+    stratsCache = {
+      loans: data.loans || [],
+      sectionRefs: data.section_refs || {},
+    };
+    return stratsCache;
+  })();
+  try {
+    return await stratsInflight;
+  } finally {
+    stratsInflight = null;
+  }
+}
+
+/** Warm Strats tape in the background after first paint (call from App). */
+export function prefetchLoanStrats() {
+  loadStratsCollateral().catch(() => {
+    /* toast only when the pane opens */
+  });
+}
+
 export default function LoanStrats() {
-  const [loading, setLoading] = useState(true);
-  const [loans, setLoans] = useState([]);
-  const [sectionRefs, setSectionRefs] = useState({});
+  const [loading, setLoading] = useState(!stratsCache);
+  const [loans, setLoans] = useState(stratsCache?.loans || []);
+  const [sectionRefs, setSectionRefs] = useState(
+    stratsCache?.sectionRefs || {}
+  );
   const [filters, setFilters] = useState(emptyFilters);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      setLoading(true);
+      if (!stratsCache) setLoading(true);
       try {
-        const collatRes = await fetch(
-          apiUrl("/api/asf/collateral?include_loans=true")
-        );
-        if (!collatRes.ok) throw new Error(await collatRes.text());
-        const data = await collatRes.json();
+        const data = await loadStratsCollateral();
         if (cancelled) return;
-        setLoans(data.loans || []);
-        setSectionRefs(data.section_refs || {});
+        setLoans(data.loans);
+        setSectionRefs(data.sectionRefs);
       } catch (err) {
         if (!cancelled) {
           setLoans([]);

@@ -82,6 +82,18 @@ az containerapp update -n cashflow-app -g cashflow-rg \
 
 4. Health: `GET https://<container-app-fqdn>/health`. UI is `/` (same origin as `/api`).
 
+### Friendly URL (custom domain) — no extra Azure “service”
+
+The default hostname looks like `cashflow-app.<random>.eastus.azurecontainerapps.io`. That random segment is from the managed environment; renaming the Container App alone does **not** remove it.
+
+For a clean name (e.g. `cashflow.yourdomain.com`):
+
+1. Own a domain (registrar cost only — GoDaddy/Namecheap/etc.).
+2. In Container App → **Custom domains** → add the hostname → create the DNS CNAME (or A/TXT as Azure shows).
+3. Use Azure’s **managed certificate** (free on Container Apps) for HTTPS.
+
+You do **not** need Front Door, Application Gateway, or another paid Azure product just for a nicer name. Optional Front Door/CDN is only if you want global edge/WAF later (extra monthly cost).
+
 ### Path B — OIDC workflow → ACR
 
 1. Once the six `AZURE_*` secrets exist, push to `master` or **Actions** → **Azure Container App** → **Run workflow**.
