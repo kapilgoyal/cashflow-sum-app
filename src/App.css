@@ -3441,14 +3441,29 @@ button.btn,
   background: var(--cf-accent);
 }
 
-/* Same invisible-overlay fix for the vertical rail */
+/*
+ * Vertical fake scrollbar must stay absolute/overlay.
+ * AG Grid's new .ag-root is flex-column (viewport → H-rail → V-rail). Forcing
+ * position:relative here (old CF-152 mirror of the H-rail fix) makes the V-rail
+ * a flex sibling under the H-rail and steals ~half the height as a black dead
+ * pane — Investor Tape mobile showed only ~12–17 rows then empty black.
+ */
 .ag-theme-cashflow .ag-body-vertical-scroll.ag-scrollbar-invisible {
-  position: relative;
-  top: auto;
-  right: auto;
-  bottom: auto;
+  position: absolute !important;
+  top: 0;
+  right: 0;
+  bottom: 7px; /* clear always-on H-rail */
+  left: auto;
+  height: auto !important;
   opacity: 1 !important;
   visibility: visible !important;
+}
+
+/* New AG Grid body viewport must fill remaining flex height after H-rail. */
+.ag-theme-cashflow .ag-grid-viewport {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
 }
 
 /* Prevent header filter/menu icons from overlapping title text */
@@ -4035,15 +4050,19 @@ button.btn,
     padding: 6px 10px 8px;
   }
 
-  .section-asf .cf-grid-host {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  /* AG Grid owns H+V scroll — host overflow-x + min-width:720 broke the H-rail. */
+  .section-asf .cf-grid-host,
+  .section-asf .grid-wrap,
+  .section-asf .grid-wrap-fill {
+    overflow: hidden;
+    max-width: 100%;
   }
 
   .section-asf .ag-theme-cashflow .ag-root-wrapper,
   .section-asf .ag-theme-cashflow .ag-center-cols-viewport,
-  .section-asf .ag-theme-cashflow .ag-body-viewport {
-    min-width: 720px;
+  .section-asf .ag-theme-cashflow .ag-body-viewport,
+  .section-asf .ag-theme-cashflow .ag-grid-viewport {
+    min-width: 0;
   }
 
   .strat-charts {
@@ -5146,8 +5165,7 @@ button.btn,
   .section-asf .cf-grid-host,
   .section-asf .grid-wrap-fill {
     max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
   }
 
   /* —— Scenarios —— keep full chart stack scrollable in .main */
@@ -5975,15 +5993,23 @@ button.btn,
     max-height: none !important;
     display: flex;
     flex-direction: column;
+    overflow: hidden !important;
   }
 
   .section-asf .cf-grid-host {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     height: 100% !important;
+    overflow: hidden !important;
   }
 
   .section-asf .cf-grid-host .ag-root-wrapper {
     height: 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .section-asf .ag-theme-cashflow .ag-grid-viewport {
+    min-width: 0 !important;
   }
 }
