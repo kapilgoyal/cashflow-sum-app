@@ -10,31 +10,34 @@ import { themeQuartz } from "ag-grid-community";
 export const FONT =
   '"IBM Plex Mono", "Roboto Mono", ui-monospace, Menlo, monospace';
 
+/*
+ * Row/spacing/icon density still steps up on large screens.
+ * Fonts locked: cells 11px/200, headers 12px/500 (header ≥ row height).
+ */
 const GRID_SCALE = {
-  /* Scenarios look app-wide: ~11–12px mono, dense rows, matched header/cell. */
   base: {
     fontSize: 11,
-    headerFontSize: 11,
-    headerHeight: 22,
+    headerFontSize: 12,
+    headerHeight: 28,
     rowHeight: 20,
     spacing: 2,
     iconSize: 12,
   },
   lg: {
     fontSize: 11,
-    headerFontSize: 11,
-    headerHeight: 22,
-    rowHeight: 20,
-    spacing: 2,
-    iconSize: 12,
+    headerFontSize: 12,
+    headerHeight: 28,
+    rowHeight: 24,
+    spacing: 3,
+    iconSize: 13,
   },
   xl: {
-    fontSize: 12,
+    fontSize: 11,
     headerFontSize: 12,
-    headerHeight: 24,
-    rowHeight: 22,
-    spacing: 2,
-    iconSize: 13,
+    headerHeight: 30,
+    rowHeight: 26,
+    spacing: 3,
+    iconSize: 14,
   },
 };
 
@@ -65,8 +68,10 @@ export const gridTheme = themeQuartz.withParams({
   backgroundColor: "#000000",
   foregroundColor: "#FCFCFC",
   headerBackgroundColor: "#0C0C0C",
+  headerTextColor: "#808080",
   oddRowBackgroundColor: "#121212",
   rowHoverColor: "#1A1A1A",
+  /* Amber-tint selection (matches --cf-selected); stronger than hover #1A1A1A. */
   selectedRowBackgroundColor: "#2A2418",
   borderColor: "#323232",
   /* No heavy outer frame — maximize usable area; keep light cell hairlines. */
@@ -76,12 +81,11 @@ export const gridTheme = themeQuartz.withParams({
   headerColumnBorder: false,
   fontFamily: FONT,
   fontSize: 11,
-  headerFontSize: 11,
-  headerFontWeight: 300,
-  headerTextColor: "#FD9D24",
-  /* Scenarios baseline: amber headers + amber nums; label cols off-white. */
+  headerFontSize: 12,
+  headerFontWeight: 500,
+  /* Base row density; large screens step row height via GRID_SCALE (fonts stay). */
   spacing: 2,
-  headerHeight: 22,
+  headerHeight: 28,
   rowHeight: 20,
   borderRadius: 0,
   wrapperBorderRadius: 0,
@@ -119,8 +123,8 @@ export function fmtInt(v) {
 }
 
 /**
- * Fraction → percent. Default 1 decimal (LTV/DTI/rates).
- * Pass digits=2 for WAC; digits=0 for whole %.
+ * Fraction → percent. Default 1 decimal (DTI/rates).
+ * Pass digits=2 for fine rates; use fmtLtv for LTV/CLTV (whole %).
  */
 export function fmtPct(v, digits = 1) {
   if (v == null || Number.isNaN(Number(v))) return "";
@@ -130,6 +134,11 @@ export function fmtPct(v, digits = 1) {
   // Drop trailing zeros: 80.0% → 80%, 6.50% → 6.5%
   const trimmed = fixed.replace(/\.?0+$/, "");
   return `${trimmed}%`;
+}
+
+/** Original/current LTV & CLTV — whole percent, no decimals. */
+export function fmtLtv(v) {
+  return fmtPct(v, 0);
 }
 
 /** WAC / coupon rates — ~1 decimal; drop trailing .0. */
@@ -175,11 +184,27 @@ export function scenarioAxisKey(row) {
 }
 
 /**
- * Sort Cohort → PSA → SDA so AG Grid `spanRows: true` can merge contiguous
- * equal Cohort Name and PSA cells (enableCellSpan on the Scenarios grid).
+ * Stamp contiguous rowSpans for a key field.
+ * First cell of a run gets span N; followers get 0 (blank + no rowspan).
+ */
+function stampRowSpans(rows, keyFn, spanField) {
+  let i = 0;
+  while (i < rows.length) {
+    const key = keyFn(rows[i]);
+    let j = i + 1;
+    while (j < rows.length && keyFn(rows[j]) === key) j += 1;
+    rows[i][spanField] = j - i;
+    for (let k = i + 1; k < j; k += 1) rows[k][spanField] = 0;
+    i = j;
+  }
+}
+
+/**
+ * Sort Cohort → PSA → SDA and stamp `_cohortSpan` / `_psaSpan` for
+ * Bloomberg-style merged cells (no redundant Scenario axis column).
  */
 export function withCohortPsaRowSpans(rows) {
-  return [...(rows || [])].sort((a, b) => {
+  const sorted = [...(rows || [])].sort((a, b) => {
     const ca = String(a.cohort || "");
     const cb = String(b.cohort || "");
     if (ca !== cb) return ca.localeCompare(cb);
@@ -188,6 +213,18 @@ export function withCohortPsaRowSpans(rows) {
     if (pa !== pb) return pa - pb;
     return (Number(a.sda_multiple) || 0) - (Number(b.sda_multiple) || 0);
   });
+  const out = sorted.map((r) => ({
+    ...r,
+    _cohortSpan: 1,
+    _psaSpan: 1,
+  }));
+  stampRowSpans(out, (r) => String(r.cohort || ""), "_cohortSpan");
+  stampRowSpans(
+    out,
+    (r) => `${r.cohort || ""}|${r.psa_multiple ?? ""}`,
+    "_psaSpan"
+  );
+  return out;
 }
 
 /** @deprecated Prefer withCohortPsaRowSpans (cohort-first grid). */
@@ -206,6 +243,8 @@ export const sharedDefaultColDef = {
   autoHeaderHeight: false,
   cellStyle: {
     fontFamily: FONT,
+    fontSize: 11,
+    fontWeight: 200,
     fontVariantNumeric: "tabular-nums",
   },
   headerClass: "cf-grid-header",
@@ -251,6 +290,19 @@ export function intCol(field, headerName, width = 72) {
     type: "numericColumn",
     filter: "agNumberColumnFilter",
     valueFormatter: (p) => fmtInt(p.value),
+    cellClass: "cf-num",
+  };
+}
+
+/** LTV / CLTV columns — whole % via fmtLtv. */
+export function ltvCol(field, headerName, width = 72) {
+  return {
+    field,
+    headerName,
+    width,
+    type: "numericColumn",
+    filter: "agNumberColumnFilter",
+    valueFormatter: (p) => fmtLtv(p.value),
     cellClass: "cf-num",
   };
 }
@@ -375,9 +427,9 @@ export function DataGrid({
   heightClass,
   exportName = "cashflow",
   showToolbar = true,
+  showExportActions = true,
   toolbarStart = null,
   gridProps = {},
-  themeParams = null,
 }) {
   const defaultColDef = useMemo(() => ({ ...sharedDefaultColDef }), []);
   const apiRef = useRef(null);
@@ -385,22 +437,11 @@ export function DataGrid({
   const onRowStatsRef = useRef(onRowStats);
   onRowStatsRef.current = onRowStats;
   const gridScale = useGridScale();
-  const scaledTheme = useMemo(() => {
-    const scale = GRID_SCALE[gridScale] || GRID_SCALE.base;
-    const extra = themeParams || {};
-    /* When matchHeaderFontSize, data cells use the same px as headers. */
-    const fontSize =
-      extra.matchHeaderFontSize != null
-        ? (extra.headerFontSize ?? scale.headerFontSize)
-        : extra.fontSize;
-    const { matchHeaderFontSize: _m, ...rest } = extra;
-    return gridTheme.withParams({
-      ...scale,
-      ...rest,
-      ...(fontSize != null ? { fontSize } : {}),
-    });
-  }, [gridScale, themeParams]);
-  const iconSize = gridScale === "xl" ? 16 : gridScale === "lg" ? 14 : 12;
+  const scaledTheme = useMemo(
+    () => gridTheme.withParams(GRID_SCALE[gridScale] || GRID_SCALE.base),
+    [gridScale]
+  );
+  const iconSize = gridScale === "xl" ? 18 : gridScale === "lg" ? 16 : 14;
 
   const emitRowStats = useCallback((api) => {
     const cb = onRowStatsRef.current;
@@ -447,6 +488,12 @@ export function DataGrid({
     (e) => {
       if (!onRowDrill || !e?.data) return;
       if (e.event?.target?.closest?.(".ag-header")) return;
+      if (
+        e.event?.target?.closest?.(
+          ".qc-row-edit, .qc-row-delete, .qc-row-action-cell"
+        )
+      )
+        return;
       onRowDrill(e.data, e);
     },
     [onRowDrill]
@@ -527,38 +574,39 @@ export function DataGrid({
       tabIndex={0}
       onKeyDown={onKeyDown}
     >
-      {showToolbar && (
+      {showToolbar && (toolbarStart || showExportActions) && (
         <div className="cf-grid-toolbar" role="toolbar" aria-label="Grid Actions">
           {toolbarStart ? (
             <div className="cf-grid-toolbar-start">{toolbarStart}</div>
           ) : (
             <div className="cf-grid-toolbar-start" aria-hidden="true" />
           )}
-          <div className="cf-grid-toolbar-actions">
-            <button
-              type="button"
-              className="cf-grid-icon-btn"
-              onClick={exportCsv}
-              title="Export CSV"
-              aria-label="Export CSV"
-            >
-              <IconExportCsv size={iconSize} />
-            </button>
-            <button
-              type="button"
-              className="cf-grid-icon-btn"
-              onClick={copyRows}
-              title="Copy (Ctrl+C)"
-              aria-label="Copy Rows To Clipboard"
-            >
-              <IconCopy size={iconSize} />
-            </button>
-          </div>
+          {showExportActions ? (
+            <div className="cf-grid-toolbar-actions">
+              <button
+                type="button"
+                className="cf-grid-icon-btn"
+                onClick={exportCsv}
+                title="Export CSV"
+                aria-label="Export CSV"
+              >
+                <IconExportCsv size={iconSize} />
+              </button>
+              <button
+                type="button"
+                className="cf-grid-icon-btn"
+                onClick={copyRows}
+                title="Copy"
+                aria-label="Copy Rows To Clipboard"
+              >
+                <IconCopy size={iconSize} />
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
       <div className="cf-grid-host ag-theme-cashflow">
         <AgGridReact
-          key={gridProps.enableCellSpan ? "cell-span" : "default"}
           theme={scaledTheme}
           rowData={rowData}
           columnDefs={columnDefs}
@@ -566,9 +614,13 @@ export function DataGrid({
           columnTypes={sharedColTypes}
           suppressCellFocus
           animateRows={false}
-          rowSelection={{ mode: "singleRow", checkboxes: false }}
-          /* spanRows conflicts with enableCellTextSelection in AG Grid 36 */
-          enableCellTextSelection={!gridProps.enableCellSpan}
+          rowSelection={{
+            mode: "singleRow",
+            checkboxes: false,
+            /* AG Grid v36 object API defaults click selection off. */
+            enableClickSelection: true,
+          }}
+          enableCellTextSelection
           ensureDomOrder
           enableBrowserTooltips
           tooltipShowDelay={400}
@@ -626,4 +678,50 @@ export function DrillTrail({ crumbs, onJump }) {
 export function StatusBanner({ tone = "muted", children }) {
   if (!children) return null;
   return <p className={`status-banner status-banner-${tone}`}>{children}</p>;
+}
+
+/** Tab-scoped loading indicator (fills the pane, not a full-app overlay). */
+export function PaneSpinner({ label = "Loading…" }) {
+  return (
+    <div className="cf-pane-spinner" role="status" aria-live="polite">
+      <span className="cf-pane-spinner-ring" aria-hidden="true" />
+      <span className="cf-pane-spinner-label">{label}</span>
+    </div>
+  );
+}
+
+/** Bottom-right toast stack for routine errors / notices. */
+export function ToastHost({ toasts = [], onDismiss }) {
+  if (!toasts?.length) return null;
+  return (
+    <div className="cf-toast-host" aria-live="polite" aria-relevant="additions">
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className={`cf-toast cf-toast-${t.tone || "error"}`}
+          role="status"
+        >
+          <span className="cf-toast-msg">{t.message}</span>
+          <button
+            type="button"
+            className="cf-toast-dismiss"
+            aria-label="Dismiss"
+            onClick={() => onDismiss?.(t.id)}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** App registers the host; any page can call pushToast(...) for routine errors. */
+let _toastPush = null;
+export function registerToastPush(fn) {
+  _toastPush = typeof fn === "function" ? fn : null;
+}
+export function pushToast(message, tone = "error") {
+  if (!message || !_toastPush) return;
+  _toastPush(String(message), tone);
 }

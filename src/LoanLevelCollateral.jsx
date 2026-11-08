@@ -16,7 +16,17 @@ import {
   YAxis,
 } from "recharts";
 import { apiUrl } from "./apiBase";
-import { DataGrid, FONT, StatusBanner, fmtNum, fmtPct, moneyCol, intCol } from "./cashflowGrid";
+import {
+  DataGrid,
+  FONT,
+  StatusBanner,
+  fmtLtv,
+  fmtNum,
+  fmtPct,
+  moneyCol,
+  intCol,
+  ltvCol,
+} from "./cashflowGrid";
 import { StateChoropleth } from "./UsChoropleth";
 
 const BAR = "#C8C8C8";
@@ -244,7 +254,7 @@ function liveObservations(loans, kpis) {
   const highShare = kpis.upb ? (highUpb / kpis.upb) * 100 : 0;
   const ltvObs =
     kpis.wa_ltv != null
-      ? `WA Original LTV ${(kpis.wa_ltv * 100).toFixed(1)}%; ≥80% LTV Is ${highShare.toFixed(0)}% Of UPB`
+      ? `WA Original LTV ${fmtLtv(kpis.wa_ltv)}; ≥80% LTV Is ${highShare.toFixed(0)}% Of UPB`
       : `≥80% Original LTV Is ${highShare.toFixed(0)}% Of UPB`;
 
   const heat = buildHeatmap(loans, "original").sort((a, b) => b.upb - a.upb);
@@ -527,18 +537,10 @@ const explorerCols = [
     width: 80,
     valueFormatter: (p) => (p.value == null ? "" : String(p.value)),
   },
-  {
-    headerName: "Orig LTV",
-    field: "original_ltv",
-    width: 90,
-    valueFormatter: (p) => fmtPct(p.value, 1),
-  },
-  {
-    headerName: "Curr LTV",
-    field: "current_ltv",
-    width: 90,
-    valueFormatter: (p) => fmtPct(p.value, 1),
-  },
+  ltvCol("original_ltv", "Orig LTV", 90),
+  ltvCol("current_ltv", "Curr LTV", 90),
+  ltvCol("original_cltv", "Orig CLTV", 90),
+  ltvCol("current_cltv", "Curr CLTV", 90),
   {
     headerName: "Rate",
     field: "current_interest_rate",
@@ -850,10 +852,10 @@ export default function LoanLevelCollateral() {
           <span className="collat-kpi-value">
             {ltvMode === "current"
               ? kpis.wa_current_ltv != null
-                ? `${(kpis.wa_current_ltv * 100).toFixed(1)}%`
+                ? fmtLtv(kpis.wa_current_ltv)
                 : "—"
               : kpis.wa_ltv != null
-                ? `${(kpis.wa_ltv * 100).toFixed(1)}%`
+                ? fmtLtv(kpis.wa_ltv)
                 : "—"}
           </span>
         </div>

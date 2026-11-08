@@ -1,10 +1,9 @@
 /**
- * Side-panel PSA CPR + SDA/SDR CDR paths for every distinct schedule speed.
+ * PSA CPR + SDA CDR paths — same tile style as Sched / Prepay / Recovery charts.
  */
 import { useMemo } from "react";
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -42,20 +41,46 @@ function tipStyle() {
   };
 }
 
-function SpeedLineChart({ title, data, series, yLabel }) {
+function seriesPeak(data, series) {
+  let peak = 0;
+  for (const row of data) {
+    for (const s of series) {
+      const v = Number(row[s.key] || 0);
+      if (v > peak) peak = v;
+    }
+  }
+  return peak;
+}
+
+function SpeedLineChart({ shortTitle, fullTitle, data, series, yLabel }) {
+  const peak = useMemo(() => seriesPeak(data, series), [data, series]);
+
   return (
-    <div className="scenario-speed-panel">
-      <div className="scenario-speed-head">
-        <h3 className="scenario-speed-title">{title}</h3>
+    <div className="scenario-component-chart" aria-label={fullTitle}>
+      <div className="scenario-cash-head">
+        <h4
+          className="scenario-cash-title scenario-component-title"
+          title={fullTitle}
+        >
+          {shortTitle}
+        </h4>
+        <p
+          className="scenario-component-stat"
+          title={`${series.length} paths · peak ${yLabel}`}
+        >
+          {data.length
+            ? `${series.length} · Pk ${pctTick(peak)}`
+            : "—"}
+        </p>
       </div>
-      <div className="scenario-speed-chart">
+      <div className="scenario-component-chart-body">
         {!data.length || !series.length ? (
           <p className="muted strat-chart-empty">No Speed Paths Loaded.</p>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minHeight={90}>
             <LineChart
               data={data}
-              margin={{ top: 8, right: 10, left: 0, bottom: 4 }}
+              margin={{ top: 2, right: 4, left: 0, bottom: 0 }}
             >
               <CartesianGrid
                 stroke="#323232"
@@ -67,50 +92,25 @@ function SpeedLineChart({ title, data, series, yLabel }) {
                 type="number"
                 domain={[1, CHART_MONTHS]}
                 ticks={[1, 30, 60, 90, 120]}
-                tick={{ fill: "#808080", fontSize: 10, fontFamily: FONT }}
+                tick={{ fill: "#808080", fontSize: 8, fontFamily: FONT }}
                 axisLine={{ stroke: "#464646" }}
                 tickLine={{ stroke: "#464646" }}
-                label={{
-                  value: "Month",
-                  position: "insideBottom",
-                  offset: -2,
-                  fill: "#808080",
-                  fontSize: 10,
-                  fontFamily: FONT,
-                }}
               />
               <YAxis
                 tickFormatter={pctTick}
-                width={46}
-                tick={{ fill: "#808080", fontSize: 10, fontFamily: FONT }}
+                width={40}
+                tickCount={4}
+                tick={{ fill: "#808080", fontSize: 8, fontFamily: FONT }}
                 axisLine={{ stroke: "#464646" }}
                 tickLine={{ stroke: "#464646" }}
-                label={{
-                  value: yLabel,
-                  angle: -90,
-                  position: "insideLeft",
-                  offset: 8,
-                  fill: "#808080",
-                  fontSize: 10,
-                  fontFamily: FONT,
-                }}
+                domain={[0, "auto"]}
               />
               <Tooltip
                 contentStyle={tipStyle()}
                 labelStyle={{ color: "#808080" }}
                 labelFormatter={(m) => `Month ${m}`}
                 formatter={(v, name) => [pctTick(v), name]}
-              />
-              <Legend
-                verticalAlign="top"
-                align="right"
-                iconType="plainline"
-                wrapperStyle={{
-                  fontSize: 9,
-                  fontFamily: FONT,
-                  fontWeight: 300,
-                  paddingBottom: 4,
-                }}
+                itemSorter={(item) => -Number(item.value || 0)}
               />
               {series.map((s) => (
                 <Line
@@ -151,13 +151,15 @@ export default function ScenarioSpeedCharts() {
   return (
     <aside className="scenario-speed-rail" aria-label="Scenario Speeds">
       <SpeedLineChart
-        title={`PSA Speeds (CPR) · ${psaMultiples.length}`}
+        shortTitle="PSA CPR"
+        fullTitle={`PSA Speeds (CPR) · ${psaMultiples.length}`}
         data={chartData}
         series={psaSeries}
         yLabel="CPR"
       />
       <SpeedLineChart
-        title={`SDA / SDR Speeds (CDR) · ${sdaMultiples.length}`}
+        shortTitle="SDA CDR"
+        fullTitle={`SDA / SDR Speeds (CDR) · ${sdaMultiples.length}`}
         data={chartData}
         series={sdaSeries}
         yLabel="CDR"

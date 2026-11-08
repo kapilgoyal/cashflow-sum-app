@@ -1,0 +1,7416 @@
+{
+  "scenario": "Base",
+  "perform_months": 360,
+  "horizon_months": 433,
+  "seasoning": "PSA CPR / SDA CDR at curve_age = loan_age_months + projection_month; path extends by FNMA state recovery lag + cohort recovery period",
+  "recovery_source": "Base scenario \u2014 engine field recovery (principal from liquidated defaults)",
+  "recovery_tail": {
+    "max_fnma_lag_months": 58,
+    "max_recovery_period_months": 15,
+    "note": "Per loan: horizon = max(perform, remaining_term) + FNMA lag + recovery_period"
+  },
+  "cohorts": {
+    "LLTV Weak RI": {
+      "scenario_id": "BASE01",
+      "psa_multiple": 100,
+      "sda_multiple": 75,
+      "recovery_period_months": 9,
+      "n_loans": 339,
+      "beginning_upb": 141091857.7,
+      "total_cash_sum": 213760454.47,
+      "recovery_sum": 1919391.06
+    },
+    "HLTV Strong RI": {
+      "scenario_id": "BASE02",
+      "psa_multiple": 150,
+      "sda_multiple": 150,
+      "recovery_period_months": 12,
+      "n_loans": 329,
+      "beginning_upb": 117854227.33,
+      "total_cash_sum": 170430818.01,
+      "recovery_sum": 2699191.42
+    },
+    "HLTV Weak RI": {
+      "scenario_id": "BASE03",
+      "psa_multiple": 75,
+      "sda_multiple": 250,
+      "recovery_period_months": 15,
+      "n_loans": 375,
+      "beginning_upb": 152309758.97,
+      "total_cash_sum": 226577446.55,
+      "recovery_sum": 6818333.07
+    }
+  },
+  "months": [
+    {
+      "month": 1,
+      "LLTV Weak RI": 982514.82,
+      "LLTV Weak RI__beg": 141091857.7,
+      "HLTV Strong RI": 936025.7,
+      "HLTV Strong RI__beg": 117854227.33,
+      "HLTV Weak RI": 1021840.09,
+      "HLTV Weak RI__beg": 152309758.97,
+      "Pool": 2940380.61
+    },
+    {
+      "month": 2,
+      "LLTV Weak RI": 1005977.0,
+      "LLTV Weak RI__beg": 140905005.11,
+      "HLTV Strong RI": 965510.16,
+      "HLTV Strong RI__beg": 117672848.13,
+      "HLTV Weak RI": 1040772.36,
+      "HLTV Weak RI__beg": 152082421.0,
+      "Pool": 3012259.52
+    },
+    {
+      "month": 3,
+      "LLTV Weak RI": 1029385.17,
+      "LLTV Weak RI__beg": 140691881.78,
+      "HLTV Strong RI": 994935.08,
+      "HLTV Strong RI__beg": 117457881.33,
+      "HLTV Weak RI": 1059647.07,
+      "HLTV Weak RI__beg": 151828630.0,
+      "Pool": 3083967.32
+    },
+    {
+      "month": 4,
+      "LLTV Weak RI": 1052725.93,
+      "LLTV Weak RI__beg": 140452398.63,
+      "HLTV Strong RI": 1024274.64,
+      "HLTV Strong RI__beg": 117209181.34,
+      "HLTV Weak RI": 1078454.09,
+      "HLTV Weak RI__beg": 151548323.84,
+      "Pool": 3155454.66
+    },
+    {
+      "month": 5,
+      "LLTV Weak RI": 1075985.78,
+      "LLTV Weak RI__beg": 140186480.51,
+      "HLTV Strong RI": 1053502.78,
+      "HLTV Strong RI__beg": 116926630.0,
+      "HLTV Weak RI": 1097183.28,
+      "HLTV Weak RI__beg": 151241453.49,
+      "Pool": 3226671.84
+    },
+    {
+      "month": 6,
+      "LLTV Weak RI": 1099151.14,
+      "LLTV Weak RI__beg": 139894066.32,
+      "HLTV Strong RI": 1082593.24,
+      "HLTV Strong RI__beg": 116610136.99,
+      "HLTV Weak RI": 1115824.44,
+      "HLTV Weak RI__beg": 150907983.15,
+      "Pool": 3297568.82
+    },
+    {
+      "month": 7,
+      "LLTV Weak RI": 1122208.37,
+      "LLTV Weak RI__beg": 139575109.16,
+      "HLTV Strong RI": 1111519.59,
+      "HLTV Strong RI__beg": 116259640.23,
+      "HLTV Weak RI": 1134100.54,
+      "HLTV Weak RI__beg": 150547890.39,
+      "Pool": 3367828.5
+    },
+    {
+      "month": 8,
+      "LLTV Weak RI": 1145143.79,
+      "LLTV Weak RI__beg": 139229576.54,
+      "HLTV Strong RI": 1140255.28,
+      "HLTV Strong RI__beg": 115875106.23,
+      "HLTV Weak RI": 1152272.66,
+      "HLTV Weak RI__beg": 150161519.76,
+      "Pool": 3437671.73
+    },
+    {
+      "month": 9,
+      "LLTV Weak RI": 1167943.66,
+      "LLTV Weak RI__beg": 138857450.43,
+      "HLTV Strong RI": 1168773.63,
+      "HLTV Strong RI__beg": 115456530.4,
+      "HLTV Weak RI": 1170330.68,
+      "HLTV Weak RI__beg": 149748871.7,
+      "Pool": 3507047.97
+    },
+    {
+      "month": 10,
+      "LLTV Weak RI": 1190594.23,
+      "LLTV Weak RI__beg": 138458727.44,
+      "HLTV Strong RI": 1197047.95,
+      "HLTV Strong RI__beg": 115003937.37,
+      "HLTV Weak RI": 1188264.48,
+      "HLTV Weak RI__beg": 149309960.1,
+      "Pool": 3575906.66
+    },
+    {
+      "month": 11,
+      "LLTV Weak RI": 1213081.73,
+      "LLTV Weak RI__beg": 138033418.92,
+      "HLTV Strong RI": 1225051.48,
+      "HLTV Strong RI__beg": 114517381.16,
+      "HLTV Weak RI": 1206063.94,
+      "HLTV Weak RI__beg": 148844812.32,
+      "Pool": 3644197.15
+    },
+    {
+      "month": 12,
+      "LLTV Weak RI": 1235392.39,
+      "LLTV Weak RI__beg": 137581551.02,
+      "HLTV Strong RI": 1252757.51,
+      "HLTV Strong RI__beg": 113996945.45,
+      "HLTV Weak RI": 1223718.98,
+      "HLTV Weak RI__beg": 148353469.3,
+      "Pool": 3711868.88
+    },
+    {
+      "month": 13,
+      "LLTV Weak RI": 1257512.43,
+      "LLTV Weak RI__beg": 137103164.82,
+      "HLTV Strong RI": 1280139.37,
+      "HLTV Strong RI__beg": 113442743.72,
+      "HLTV Weak RI": 1241219.51,
+      "HLTV Weak RI__beg": 147835985.59,
+      "Pool": 3778871.31
+    },
+    {
+      "month": 14,
+      "LLTV Weak RI": 1279428.13,
+      "LLTV Weak RI__beg": 136598316.39,
+      "HLTV Strong RI": 1307170.47,
+      "HLTV Strong RI__beg": 112854919.34,
+      "HLTV Weak RI": 1258555.5,
+      "HLTV Weak RI__beg": 147292429.37,
+      "Pool": 3845154.1
+    },
+    {
+      "month": 15,
+      "LLTV Weak RI": 1301125.77,
+      "LLTV Weak RI__beg": 136067076.82,
+      "HLTV Strong RI": 1333824.37,
+      "HLTV Strong RI__beg": 112233645.7,
+      "HLTV Weak RI": 1275716.93,
+      "HLTV Weak RI__beg": 146722882.49,
+      "Pool": 3910667.07
+    },
+    {
+      "month": 16,
+      "LLTV Weak RI": 1322633.14,
+      "LLTV Weak RI__beg": 135509532.28,
+      "HLTV Strong RI": 1360112.78,
+      "HLTV Strong RI__beg": 111579126.23,
+      "HLTV Weak RI": 1292819.24,
+      "HLTV Weak RI__beg": 146127440.5,
+      "Pool": 3975565.16
+    },
+    {
+      "month": 17,
+      "LLTV Weak RI": 1343992.62,
+      "LLTV Weak RI__beg": 134925784.09,
+      "HLTV Strong RI": 1386067.89,
+      "HLTV Strong RI__beg": 110891594.38,
+      "HLTV Weak RI": 1309955.87,
+      "HLTV Weak RI__beg": 145506212.61,
+      "Pool": 4040016.38
+    },
+    {
+      "month": 18,
+      "LLTV Weak RI": 1365133.31,
+      "LLTV Weak RI__beg": 134315948.65,
+      "HLTV Strong RI": 1411607.3,
+      "HLTV Strong RI__beg": 110171313.58,
+      "HLTV Weak RI": 1326966.81,
+      "HLTV Weak RI__beg": 144859321.74,
+      "Pool": 4103707.42
+    },
+    {
+      "month": 19,
+      "LLTV Weak RI": 1385760.23,
+      "LLTV Weak RI__beg": 133680157.52,
+      "HLTV Strong RI": 1436428.16,
+      "HLTV Strong RI__beg": 109418577.14,
+      "HLTV Weak RI": 1343412.76,
+      "HLTV Weak RI__beg": 144186904.45,
+      "Pool": 4165601.15
+    },
+    {
+      "month": 20,
+      "LLTV Weak RI": 1406149.1,
+      "LLTV Weak RI__beg": 133018863.97,
+      "HLTV Strong RI": 1460796.38,
+      "HLTV Strong RI__beg": 108634026.99,
+      "HLTV Weak RI": 1359735.37,
+      "HLTV Weak RI__beg": 143489726.75,
+      "Pool": 4226680.85
+    },
+    {
+      "month": 21,
+      "LLTV Weak RI": 1426344.26,
+      "LLTV Weak RI__beg": 132332225.46,
+      "HLTV Strong RI": 1484749.39,
+      "HLTV Strong RI__beg": 107818008.62,
+      "HLTV Weak RI": 1376082.72,
+      "HLTV Weak RI__beg": 142767945.07,
+      "Pool": 4287176.37
+    },
+    {
+      "month": 22,
+      "LLTV Weak RI": 1446305.91,
+      "LLTV Weak RI__beg": 131620414.33,
+      "HLTV Strong RI": 1508228.33,
+      "HLTV Strong RI__beg": 106970896.68,
+      "HLTV Weak RI": 1392352.57,
+      "HLTV Weak RI__beg": 142021729.0,
+      "Pool": 4346886.81
+    },
+    {
+      "month": 23,
+      "LLTV Weak RI": 1466014.16,
+      "LLTV Weak RI__beg": 130883617.78,
+      "HLTV Strong RI": 1531204.35,
+      "HLTV Strong RI__beg": 106093094.71,
+      "HLTV Weak RI": 1408521.61,
+      "HLTV Weak RI__beg": 141251261.27,
+      "Pool": 4405740.12
+    },
+    {
+      "month": 24,
+      "LLTV Weak RI": 1485480.45,
+      "LLTV Weak RI__beg": 130122037.78,
+      "HLTV Strong RI": 1553689.38,
+      "HLTV Strong RI__beg": 105185034.85,
+      "HLTV Weak RI": 1424664.68,
+      "HLTV Weak RI__beg": 140456737.64,
+      "Pool": 4463834.51
+    },
+    {
+      "month": 25,
+      "LLTV Weak RI": 1504300.45,
+      "LLTV Weak RI__beg": 129335891.04,
+      "HLTV Strong RI": 1574987.5,
+      "HLTV Strong RI__beg": 104247177.44,
+      "HLTV Weak RI": 1440128.21,
+      "HLTV Weak RI__beg": 139638366.86,
+      "Pool": 4519416.16
+    },
+    {
+      "month": 26,
+      "LLTV Weak RI": 1522208.39,
+      "LLTV Weak RI__beg": 128525879.33,
+      "HLTV Strong RI": 1594485.62,
+      "HLTV Strong RI__beg": 103280886.91,
+      "HLTV Weak RI": 1454784.19,
+      "HLTV Weak RI__beg": 138797435.88,
+      "Pool": 4571478.2
+    },
+    {
+      "month": 27,
+      "LLTV Weak RI": 1537970.65,
+      "LLTV Weak RI__beg": 127692858.28,
+      "HLTV Strong RI": 1611931.15,
+      "HLTV Strong RI__beg": 102288091.62,
+      "HLTV Weak RI": 1468109.76,
+      "HLTV Weak RI__beg": 137935194.63,
+      "Pool": 4618011.56
+    },
+    {
+      "month": 28,
+      "LLTV Weak RI": 1550451.62,
+      "LLTV Weak RI__beg": 126839078.33,
+      "HLTV Strong RI": 1625505.3,
+      "HLTV Strong RI__beg": 101271030.17,
+      "HLTV Weak RI": 1479197.8,
+      "HLTV Weak RI__beg": 137053616.63,
+      "Pool": 4655154.72
+    },
+    {
+      "month": 29,
+      "LLTV Weak RI": 1557460.07,
+      "LLTV Weak RI__beg": 125968037.05,
+      "HLTV Strong RI": 1630606.98,
+      "HLTV Strong RI__beg": 100233912.7,
+      "HLTV Weak RI": 1485885.0,
+      "HLTV Weak RI__beg": 136155943.98,
+      "Pool": 4673952.05
+    },
+    {
+      "month": 30,
+      "LLTV Weak RI": 1557172.16,
+      "LLTV Weak RI__beg": 125085582.63,
+      "HLTV Strong RI": 1627052.52,
+      "HLTV Strong RI__beg": 99185920.02,
+      "HLTV Weak RI": 1487614.01,
+      "HLTV Weak RI__beg": 135248247.64,
+      "Pool": 4671838.69
+    },
+    {
+      "month": 31,
+      "LLTV Weak RI": 1553300.51,
+      "LLTV Weak RI__beg": 124199487.5,
+      "HLTV Strong RI": 1620121.08,
+      "HLTV Strong RI__beg": 98136551.17,
+      "HLTV Weak RI": 1487092.49,
+      "HLTV Weak RI__beg": 134337366.1,
+      "Pool": 4660514.08
+    },
+    {
+      "month": 32,
+      "LLTV Weak RI": 1549481.9,
+      "LLTV Weak RI__beg": 123313617.34,
+      "HLTV Strong RI": 1613299.96,
+      "HLTV Strong RI__beg": 97089578.35,
+      "HLTV Weak RI": 1486579.79,
+      "HLTV Weak RI__beg": 133426416.07,
+      "Pool": 4649361.65
+    },
+    {
+      "month": 33,
+      "LLTV Weak RI": 1545691.14,
+      "LLTV Weak RI__beg": 122427970.18,
+      "HLTV Strong RI": 1606525.24,
+      "HLTV Strong RI__beg": 96044995.05,
+      "HLTV Weak RI": 1486223.94,
+      "HLTV Weak RI__beg": 132515396.52,
+      "Pool": 4638440.32
+    },
+    {
+      "month": 34,
+      "LLTV Weak RI": 1541838.24,
+      "LLTV Weak RI__beg": 121542544.08,
+      "HLTV Strong RI": 1599829.51,
+      "HLTV Strong RI__beg": 95002794.82,
+      "HLTV Weak RI": 1485987.17,
+      "HLTV Weak RI__beg": 131604306.39,
+      "Pool": 4627654.92
+    },
+    {
+      "month": 35,
+      "LLTV Weak RI": 1537991.25,
+      "LLTV Weak RI__beg": 120657337.08,
+      "HLTV Strong RI": 1593215.45,
+      "HLTV Strong RI__beg": 93962971.23,
+      "HLTV Weak RI": 1485887.48,
+      "HLTV Weak RI__beg": 130693144.66,
+      "Pool": 4617094.18
+    },
+    {
+      "month": 36,
+      "LLTV Weak RI": 1534142.23,
+      "LLTV Weak RI__beg": 119772347.24,
+      "HLTV Strong RI": 1586645.59,
+      "HLTV Strong RI__beg": 92925517.87,
+      "HLTV Weak RI": 1485764.94,
+      "HLTV Weak RI__beg": 129781910.29,
+      "Pool": 4606552.76
+    },
+    {
+      "month": 37,
+      "LLTV Weak RI": 1530268.4,
+      "LLTV Weak RI__beg": 118887572.66,
+      "HLTV Strong RI": 1579988.77,
+      "HLTV Strong RI__beg": 91890428.34,
+      "HLTV Weak RI": 1485710.05,
+      "HLTV Weak RI__beg": 128870602.26,
+      "Pool": 4595967.22
+    },
+    {
+      "month": 38,
+      "LLTV Weak RI": 1526386.61,
+      "LLTV Weak RI__beg": 118003011.4,
+      "HLTV Strong RI": 1573347.65,
+      "HLTV Strong RI__beg": 90857696.29,
+      "HLTV Weak RI": 1485734.22,
+      "HLTV Weak RI__beg": 127959252.71,
+      "Pool": 4585468.48
+    },
+    {
+      "month": 39,
+      "LLTV Weak RI": 1522496.27,
+      "LLTV Weak RI__beg": 117118661.57,
+      "HLTV Strong RI": 1566699.08,
+      "HLTV Strong RI__beg": 89827315.37,
+      "HLTV Weak RI": 1485749.24,
+      "HLTV Weak RI__beg": 127047860.1,
+      "Pool": 4574944.59
+    },
+    {
+      "month": 40,
+      "LLTV Weak RI": 1518595.71,
+      "LLTV Weak RI__beg": 116234521.26,
+      "HLTV Strong RI": 1560028.98,
+      "HLTV Strong RI__beg": 88799279.28,
+      "HLTV Weak RI": 1485591.91,
+      "HLTV Weak RI__beg": 126136422.91,
+      "Pool": 4564216.6
+    },
+    {
+      "month": 41,
+      "LLTV Weak RI": 1514682.8,
+      "LLTV Weak RI__beg": 115350588.6,
+      "HLTV Strong RI": 1553352.19,
+      "HLTV Strong RI__beg": 87773581.72,
+      "HLTV Weak RI": 1485414.03,
+      "HLTV Weak RI__beg": 125224939.6,
+      "Pool": 4553449.02
+    },
+    {
+      "month": 42,
+      "LLTV Weak RI": 1510755.72,
+      "LLTV Weak RI__beg": 114466861.69,
+      "HLTV Strong RI": 1546666.66,
+      "HLTV Strong RI__beg": 86750216.42,
+      "HLTV Weak RI": 1485189.76,
+      "HLTV Weak RI__beg": 124313408.64,
+      "Pool": 4542612.14
+    },
+    {
+      "month": 43,
+      "LLTV Weak RI": 1506810.42,
+      "LLTV Weak RI__beg": 113583338.68,
+      "HLTV Strong RI": 1539963.03,
+      "HLTV Strong RI__beg": 85729177.14,
+      "HLTV Weak RI": 1484866.88,
+      "HLTV Weak RI__beg": 123401828.53,
+      "Pool": 4531640.33
+    },
+    {
+      "month": 44,
+      "LLTV Weak RI": 1502841.04,
+      "LLTV Weak RI__beg": 112700017.7,
+      "HLTV Strong RI": 1533235.66,
+      "HLTV Strong RI__beg": 84710457.65,
+      "HLTV Weak RI": 1484471.22,
+      "HLTV Weak RI__beg": 122490197.75,
+      "Pool": 4520547.92
+    },
+    {
+      "month": 45,
+      "LLTV Weak RI": 1498836.57,
+      "LLTV Weak RI__beg": 111816896.91,
+      "HLTV Strong RI": 1526474.35,
+      "HLTV Strong RI__beg": 83694051.76,
+      "HLTV Weak RI": 1483980.84,
+      "HLTV Weak RI__beg": 121578514.8,
+      "Pool": 4509291.76
+    },
+    {
+      "month": 46,
+      "LLTV Weak RI": 1494785.79,
+      "LLTV Weak RI__beg": 110933974.45,
+      "HLTV Strong RI": 1519666.65,
+      "HLTV Strong RI__beg": 82679953.3,
+      "HLTV Weak RI": 1483374.96,
+      "HLTV Weak RI__beg": 120666778.17,
+      "Pool": 4497827.4
+    },
+    {
+      "month": 47,
+      "LLTV Weak RI": 1490683.37,
+      "LLTV Weak RI__beg": 110051248.51,
+      "HLTV Strong RI": 1512807.26,
+      "HLTV Strong RI__beg": 81668156.1,
+      "HLTV Weak RI": 1482640.4,
+      "HLTV Weak RI__beg": 119754986.36,
+      "Pool": 4486131.03
+    },
+    {
+      "month": 48,
+      "LLTV Weak RI": 1486524.58,
+      "LLTV Weak RI__beg": 109168717.25,
+      "HLTV Strong RI": 1505891.88,
+      "HLTV Strong RI__beg": 80658654.05,
+      "HLTV Weak RI": 1481770.29,
+      "HLTV Weak RI__beg": 118843137.9,
+      "Pool": 4474186.75
+    },
+    {
+      "month": 49,
+      "LLTV Weak RI": 1482307.43,
+      "LLTV Weak RI__beg": 108286378.87,
+      "HLTV Strong RI": 1498913.9,
+      "HLTV Strong RI__beg": 79651441.02,
+      "HLTV Weak RI": 1480749.95,
+      "HLTV Weak RI__beg": 117931231.28,
+      "Pool": 4461971.28
+    },
+    {
+      "month": 50,
+      "LLTV Weak RI": 1478029.57,
+      "LLTV Weak RI__beg": 107404239.42,
+      "HLTV Strong RI": 1491865.99,
+      "HLTV Strong RI__beg": 78646520.46,
+      "HLTV Weak RI": 1479555.1,
+      "HLTV Weak RI__beg": 117019322.25,
+      "Pool": 4449450.66
+    },
+    {
+      "month": 51,
+      "LLTV Weak RI": 1473682.18,
+      "LLTV Weak RI__beg": 106522296.98,
+      "HLTV Strong RI": 1484742.3,
+      "HLTV Strong RI__beg": 77643886.04,
+      "HLTV Weak RI": 1478168.8,
+      "HLTV Weak RI__beg": 116107408.4,
+      "Pool": 4436593.28
+    },
+    {
+      "month": 52,
+      "LLTV Weak RI": 1469262.26,
+      "LLTV Weak RI__beg": 105640549.61,
+      "HLTV Strong RI": 1477532.65,
+      "HLTV Strong RI__beg": 76643531.46,
+      "HLTV Weak RI": 1476574.61,
+      "HLTV Weak RI__beg": 115195487.31,
+      "Pool": 4423369.52
+    },
+    {
+      "month": 53,
+      "LLTV Weak RI": 1464767.09,
+      "LLTV Weak RI__beg": 104758995.41,
+      "HLTV Strong RI": 1470222.56,
+      "HLTV Strong RI__beg": 75645450.46,
+      "HLTV Weak RI": 1474754.09,
+      "HLTV Weak RI__beg": 114283556.59,
+      "Pool": 4409743.74
+    },
+    {
+      "month": 54,
+      "LLTV Weak RI": 1460192.94,
+      "LLTV Weak RI__beg": 103877632.47,
+      "HLTV Strong RI": 1462798.29,
+      "HLTV Strong RI__beg": 74649636.8,
+      "HLTV Weak RI": 1472694.31,
+      "HLTV Weak RI__beg": 113371613.85,
+      "Pool": 4395685.54
+    },
+    {
+      "month": 55,
+      "LLTV Weak RI": 1455546.1,
+      "LLTV Weak RI__beg": 102996458.9,
+      "HLTV Strong RI": 1455264.64,
+      "HLTV Strong RI__beg": 73656084.25,
+      "HLTV Weak RI": 1470391.79,
+      "HLTV Weak RI__beg": 112459656.7,
+      "Pool": 4381202.53
+    },
+    {
+      "month": 56,
+      "LLTV Weak RI": 1450828.99,
+      "LLTV Weak RI__beg": 102115484.71,
+      "HLTV Strong RI": 1447624.85,
+      "HLTV Strong RI__beg": 72664810.91,
+      "HLTV Weak RI": 1467851.46,
+      "HLTV Weak RI__beg": 111547781.63,
+      "Pool": 4366305.3
+    },
+    {
+      "month": 57,
+      "LLTV Weak RI": 1446045.62,
+      "LLTV Weak RI__beg": 101234723.02,
+      "HLTV Strong RI": 1439885.81,
+      "HLTV Strong RI__beg": 71675849.6,
+      "HLTV Weak RI": 1465074.4,
+      "HLTV Weak RI__beg": 110636079.81,
+      "Pool": 4351005.83
+    },
+    {
+      "month": 58,
+      "LLTV Weak RI": 1441200.12,
+      "LLTV Weak RI__beg": 100354221.03,
+      "HLTV Strong RI": 1432062.31,
+      "HLTV Strong RI__beg": 70689240.67,
+      "HLTV Weak RI": 1462067.47,
+      "HLTV Weak RI__beg": 109724709.79,
+      "Pool": 4335329.9
+    },
+    {
+      "month": 59,
+      "LLTV Weak RI": 1436301.44,
+      "LLTV Weak RI__beg": 99474056.27,
+      "HLTV Strong RI": 1424178.68,
+      "HLTV Strong RI__beg": 69705079.23,
+      "HLTV Weak RI": 1458860.9,
+      "HLTV Weak RI__beg": 108813944.69,
+      "Pool": 4319341.02
+    },
+    {
+      "month": 60,
+      "LLTV Weak RI": 1431360.63,
+      "LLTV Weak RI__beg": 98594364.5,
+      "HLTV Strong RI": 1416232.93,
+      "HLTV Strong RI__beg": 68723595.37,
+      "HLTV Weak RI": 1455471.98,
+      "HLTV Weak RI__beg": 107904319.37,
+      "Pool": 4303065.54
+    },
+    {
+      "month": 61,
+      "LLTV Weak RI": 1426386.32,
+      "LLTV Weak RI__beg": 97715327.66,
+      "HLTV Strong RI": 1408234.59,
+      "HLTV Strong RI__beg": 67745025.25,
+      "HLTV Weak RI": 1451924.64,
+      "HLTV Weak RI__beg": 106996434.68,
+      "Pool": 4286545.55
+    },
+    {
+      "month": 62,
+      "LLTV Weak RI": 1421388.86,
+      "LLTV Weak RI__beg": 96837029.74,
+      "HLTV Strong RI": 1400193.13,
+      "HLTV Strong RI__beg": 66769443.72,
+      "HLTV Weak RI": 1448233.88,
+      "HLTV Weak RI__beg": 106090542.7,
+      "Pool": 4269815.87
+    },
+    {
+      "month": 63,
+      "LLTV Weak RI": 1416384.14,
+      "LLTV Weak RI__beg": 95959458.4,
+      "HLTV Strong RI": 1392116.63,
+      "HLTV Strong RI__beg": 65796819.96,
+      "HLTV Weak RI": 1444408.55,
+      "HLTV Weak RI__beg": 105186605.95,
+      "Pool": 4252909.32
+    },
+    {
+      "month": 64,
+      "LLTV Weak RI": 1411378.35,
+      "LLTV Weak RI__beg": 95082601.29,
+      "HLTV Strong RI": 1384018.2,
+      "HLTV Strong RI__beg": 64827123.34,
+      "HLTV Weak RI": 1440465.85,
+      "HLTV Weak RI__beg": 104284587.05,
+      "Pool": 4235862.4
+    },
+    {
+      "month": 65,
+      "LLTV Weak RI": 1406375.57,
+      "LLTV Weak RI__beg": 94206446.11,
+      "HLTV Strong RI": 1375915.46,
+      "HLTV Strong RI__beg": 63860323.42,
+      "HLTV Weak RI": 1436432.93,
+      "HLTV Weak RI__beg": 103384448.76,
+      "Pool": 4218723.96
+    },
+    {
+      "month": 66,
+      "LLTV Weak RI": 1401378.13,
+      "LLTV Weak RI__beg": 93330980.58,
+      "HLTV Strong RI": 1367825.27,
+      "HLTV Strong RI__beg": 62896389.96,
+      "HLTV Weak RI": 1432329.09,
+      "HLTV Weak RI__beg": 102486153.95,
+      "Pool": 4201532.49
+    },
+    {
+      "month": 67,
+      "LLTV Weak RI": 1396386.81,
+      "LLTV Weak RI__beg": 92456192.43,
+      "HLTV Strong RI": 1359753.53,
+      "HLTV Strong RI__beg": 61935292.86,
+      "HLTV Weak RI": 1428173.22,
+      "HLTV Weak RI__beg": 101589665.64,
+      "Pool": 4184313.56
+    },
+    {
+      "month": 68,
+      "LLTV Weak RI": 1391398.75,
+      "LLTV Weak RI__beg": 91582069.43,
+      "HLTV Strong RI": 1351704.28,
+      "HLTV Strong RI__beg": 60977002.23,
+      "HLTV Weak RI": 1423986.34,
+      "HLTV Weak RI__beg": 100694946.93,
+      "Pool": 4167089.37
+    },
+    {
+      "month": 69,
+      "LLTV Weak RI": 1386415.57,
+      "LLTV Weak RI__beg": 90708599.37,
+      "HLTV Strong RI": 1343682.62,
+      "HLTV Strong RI__beg": 60021488.36,
+      "HLTV Weak RI": 1419785.0,
+      "HLTV Weak RI__beg": 99801961.05,
+      "Pool": 4149883.19
+    },
+    {
+      "month": 70,
+      "LLTV Weak RI": 1381436.77,
+      "LLTV Weak RI__beg": 89835770.06,
+      "HLTV Strong RI": 1335688.35,
+      "HLTV Strong RI__beg": 59068721.71,
+      "HLTV Weak RI": 1415576.45,
+      "HLTV Weak RI__beg": 98910671.36,
+      "Pool": 4132701.57
+    },
+    {
+      "month": 71,
+      "LLTV Weak RI": 1376461.72,
+      "LLTV Weak RI__beg": 88963569.34,
+      "HLTV Strong RI": 1327706.07,
+      "HLTV Strong RI__beg": 58118672.89,
+      "HLTV Weak RI": 1411362.88,
+      "HLTV Weak RI__beg": 98021041.31,
+      "Pool": 4115530.67
+    },
+    {
+      "month": 72,
+      "LLTV Weak RI": 1371489.87,
+      "LLTV Weak RI__beg": 88091985.07,
+      "HLTV Strong RI": 1319745.57,
+      "HLTV Strong RI__beg": 57171312.71,
+      "HLTV Weak RI": 1407149.45,
+      "HLTV Weak RI__beg": 97133034.44,
+      "Pool": 4098384.89
+    },
+    {
+      "month": 73,
+      "LLTV Weak RI": 1366519.84,
+      "LLTV Weak RI__beg": 87221005.12,
+      "HLTV Strong RI": 1311803.93,
+      "HLTV Strong RI__beg": 56226612.15,
+      "HLTV Weak RI": 1402938.06,
+      "HLTV Weak RI__beg": 96246614.43,
+      "Pool": 4081261.83
+    },
+    {
+      "month": 74,
+      "LLTV Weak RI": 1361549.56,
+      "LLTV Weak RI__beg": 86350617.4,
+      "HLTV Strong RI": 1303879.46,
+      "HLTV Strong RI__beg": 55284542.34,
+      "HLTV Weak RI": 1398711.52,
+      "HLTV Weak RI__beg": 95361745.03,
+      "Pool": 4064140.54
+    },
+    {
+      "month": 75,
+      "LLTV Weak RI": 1356574.97,
+      "LLTV Weak RI__beg": 85480809.83,
+      "HLTV Strong RI": 1295968.97,
+      "HLTV Strong RI__beg": 54345074.59,
+      "HLTV Weak RI": 1394471.28,
+      "HLTV Weak RI__beg": 94478390.1,
+      "Pool": 4047015.22
+    },
+    {
+      "month": 76,
+      "LLTV Weak RI": 1351591.96,
+      "LLTV Weak RI__beg": 84611570.35,
+      "HLTV Strong RI": 1288068.54,
+      "HLTV Strong RI__beg": 53408180.36,
+      "HLTV Weak RI": 1390209.99,
+      "HLTV Weak RI__beg": 93596513.59,
+      "Pool": 4029870.49
+    },
+    {
+      "month": 77,
+      "LLTV Weak RI": 1346598.65,
+      "LLTV Weak RI__beg": 83742886.93,
+      "HLTV Strong RI": 1280176.35,
+      "HLTV Strong RI__beg": 52473831.3,
+      "HLTV Weak RI": 1385923.07,
+      "HLTV Weak RI__beg": 92716079.52,
+      "Pool": 4012698.07
+    },
+    {
+      "month": 78,
+      "LLTV Weak RI": 1341593.33,
+      "LLTV Weak RI__beg": 82874747.55,
+      "HLTV Strong RI": 1272291.12,
+      "HLTV Strong RI__beg": 51541999.18,
+      "HLTV Weak RI": 1381608.4,
+      "HLTV Weak RI__beg": 91837052.04,
+      "Pool": 3995492.85
+    },
+    {
+      "month": 79,
+      "LLTV Weak RI": 1336575.34,
+      "LLTV Weak RI__beg": 82007140.22,
+      "HLTV Strong RI": 1264410.78,
+      "HLTV Strong RI__beg": 50612655.97,
+      "HLTV Weak RI": 1377260.79,
+      "HLTV Weak RI__beg": 90959395.35,
+      "Pool": 3978246.91
+    },
+    {
+      "month": 80,
+      "LLTV Weak RI": 1331543.85,
+      "LLTV Weak RI__beg": 81140052.97,
+      "HLTV Strong RI": 1256532.98,
+      "HLTV Strong RI__beg": 49685773.76,
+      "HLTV Weak RI": 1372871.48,
+      "HLTV Weak RI__beg": 90083073.73,
+      "Pool": 3960948.31
+    },
+    {
+      "month": 81,
+      "LLTV Weak RI": 1326495.61,
+      "LLTV Weak RI__beg": 80273473.83,
+      "HLTV Strong RI": 1248655.87,
+      "HLTV Strong RI__beg": 48761324.83,
+      "HLTV Weak RI": 1368434.36,
+      "HLTV Weak RI__beg": 89208051.57,
+      "Pool": 3943585.84
+    },
+    {
+      "month": 82,
+      "LLTV Weak RI": 1321429.54,
+      "LLTV Weak RI__beg": 79407390.87,
+      "HLTV Strong RI": 1240776.15,
+      "HLTV Strong RI__beg": 47839281.59,
+      "HLTV Weak RI": 1363943.88,
+      "HLTV Weak RI__beg": 88334293.29,
+      "Pool": 3926149.57
+    },
+    {
+      "month": 83,
+      "LLTV Weak RI": 1316344.68,
+      "LLTV Weak RI__beg": 78541792.16,
+      "HLTV Strong RI": 1232889.08,
+      "HLTV Strong RI__beg": 46919616.6,
+      "HLTV Weak RI": 1359392.93,
+      "HLTV Weak RI__beg": 87461763.43,
+      "Pool": 3908626.69
+    },
+    {
+      "month": 84,
+      "LLTV Weak RI": 1311239.71,
+      "LLTV Weak RI__beg": 77676665.81,
+      "HLTV Strong RI": 1224990.1,
+      "HLTV Strong RI__beg": 46002302.6,
+      "HLTV Weak RI": 1354776.88,
+      "HLTV Weak RI__beg": 86590426.57,
+      "Pool": 3891006.69
+    },
+    {
+      "month": 85,
+      "LLTV Weak RI": 1306116.91,
+      "LLTV Weak RI__beg": 76811999.94,
+      "HLTV Strong RI": 1217080.75,
+      "HLTV Strong RI__beg": 45087312.43,
+      "HLTV Weak RI": 1350094.27,
+      "HLTV Weak RI__beg": 85720247.35,
+      "Pool": 3873291.93
+    },
+    {
+      "month": 86,
+      "LLTV Weak RI": 1300977.13,
+      "LLTV Weak RI__beg": 75947782.67,
+      "HLTV Strong RI": 1209160.96,
+      "HLTV Strong RI__beg": 44174619.12,
+      "HLTV Weak RI": 1345346.57,
+      "HLTV Weak RI__beg": 84851190.5,
+      "Pool": 3855484.66
+    },
+    {
+      "month": 87,
+      "LLTV Weak RI": 1295821.4,
+      "LLTV Weak RI__beg": 75084002.16,
+      "HLTV Strong RI": 1201231.99,
+      "HLTV Strong RI__beg": 43264195.82,
+      "HLTV Weak RI": 1340532.73,
+      "HLTV Weak RI__beg": 83983220.79,
+      "Pool": 3837586.12
+    },
+    {
+      "month": 88,
+      "LLTV Weak RI": 1290650.52,
+      "LLTV Weak RI__beg": 74220646.56,
+      "HLTV Strong RI": 1193296.52,
+      "HLTV Strong RI__beg": 42356015.84,
+      "HLTV Weak RI": 1335654.74,
+      "HLTV Weak RI__beg": 83116303.06,
+      "Pool": 3819601.78
+    },
+    {
+      "month": 89,
+      "LLTV Weak RI": 1285466.46,
+      "LLTV Weak RI__beg": 73357704.08,
+      "HLTV Strong RI": 1185357.06,
+      "HLTV Strong RI__beg": 41450052.61,
+      "HLTV Weak RI": 1330718.63,
+      "HLTV Weak RI__beg": 82250402.19,
+      "Pool": 3801542.15
+    },
+    {
+      "month": 90,
+      "LLTV Weak RI": 1280273.55,
+      "LLTV Weak RI__beg": 72495162.89,
+      "HLTV Strong RI": 1177415.63,
+      "HLTV Strong RI__beg": 40546279.72,
+      "HLTV Weak RI": 1325733.61,
+      "HLTV Weak RI__beg": 81385483.12,
+      "Pool": 3783422.79
+    },
+    {
+      "month": 91,
+      "LLTV Weak RI": 1275074.76,
+      "LLTV Weak RI__beg": 71633011.22,
+      "HLTV Strong RI": 1169475.07,
+      "HLTV Strong RI__beg": 39644670.89,
+      "HLTV Weak RI": 1320708.43,
+      "HLTV Weak RI__beg": 80521510.85,
+      "Pool": 3765258.26
+    },
+    {
+      "month": 92,
+      "LLTV Weak RI": 1269873.89,
+      "LLTV Weak RI__beg": 70771237.3,
+      "HLTV Strong RI": 1161538.44,
+      "HLTV Strong RI__beg": 38745199.98,
+      "HLTV Weak RI": 1315648.87,
+      "HLTV Weak RI__beg": 79658450.41,
+      "Pool": 3747061.2
+    },
+    {
+      "month": 93,
+      "LLTV Weak RI": 1264676.81,
+      "LLTV Weak RI__beg": 69909829.36,
+      "HLTV Strong RI": 1153608.36,
+      "HLTV Strong RI__beg": 37847840.98,
+      "HLTV Weak RI": 1310558.29,
+      "HLTV Weak RI__beg": 78796266.88,
+      "Pool": 3728843.46
+    },
+    {
+      "month": 94,
+      "LLTV Weak RI": 1259485.89,
+      "LLTV Weak RI__beg": 69048775.67,
+      "HLTV Strong RI": 1145689.07,
+      "HLTV Strong RI__beg": 36952568.02,
+      "HLTV Weak RI": 1305443.24,
+      "HLTV Weak RI__beg": 77934925.38,
+      "Pool": 3710618.2
+    },
+    {
+      "month": 95,
+      "LLTV Weak RI": 1254302.68,
+      "LLTV Weak RI__beg": 68188064.5,
+      "HLTV Strong RI": 1137786.33,
+      "HLTV Strong RI__beg": 36059355.35,
+      "HLTV Weak RI": 1300314.13,
+      "HLTV Weak RI__beg": 77074391.06,
+      "Pool": 3692403.14
+    },
+    {
+      "month": 96,
+      "LLTV Weak RI": 1249128.36,
+      "LLTV Weak RI__beg": 67327684.13,
+      "HLTV Strong RI": 1129905.62,
+      "HLTV Strong RI__beg": 35168177.36,
+      "HLTV Weak RI": 1295178.27,
+      "HLTV Weak RI__beg": 76214629.12,
+      "Pool": 3674212.25
+    },
+    {
+      "month": 97,
+      "LLTV Weak RI": 1243963.73,
+      "LLTV Weak RI__beg": 66467622.85,
+      "HLTV Strong RI": 1122048.79,
+      "HLTV Strong RI__beg": 34279008.56,
+      "HLTV Weak RI": 1290042.34,
+      "HLTV Weak RI__beg": 75355604.79,
+      "Pool": 3656054.86
+    },
+    {
+      "month": 98,
+      "LLTV Weak RI": 1238808.74,
+      "LLTV Weak RI__beg": 65607868.99,
+      "HLTV Strong RI": 1114218.08,
+      "HLTV Strong RI__beg": 33391823.62,
+      "HLTV Weak RI": 1284914.67,
+      "HLTV Weak RI__beg": 74497265.5,
+      "Pool": 3637941.49
+    },
+    {
+      "month": 99,
+      "LLTV Weak RI": 1233663.28,
+      "LLTV Weak RI__beg": 64748410.87,
+      "HLTV Strong RI": 1106415.88,
+      "HLTV Strong RI__beg": 32506597.28,
+      "HLTV Weak RI": 1279801.64,
+      "HLTV Weak RI__beg": 73639577.0,
+      "Pool": 3619880.8
+    },
+    {
+      "month": 100,
+      "LLTV Weak RI": 1228527.3,
+      "LLTV Weak RI__beg": 63889236.81,
+      "HLTV Strong RI": 1098643.9,
+      "HLTV Strong RI__beg": 31623304.45,
+      "HLTV Weak RI": 1274706.26,
+      "HLTV Weak RI__beg": 72782505.06,
+      "Pool": 3601877.46
+    },
+    {
+      "month": 101,
+      "LLTV Weak RI": 1223400.69,
+      "LLTV Weak RI__beg": 63030335.17,
+      "HLTV Strong RI": 1090902.01,
+      "HLTV Strong RI__beg": 30741920.14,
+      "HLTV Weak RI": 1269630.55,
+      "HLTV Weak RI__beg": 71926015.47,
+      "Pool": 3583933.25
+    },
+    {
+      "month": 102,
+      "LLTV Weak RI": 1218283.39,
+      "LLTV Weak RI__beg": 62171694.31,
+      "HLTV Strong RI": 1083189.94,
+      "HLTV Strong RI__beg": 29862419.49,
+      "HLTV Weak RI": 1264578.31,
+      "HLTV Weak RI__beg": 71070074.03,
+      "Pool": 3566051.64
+    },
+    {
+      "month": 103,
+      "LLTV Weak RI": 1213175.32,
+      "LLTV Weak RI__beg": 61313302.59,
+      "HLTV Strong RI": 1075507.42,
+      "HLTV Strong RI__beg": 28984777.76,
+      "HLTV Weak RI": 1259551.43,
+      "HLTV Weak RI__beg": 70214646.55,
+      "Pool": 3548234.17
+    },
+    {
+      "month": 104,
+      "LLTV Weak RI": 1208076.4,
+      "LLTV Weak RI__beg": 60455148.4,
+      "HLTV Strong RI": 1067854.18,
+      "HLTV Strong RI__beg": 28108970.32,
+      "HLTV Weak RI": 1254549.68,
+      "HLTV Weak RI__beg": 69359698.88,
+      "Pool": 3530480.26
+    },
+    {
+      "month": 105,
+      "LLTV Weak RI": 1202986.55,
+      "LLTV Weak RI__beg": 59597220.13,
+      "HLTV Strong RI": 1060229.96,
+      "HLTV Strong RI__beg": 27234972.67,
+      "HLTV Weak RI": 1249572.84,
+      "HLTV Weak RI__beg": 68505196.85,
+      "Pool": 3512789.35
+    },
+    {
+      "month": 106,
+      "LLTV Weak RI": 1197905.69,
+      "LLTV Weak RI__beg": 58739506.18,
+      "HLTV Strong RI": 1052634.49,
+      "HLTV Strong RI__beg": 26362760.4,
+      "HLTV Weak RI": 1244620.71,
+      "HLTV Weak RI__beg": 67651106.31,
+      "Pool": 3495160.89
+    },
+    {
+      "month": 107,
+      "LLTV Weak RI": 1192833.75,
+      "LLTV Weak RI__beg": 57881994.95,
+      "HLTV Strong RI": 1045067.45,
+      "HLTV Strong RI__beg": 25492309.25,
+      "HLTV Weak RI": 1239693.06,
+      "HLTV Weak RI__beg": 66797393.12,
+      "Pool": 3477594.26
+    },
+    {
+      "month": 108,
+      "LLTV Weak RI": 1187770.64,
+      "LLTV Weak RI__beg": 57024674.88,
+      "HLTV Strong RI": 1037528.57,
+      "HLTV Strong RI__beg": 24623595.05,
+      "HLTV Weak RI": 1234789.68,
+      "HLTV Weak RI__beg": 65944023.13,
+      "Pool": 3460088.89
+    },
+    {
+      "month": 109,
+      "LLTV Weak RI": 1184821.7,
+      "LLTV Weak RI__beg": 56167534.38,
+      "HLTV Strong RI": 1033114.27,
+      "HLTV Strong RI__beg": 23756593.74,
+      "HLTV Weak RI": 1229910.25,
+      "HLTV Weak RI__beg": 65090962.2,
+      "Pool": 3447846.22
+    },
+    {
+      "month": 110,
+      "LLTV Weak RI": 1179779.63,
+      "LLTV Weak RI__beg": 55308451.75,
+      "HLTV Strong RI": 1025624.23,
+      "HLTV Strong RI__beg": 22888180.11,
+      "HLTV Weak RI": 1225054.58,
+      "HLTV Weak RI__beg": 64238147.14,
+      "Pool": 3430458.44
+    },
+    {
+      "month": 111,
+      "LLTV Weak RI": 1174745.98,
+      "LLTV Weak RI__beg": 54449505.39,
+      "HLTV Strong RI": 1018161.28,
+      "HLTV Strong RI__beg": 22021413.04,
+      "HLTV Weak RI": 1220222.45,
+      "HLTV Weak RI__beg": 63385544.65,
+      "Pool": 3413129.71
+    },
+    {
+      "month": 112,
+      "LLTV Weak RI": 1169720.66,
+      "LLTV Weak RI__beg": 53590683.93,
+      "HLTV Strong RI": 1010725.18,
+      "HLTV Strong RI__beg": 21156269.11,
+      "HLTV Weak RI": 1215414.14,
+      "HLTV Weak RI__beg": 62533121.44,
+      "Pool": 3395859.98
+    },
+    {
+      "month": 113,
+      "LLTV Weak RI": 1164703.61,
+      "LLTV Weak RI__beg": 52731976.01,
+      "HLTV Strong RI": 1003315.68,
+      "HLTV Strong RI__beg": 20292725.02,
+      "HLTV Weak RI": 1210629.26,
+      "HLTV Weak RI__beg": 61680844.18,
+      "Pool": 3378648.55
+    },
+    {
+      "month": 114,
+      "LLTV Weak RI": 1159694.75,
+      "LLTV Weak RI__beg": 51873370.28,
+      "HLTV Strong RI": 995932.54,
+      "HLTV Strong RI__beg": 19430757.56,
+      "HLTV Weak RI": 1205867.6,
+      "HLTV Weak RI__beg": 60828679.56,
+      "Pool": 3361494.89
+    },
+    {
+      "month": 115,
+      "LLTV Weak RI": 1157145.87,
+      "LLTV Weak RI__beg": 51014855.39,
+      "HLTV Strong RI": 988575.49,
+      "HLTV Strong RI__beg": 18570343.63,
+      "HLTV Weak RI": 1201589.4,
+      "HLTV Weak RI__beg": 59976594.21,
+      "Pool": 3347310.76
+    },
+    {
+      "month": 116,
+      "LLTV Weak RI": 1152156.85,
+      "LLTV Weak RI__beg": 50153961.5,
+      "HLTV Strong RI": 981243.86,
+      "HLTV Strong RI__beg": 17711455.59,
+      "HLTV Weak RI": 1196873.64,
+      "HLTV Weak RI__beg": 59124043.21,
+      "Pool": 3330274.35
+    },
+    {
+      "month": 117,
+      "LLTV Weak RI": 1148063.98,
+      "LLTV Weak RI__beg": 49293103.02,
+      "HLTV Strong RI": 974199.31,
+      "HLTV Strong RI__beg": 16854062.52,
+      "HLTV Weak RI": 1195646.96,
+      "HLTV Weak RI__beg": 58271403.95,
+      "Pool": 3317910.25
+    },
+    {
+      "month": 118,
+      "LLTV Weak RI": 1145275.43,
+      "LLTV Weak RI__beg": 48431357.57,
+      "HLTV Strong RI": 973336.79,
+      "HLTV Strong RI__beg": 15997870.74,
+      "HLTV Weak RI": 1192617.3,
+      "HLTV Weak RI__beg": 57415089.19,
+      "Pool": 3311229.52
+    },
+    {
+      "month": 119,
+      "LLTV Weak RI": 1150517.34,
+      "LLTV Weak RI__beg": 47567375.69,
+      "HLTV Strong RI": 966500.47,
+      "HLTV Strong RI__beg": 15136674.04,
+      "HLTV Weak RI": 1193815.13,
+      "HLTV Weak RI__beg": 56556731.79,
+      "Pool": 3310832.94
+    },
+    {
+      "month": 120,
+      "LLTV Weak RI": 1153217.7,
+      "LLTV Weak RI__beg": 46693042.91,
+      "HLTV Strong RI": 959975.98,
+      "HLTV Strong RI__beg": 14276357.92,
+      "HLTV Weak RI": 1192022.25,
+      "HLTV Weak RI__beg": 55691803.33,
+      "Pool": 3305215.93
+    },
+    {
+      "month": 121,
+      "LLTV Weak RI": 1151865.01,
+      "LLTV Weak RI__beg": 45810750.95,
+      "HLTV Strong RI": 953131.57,
+      "HLTV Strong RI__beg": 13416565.91,
+      "HLTV Weak RI": 1187429.53,
+      "HLTV Weak RI__beg": 54822948.52,
+      "Pool": 3292426.11
+    },
+    {
+      "month": 122,
+      "LLTV Weak RI": 1146948.69,
+      "LLTV Weak RI__beg": 44924468.26,
+      "HLTV Strong RI": 945918.56,
+      "HLTV Strong RI__beg": 12557609.53,
+      "HLTV Weak RI": 1182852.85,
+      "HLTV Weak RI__beg": 53952818.03,
+      "Pool": 3275720.1
+    },
+    {
+      "month": 123,
+      "LLTV Weak RI": 1142036.23,
+      "LLTV Weak RI__beg": 44037742.33,
+      "HLTV Strong RI": 938727.31,
+      "HLTV Strong RI__beg": 11699874.91,
+      "HLTV Weak RI": 1178292.16,
+      "HLTV Weak RI__beg": 53081409.86,
+      "Pool": 3259055.7
+    },
+    {
+      "month": 124,
+      "LLTV Weak RI": 1137127.64,
+      "LLTV Weak RI__beg": 43150572.75,
+      "HLTV Strong RI": 930667.13,
+      "HLTV Strong RI__beg": 10843360.16,
+      "HLTV Weak RI": 1173747.47,
+      "HLTV Weak RI__beg": 52208721.98,
+      "Pool": 3241542.24
+    },
+    {
+      "month": 125,
+      "LLTV Weak RI": 1132223.03,
+      "LLTV Weak RI__beg": 42262959.12,
+      "HLTV Strong RI": 920947.26,
+      "HLTV Strong RI__beg": 9988954.12,
+      "HLTV Weak RI": 1169218.93,
+      "HLTV Weak RI__beg": 51334752.36,
+      "Pool": 3222389.22
+    },
+    {
+      "month": 126,
+      "LLTV Weak RI": 1127322.53,
+      "LLTV Weak RI__beg": 41374901.03,
+      "HLTV Strong RI": 911679.43,
+      "HLTV Strong RI__beg": 9138342.73,
+      "HLTV Weak RI": 1164706.49,
+      "HLTV Weak RI__beg": 50459498.98,
+      "Pool": 3203708.45
+    },
+    {
+      "month": 127,
+      "LLTV Weak RI": 1122426.33,
+      "LLTV Weak RI__beg": 40486398.09,
+      "HLTV Strong RI": 899820.85,
+      "HLTV Strong RI__beg": 8291112.13,
+      "HLTV Weak RI": 1160209.6,
+      "HLTV Weak RI__beg": 49582959.81,
+      "Pool": 3182456.78
+    },
+    {
+      "month": 128,
+      "LLTV Weak RI": 1117534.43,
+      "LLTV Weak RI__beg": 39597449.89,
+      "HLTV Strong RI": 882424.65,
+      "HLTV Strong RI__beg": 7449889.82,
+      "HLTV Weak RI": 1155728.41,
+      "HLTV Weak RI__beg": 48705132.8,
+      "Pool": 3155687.49
+    },
+    {
+      "month": 129,
+      "LLTV Weak RI": 1112646.81,
+      "LLTV Weak RI__beg": 38708056.01,
+      "HLTV Strong RI": 867598.83,
+      "HLTV Strong RI__beg": 6620268.85,
+      "HLTV Weak RI": 1151263.14,
+      "HLTV Weak RI__beg": 47826015.93,
+      "Pool": 3131508.78
+    },
+    {
+      "month": 130,
+      "LLTV Weak RI": 1107763.74,
+      "LLTV Weak RI__beg": 37818216.07,
+      "HLTV Strong RI": 846362.55,
+      "HLTV Strong RI__beg": 5799779.8,
+      "HLTV Weak RI": 1146814.03,
+      "HLTV Weak RI__beg": 46945607.14,
+      "Pool": 3100940.32
+    },
+    {
+      "month": 131,
+      "LLTV Weak RI": 1102885.45,
+      "LLTV Weak RI__beg": 36927929.64,
+      "HLTV Strong RI": 824254.63,
+      "HLTV Strong RI__beg": 4994914.1,
+      "HLTV Weak RI": 1142382.36,
+      "HLTV Weak RI__beg": 46063904.4,
+      "Pool": 3069522.44
+    },
+    {
+      "month": 132,
+      "LLTV Weak RI": 1098012.15,
+      "LLTV Weak RI__beg": 36037196.33,
+      "HLTV Strong RI": 776254.2,
+      "HLTV Strong RI__beg": 4206671.92,
+      "HLTV Weak RI": 1137969.34,
+      "HLTV Weak RI__beg": 45180905.66,
+      "Pool": 3012235.69
+    },
+    {
+      "month": 133,
+      "LLTV Weak RI": 1093144.48,
+      "LLTV Weak RI__beg": 35146015.72,
+      "HLTV Strong RI": 732321.74,
+      "HLTV Strong RI__beg": 3461075.85,
+      "HLTV Weak RI": 1133576.32,
+      "HLTV Weak RI__beg": 44296608.86,
+      "Pool": 2959042.54
+    },
+    {
+      "month": 134,
+      "LLTV Weak RI": 1088283.42,
+      "LLTV Weak RI__beg": 34254387.42,
+      "HLTV Strong RI": 675820.16,
+      "HLTV Strong RI__beg": 2754365.21,
+      "HLTV Weak RI": 1129205.54,
+      "HLTV Weak RI__beg": 43411011.95,
+      "Pool": 2893309.12
+    },
+    {
+      "month": 135,
+      "LLTV Weak RI": 1083431.0,
+      "LLTV Weak RI__beg": 33362311.01,
+      "HLTV Strong RI": 568846.07,
+      "HLTV Strong RI__beg": 2099391.91,
+      "HLTV Weak RI": 1124860.72,
+      "HLTV Weak RI__beg": 42524112.86,
+      "Pool": 2777137.79
+    },
+    {
+      "month": 136,
+      "LLTV Weak RI": 1078589.13,
+      "LLTV Weak RI__beg": 32469786.08,
+      "HLTV Strong RI": 418475.16,
+      "HLTV Strong RI__beg": 1546984.88,
+      "HLTV Weak RI": 1120545.4,
+      "HLTV Weak RI__beg": 41635909.54,
+      "Pool": 2617609.69
+    },
+    {
+      "month": 137,
+      "LLTV Weak RI": 1073758.51,
+      "LLTV Weak RI__beg": 31576812.23,
+      "HLTV Strong RI": 264163.32,
+      "HLTV Strong RI__beg": 1141221.03,
+      "HLTV Weak RI": 1116261.88,
+      "HLTV Weak RI__beg": 40746399.93,
+      "Pool": 2454183.71
+    },
+    {
+      "month": 138,
+      "LLTV Weak RI": 1068939.82,
+      "LLTV Weak RI__beg": 30683389.04,
+      "HLTV Strong RI": 129937.48,
+      "HLTV Strong RI__beg": 886998.78,
+      "HLTV Weak RI": 1112010.87,
+      "HLTV Weak RI__beg": 39855581.94,
+      "Pool": 2310888.17
+    },
+    {
+      "month": 139,
+      "LLTV Weak RI": 1064133.1,
+      "LLTV Weak RI__beg": 29789516.12,
+      "HLTV Strong RI": 61574.74,
+      "HLTV Strong RI__beg": 765199.96,
+      "HLTV Weak RI": 1107794.66,
+      "HLTV Weak RI__beg": 38963453.51,
+      "Pool": 2233502.5
+    },
+    {
+      "month": 140,
+      "LLTV Weak RI": 1059338.59,
+      "LLTV Weak RI__beg": 28895193.04,
+      "HLTV Strong RI": 30206.16,
+      "HLTV Strong RI__beg": 710795.77,
+      "HLTV Weak RI": 1103617.29,
+      "HLTV Weak RI__beg": 38070012.57,
+      "Pool": 2193162.04
+    },
+    {
+      "month": 141,
+      "LLTV Weak RI": 1054557.61,
+      "LLTV Weak RI__beg": 28000419.41,
+      "HLTV Strong RI": 26507.05,
+      "HLTV Strong RI__beg": 687218.07,
+      "HLTV Weak RI": 1099481.75,
+      "HLTV Weak RI__beg": 37175257.03,
+      "Pool": 2180546.41
+    },
+    {
+      "month": 142,
+      "LLTV Weak RI": 1049790.31,
+      "LLTV Weak RI__beg": 27105194.8,
+      "HLTV Strong RI": 26177.98,
+      "HLTV Strong RI__beg": 666998.16,
+      "HLTV Weak RI": 1095390.33,
+      "HLTV Weak RI__beg": 36279184.82,
+      "Pool": 2171358.62
+    },
+    {
+      "month": 143,
+      "LLTV Weak RI": 1045036.8,
+      "LLTV Weak RI__beg": 26209518.81,
+      "HLTV Strong RI": 25865.03,
+      "HLTV Strong RI__beg": 646801.58,
+      "HLTV Weak RI": 1091345.86,
+      "HLTV Weak RI__beg": 35381793.83,
+      "Pool": 2162247.69
+    },
+    {
+      "month": 144,
+      "LLTV Weak RI": 1040297.1,
+      "LLTV Weak RI__beg": 25313391.03,
+      "HLTV Strong RI": 25568.46,
+      "HLTV Strong RI__beg": 626628.3,
+      "HLTV Weak RI": 1087350.1,
+      "HLTV Weak RI__beg": 34483081.99,
+      "Pool": 2153215.66
+    },
+    {
+      "month": 145,
+      "LLTV Weak RI": 1035569.73,
+      "LLTV Weak RI__beg": 24416811.04,
+      "HLTV Strong RI": 25287.06,
+      "HLTV Strong RI__beg": 606478.3,
+      "HLTV Weak RI": 1083403.03,
+      "HLTV Weak RI__beg": 33583047.21,
+      "Pool": 2144259.82
+    },
+    {
+      "month": 146,
+      "LLTV Weak RI": 1030854.03,
+      "LLTV Weak RI__beg": 23519778.44,
+      "HLTV Strong RI": 25019.83,
+      "HLTV Strong RI__beg": 586351.54,
+      "HLTV Weak RI": 1079503.06,
+      "HLTV Weak RI__beg": 32681687.37,
+      "Pool": 2135376.92
+    },
+    {
+      "month": 147,
+      "LLTV Weak RI": 1026149.08,
+      "LLTV Weak RI__beg": 22622292.81,
+      "HLTV Strong RI": 24765.64,
+      "HLTV Strong RI__beg": 566247.98,
+      "HLTV Weak RI": 1075649.38,
+      "HLTV Weak RI__beg": 31779000.4,
+      "Pool": 2126564.1
+    },
+    {
+      "month": 148,
+      "LLTV Weak RI": 1021453.98,
+      "LLTV Weak RI__beg": 21724353.74,
+      "HLTV Strong RI": 24522.93,
+      "HLTV Strong RI__beg": 546167.61,
+      "HLTV Weak RI": 1071840.24,
+      "HLTV Weak RI__beg": 30874984.17,
+      "Pool": 2117817.15
+    },
+    {
+      "month": 149,
+      "LLTV Weak RI": 1016767.54,
+      "LLTV Weak RI__beg": 20825960.82,
+      "HLTV Strong RI": 24290.62,
+      "HLTV Strong RI__beg": 526110.39,
+      "HLTV Weak RI": 1068071.98,
+      "HLTV Weak RI__beg": 29969636.58,
+      "Pool": 2109130.14
+    },
+    {
+      "month": 150,
+      "LLTV Weak RI": 1012087.52,
+      "LLTV Weak RI__beg": 19927113.63,
+      "HLTV Strong RI": 24067.72,
+      "HLTV Strong RI__beg": 506076.29,
+      "HLTV Weak RI": 1064339.37,
+      "HLTV Weak RI__beg": 29062955.53,
+      "Pool": 2100494.61
+    },
+    {
+      "month": 151,
+      "LLTV Weak RI": 1007412.4,
+      "LLTV Weak RI__beg": 19027811.76,
+      "HLTV Strong RI": 23853.19,
+      "HLTV Strong RI__beg": 486065.29,
+      "HLTV Weak RI": 1060637.37,
+      "HLTV Weak RI__beg": 28154938.9,
+      "Pool": 2091902.96
+    },
+    {
+      "month": 152,
+      "LLTV Weak RI": 1002740.26,
+      "LLTV Weak RI__beg": 18128054.79,
+      "HLTV Strong RI": 23645.93,
+      "HLTV Strong RI__beg": 466077.34,
+      "HLTV Weak RI": 1056962.28,
+      "HLTV Weak RI__beg": 27245584.57,
+      "Pool": 2083348.47
+    },
+    {
+      "month": 153,
+      "LLTV Weak RI": 998068.32,
+      "LLTV Weak RI__beg": 17227842.32,
+      "HLTV Strong RI": 23445.04,
+      "HLTV Strong RI__beg": 446112.42,
+      "HLTV Weak RI": 1053311.98,
+      "HLTV Weak RI__beg": 26334890.42,
+      "Pool": 2074825.34
+    },
+    {
+      "month": 154,
+      "LLTV Weak RI": 993395.44,
+      "LLTV Weak RI__beg": 16327173.92,
+      "HLTV Strong RI": 23249.33,
+      "HLTV Strong RI__beg": 426170.51,
+      "HLTV Weak RI": 1049682.7,
+      "HLTV Weak RI__beg": 25422854.32,
+      "Pool": 2066327.47
+    },
+    {
+      "month": 155,
+      "LLTV Weak RI": 988720.87,
+      "LLTV Weak RI__beg": 15426049.18,
+      "HLTV Strong RI": 23057.34,
+      "HLTV Strong RI__beg": 406251.56,
+      "HLTV Weak RI": 1046068.81,
+      "HLTV Weak RI__beg": 24509474.15,
+      "Pool": 2057847.02
+    },
+    {
+      "month": 156,
+      "LLTV Weak RI": 984044.13,
+      "LLTV Weak RI__beg": 14524467.68,
+      "HLTV Strong RI": 22867.81,
+      "HLTV Strong RI__beg": 386355.56,
+      "HLTV Weak RI": 1042465.93,
+      "HLTV Weak RI__beg": 23594747.77,
+      "Pool": 2049377.87
+    },
+    {
+      "month": 157,
+      "LLTV Weak RI": 978528.85,
+      "LLTV Weak RI__beg": 13622429.02,
+      "HLTV Strong RI": 22680.3,
+      "HLTV Strong RI__beg": 366482.47,
+      "HLTV Weak RI": 1038870.36,
+      "HLTV Weak RI__beg": 22678673.06,
+      "Pool": 2040079.51
+    },
+    {
+      "month": 158,
+      "LLTV Weak RI": 973039.38,
+      "LLTV Weak RI__beg": 12720769.0,
+      "HLTV Strong RI": 22494.49,
+      "HLTV Strong RI__beg": 346632.26,
+      "HLTV Weak RI": 1035277.9,
+      "HLTV Weak RI__beg": 21761247.86,
+      "Pool": 2030811.77
+    },
+    {
+      "month": 159,
+      "LLTV Weak RI": 965000.79,
+      "LLTV Weak RI__beg": 11819464.24,
+      "HLTV Strong RI": 22310.11,
+      "HLTV Strong RI__beg": 326804.9,
+      "HLTV Weak RI": 1031685.12,
+      "HLTV Weak RI__beg": 20842470.04,
+      "Pool": 2018996.02
+    },
+    {
+      "month": 160,
+      "LLTV Weak RI": 950977.03,
+      "LLTV Weak RI__beg": 10921066.31,
+      "HLTV Strong RI": 22127.23,
+      "HLTV Strong RI__beg": 307000.36,
+      "HLTV Weak RI": 1028090.48,
+      "HLTV Weak RI__beg": 19922337.46,
+      "Pool": 2001194.74
+    },
+    {
+      "month": 161,
+      "LLTV Weak RI": 940730.91,
+      "LLTV Weak RI__beg": 10031580.82,
+      "HLTV Strong RI": 21945.93,
+      "HLTV Strong RI__beg": 287218.62,
+      "HLTV Weak RI": 1024493.04,
+      "HLTV Weak RI__beg": 19000847.95,
+      "Pool": 1987169.88
+    },
+    {
+      "month": 162,
+      "LLTV Weak RI": 920061.55,
+      "LLTV Weak RI__beg": 9147290.13,
+      "HLTV Strong RI": 21766.42,
+      "HLTV Strong RI__beg": 267459.64,
+      "HLTV Weak RI": 1019888.48,
+      "HLTV Weak RI__beg": 18077999.38,
+      "Pool": 1961716.45
+    },
+    {
+      "month": 163,
+      "LLTV Weak RI": 872541.64,
+      "LLTV Weak RI__beg": 8278652.26,
+      "HLTV Strong RI": 21588.71,
+      "HLTV Strong RI__beg": 247723.4,
+      "HLTV Weak RI": 1014164.93,
+      "HLTV Weak RI__beg": 17154792.7,
+      "Pool": 1908295.28
+    },
+    {
+      "month": 164,
+      "LLTV Weak RI": 833013.34,
+      "LLTV Weak RI__beg": 7452618.12,
+      "HLTV Strong RI": 21412.8,
+      "HLTV Strong RI__beg": 228009.85,
+      "HLTV Weak RI": 1010565.28,
+      "HLTV Weak RI__beg": 16232345.31,
+      "Pool": 1864991.42
+    },
+    {
+      "month": 165,
+      "LLTV Weak RI": 788548.9,
+      "LLTV Weak RI__beg": 6661462.51,
+      "HLTV Strong RI": 21238.65,
+      "HLTV Strong RI__beg": 208318.99,
+      "HLTV Weak RI": 1006318.95,
+      "HLTV Weak RI__beg": 15308538.74,
+      "Pool": 1816106.5
+    },
+    {
+      "month": 166,
+      "LLTV Weak RI": 717378.51,
+      "LLTV Weak RI__beg": 5910335.82,
+      "HLTV Strong RI": 21066.16,
+      "HLTV Strong RI__beg": 188650.77,
+      "HLTV Weak RI": 998920.46,
+      "HLTV Weak RI__beg": 14384012.49,
+      "Pool": 1737365.13
+    },
+    {
+      "month": 167,
+      "LLTV Weak RI": 597660.42,
+      "LLTV Weak RI__beg": 5226189.37,
+      "HLTV Strong RI": 20895.26,
+      "HLTV Strong RI__beg": 169005.16,
+      "HLTV Weak RI": 985501.95,
+      "HLTV Weak RI__beg": 13461915.88,
+      "Pool": 1604057.63
+    },
+    {
+      "month": 168,
+      "LLTV Weak RI": 495784.24,
+      "LLTV Weak RI__beg": 4657971.33,
+      "HLTV Strong RI": 20725.85,
+      "HLTV Strong RI__beg": 149382.15,
+      "HLTV Weak RI": 975798.43,
+      "HLTV Weak RI__beg": 12548282.82,
+      "Pool": 1492308.52
+    },
+    {
+      "month": 169,
+      "LLTV Weak RI": 369568.2,
+      "LLTV Weak RI__beg": 4188521.38,
+      "HLTV Strong RI": 18940.92,
+      "HLTV Strong RI__beg": 129781.69,
+      "HLTV Weak RI": 970237.28,
+      "HLTV Weak RI__beg": 11639445.01,
+      "Pool": 1358746.4
+    },
+    {
+      "month": 170,
+      "LLTV Weak RI": 298344.45,
+      "LLTV Weak RI__beg": 3842743.95,
+      "HLTV Strong RI": 15048.16,
+      "HLTV Strong RI__beg": 111820.86,
+      "HLTV Weak RI": 962380.1,
+      "HLTV Weak RI__beg": 10731287.95,
+      "Pool": 1275772.71
+    },
+    {
+      "month": 171,
+      "LLTV Weak RI": 234412.23,
+      "LLTV Weak RI__beg": 3566335.97,
+      "HLTV Strong RI": 14925.0,
+      "HLTV Strong RI__beg": 97619.41,
+      "HLTV Weak RI": 949564.72,
+      "HLTV Weak RI__beg": 9826112.14,
+      "Pool": 1198901.95
+    },
+    {
+      "month": 172,
+      "LLTV Weak RI": 181552.27,
+      "LLTV Weak RI__beg": 3352385.18,
+      "HLTV Strong RI": 14802.89,
+      "HLTV Strong RI__beg": 83434.2,
+      "HLTV Weak RI": 934783.71,
+      "HLTV Weak RI__beg": 8928892.47,
+      "Pool": 1131138.87
+    },
+    {
+      "month": 173,
+      "LLTV Weak RI": 146489.88,
+      "LLTV Weak RI__beg": 3190153.35,
+      "HLTV Strong RI": 14418.86,
+      "HLTV Strong RI__beg": 69265.22,
+      "HLTV Weak RI": 923891.41,
+      "HLTV Weak RI__beg": 8041640.61,
+      "Pool": 1084800.15
+    },
+    {
+      "month": 174,
+      "LLTV Weak RI": 112117.06,
+      "LLTV Weak RI__beg": 3062116.0,
+      "HLTV Strong RI": 12936.34,
+      "HLTV Strong RI__beg": 55375.3,
+      "HLTV Weak RI": 894484.59,
+      "HLTV Weak RI__beg": 7160527.49,
+      "Pool": 1019537.99
+    },
+    {
+      "month": 175,
+      "LLTV Weak RI": 96325.18,
+      "LLTV Weak RI__beg": 2967756.83,
+      "HLTV Strong RI": 6466.08,
+      "HLTV Strong RI__beg": 42865.7,
+      "HLTV Weak RI": 848778.47,
+      "HLTV Weak RI__beg": 6304104.01,
+      "Pool": 951569.73
+    },
+    {
+      "month": 176,
+      "LLTV Weak RI": 89044.82,
+      "LLTV Weak RI__beg": 2888662.59,
+      "HLTV Strong RI": 6409.96,
+      "HLTV Strong RI__beg": 36734.2,
+      "HLTV Weak RI": 763792.74,
+      "HLTV Weak RI__beg": 5488812.96,
+      "Pool": 859247.52
+    },
+    {
+      "month": 177,
+      "LLTV Weak RI": 84569.77,
+      "LLTV Weak RI__beg": 2816395.04,
+      "HLTV Strong RI": 6310.6,
+      "HLTV Strong RI__beg": 30612.95,
+      "HLTV Weak RI": 647932.34,
+      "HLTV Weak RI__beg": 4754170.42,
+      "Pool": 738812.71
+    },
+    {
+      "month": 178,
+      "LLTV Weak RI": 81273.66,
+      "LLTV Weak RI__beg": 2748180.87,
+      "HLTV Strong RI": 5852.88,
+      "HLTV Strong RI__beg": 24545.93,
+      "HLTV Weak RI": 527175.81,
+      "HLTV Weak RI__beg": 4131506.46,
+      "Pool": 614302.35
+    },
+    {
+      "month": 179,
+      "LLTV Weak RI": 80923.85,
+      "LLTV Weak RI__beg": 2682859.78,
+      "HLTV Strong RI": 5706.17,
+      "HLTV Strong RI__beg": 18892.51,
+      "HLTV Weak RI": 435524.8,
+      "HLTV Weak RI__beg": 3626342.51,
+      "Pool": 522154.82
+    },
+    {
+      "month": 180,
+      "LLTV Weak RI": 80574.07,
+      "LLTV Weak RI__beg": 2617498.93,
+      "HLTV Strong RI": 5005.74,
+      "HLTV Strong RI__beg": 13345.13,
+      "HLTV Weak RI": 358147.14,
+      "HLTV Weak RI__beg": 3210222.26,
+      "Pool": 443726.95
+    },
+    {
+      "month": 181,
+      "LLTV Weak RI": 80224.31,
+      "LLTV Weak RI__beg": 2552098.3,
+      "HLTV Strong RI": 4537.15,
+      "HLTV Strong RI__beg": 8458.78,
+      "HLTV Weak RI": 261907.5,
+      "HLTV Weak RI__beg": 2869357.76,
+      "Pool": 346668.96
+    },
+    {
+      "month": 182,
+      "LLTV Weak RI": 79874.63,
+      "LLTV Weak RI__beg": 2486657.85,
+      "HLTV Strong RI": 1966.98,
+      "HLTV Strong RI__beg": 4006.68,
+      "HLTV Weak RI": 213367.89,
+      "HLTV Weak RI__beg": 2623005.42,
+      "Pool": 295209.5
+    },
+    {
+      "month": 183,
+      "LLTV Weak RI": 79525.01,
+      "LLTV Weak RI__beg": 2421177.55,
+      "HLTV Strong RI": 1535.07,
+      "HLTV Strong RI__beg": 2093.47,
+      "HLTV Weak RI": 161423.73,
+      "HLTV Weak RI__beg": 2423956.93,
+      "Pool": 242483.81
+    },
+    {
+      "month": 184,
+      "LLTV Weak RI": 79175.52,
+      "LLTV Weak RI__beg": 2355657.35,
+      "HLTV Strong RI": 623.95,
+      "HLTV Strong RI__beg": 597.14,
+      "HLTV Weak RI": 105956.13,
+      "HLTV Weak RI__beg": 2275861.15,
+      "Pool": 185755.6
+    },
+    {
+      "month": 185,
+      "LLTV Weak RI": 78826.22,
+      "LLTV Weak RI__beg": 2290097.23,
+      "HLTV Strong RI": 20.95,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 86449.18,
+      "HLTV Weak RI__beg": 2182488.96,
+      "Pool": 165296.35
+    },
+    {
+      "month": 186,
+      "LLTV Weak RI": 78477.1,
+      "LLTV Weak RI__beg": 2224497.15,
+      "HLTV Strong RI": 19.19,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 78355.34,
+      "HLTV Weak RI__beg": 2108145.95,
+      "Pool": 156851.63
+    },
+    {
+      "month": 187,
+      "LLTV Weak RI": 78128.15,
+      "LLTV Weak RI__beg": 2158857.08,
+      "HLTV Strong RI": 17.91,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 71263.33,
+      "HLTV Weak RI__beg": 2041508.21,
+      "Pool": 149409.39
+    },
+    {
+      "month": 188,
+      "LLTV Weak RI": 77779.36,
+      "LLTV Weak RI__beg": 2093176.97,
+      "HLTV Strong RI": 16.84,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 63253.76,
+      "HLTV Weak RI__beg": 1981610.07,
+      "Pool": 141049.96
+    },
+    {
+      "month": 189,
+      "LLTV Weak RI": 77430.82,
+      "LLTV Weak RI__beg": 2027456.8,
+      "HLTV Strong RI": 15.94,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 51617.93,
+      "HLTV Weak RI__beg": 1929399.59,
+      "Pool": 129064.69
+    },
+    {
+      "month": 190,
+      "LLTV Weak RI": 77082.56,
+      "LLTV Weak RI__beg": 1961696.54,
+      "HLTV Strong RI": 15.05,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 50273.5,
+      "HLTV Weak RI__beg": 1888535.35,
+      "Pool": 127371.11
+    },
+    {
+      "month": 191,
+      "LLTV Weak RI": 76734.67,
+      "LLTV Weak RI__beg": 1895896.14,
+      "HLTV Strong RI": 14.17,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 45887.1,
+      "HLTV Weak RI__beg": 1848774.97,
+      "Pool": 122635.94
+    },
+    {
+      "month": 192,
+      "LLTV Weak RI": 76387.22,
+      "LLTV Weak RI__beg": 1830055.57,
+      "HLTV Strong RI": 13.3,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 44441.47,
+      "HLTV Weak RI__beg": 1813164.76,
+      "Pool": 120841.99
+    },
+    {
+      "month": 193,
+      "LLTV Weak RI": 76040.17,
+      "LLTV Weak RI__beg": 1764174.8,
+      "HLTV Strong RI": 12.43,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 43610.45,
+      "HLTV Weak RI__beg": 1778781.14,
+      "Pool": 119663.05
+    },
+    {
+      "month": 194,
+      "LLTV Weak RI": 75693.52,
+      "LLTV Weak RI__beg": 1698253.78,
+      "HLTV Strong RI": 11.58,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 43445.91,
+      "HLTV Weak RI__beg": 1745014.33,
+      "Pool": 119151.01
+    },
+    {
+      "month": 195,
+      "LLTV Weak RI": 75347.29,
+      "LLTV Weak RI__beg": 1632292.5,
+      "HLTV Strong RI": 10.76,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 43281.63,
+      "HLTV Weak RI__beg": 1711200.53,
+      "Pool": 118639.68
+    },
+    {
+      "month": 196,
+      "LLTV Weak RI": 75001.48,
+      "LLTV Weak RI__beg": 1566290.9,
+      "HLTV Strong RI": 9.96,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 43117.73,
+      "HLTV Weak RI__beg": 1677339.68,
+      "Pool": 118129.17
+    },
+    {
+      "month": 197,
+      "LLTV Weak RI": 74656.08,
+      "LLTV Weak RI__beg": 1500248.96,
+      "HLTV Strong RI": 9.22,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 42954.38,
+      "HLTV Weak RI__beg": 1643431.69,
+      "Pool": 117619.68
+    },
+    {
+      "month": 198,
+      "LLTV Weak RI": 74311.05,
+      "LLTV Weak RI__beg": 1434166.64,
+      "HLTV Strong RI": 8.52,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 42791.63,
+      "HLTV Weak RI__beg": 1609476.51,
+      "Pool": 117111.2
+    },
+    {
+      "month": 199,
+      "LLTV Weak RI": 73966.37,
+      "LLTV Weak RI__beg": 1368043.91,
+      "HLTV Strong RI": 7.88,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 42629.61,
+      "HLTV Weak RI__beg": 1575474.07,
+      "Pool": 116603.86
+    },
+    {
+      "month": 200,
+      "LLTV Weak RI": 73621.88,
+      "LLTV Weak RI__beg": 1301880.72,
+      "HLTV Strong RI": 7.3,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 42468.49,
+      "HLTV Weak RI__beg": 1541424.28,
+      "Pool": 116097.67
+    },
+    {
+      "month": 201,
+      "LLTV Weak RI": 73277.52,
+      "LLTV Weak RI__beg": 1235677.06,
+      "HLTV Strong RI": 6.78,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 42308.57,
+      "HLTV Weak RI__beg": 1507327.1,
+      "Pool": 115592.87
+    },
+    {
+      "month": 202,
+      "LLTV Weak RI": 72933.28,
+      "LLTV Weak RI__beg": 1169432.87,
+      "HLTV Strong RI": 6.31,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 42149.91,
+      "HLTV Weak RI__beg": 1473182.44,
+      "Pool": 115089.5
+    },
+    {
+      "month": 203,
+      "LLTV Weak RI": 72589.05,
+      "LLTV Weak RI__beg": 1103148.12,
+      "HLTV Strong RI": 5.89,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 41992.63,
+      "HLTV Weak RI__beg": 1438990.23,
+      "Pool": 114587.57
+    },
+    {
+      "month": 204,
+      "LLTV Weak RI": 72244.8,
+      "LLTV Weak RI__beg": 1036822.78,
+      "HLTV Strong RI": 5.52,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 41836.89,
+      "HLTV Weak RI__beg": 1404750.41,
+      "Pool": 114087.21
+    },
+    {
+      "month": 205,
+      "LLTV Weak RI": 71900.42,
+      "LLTV Weak RI__beg": 970456.82,
+      "HLTV Strong RI": 5.21,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 41682.83,
+      "HLTV Weak RI__beg": 1370462.91,
+      "Pool": 113588.46
+    },
+    {
+      "month": 206,
+      "LLTV Weak RI": 71555.93,
+      "LLTV Weak RI__beg": 904050.19,
+      "HLTV Strong RI": 4.95,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 41530.46,
+      "HLTV Weak RI__beg": 1336127.65,
+      "Pool": 113091.34
+    },
+    {
+      "month": 207,
+      "LLTV Weak RI": 71211.25,
+      "LLTV Weak RI__beg": 837602.86,
+      "HLTV Strong RI": 4.72,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 41379.81,
+      "HLTV Weak RI__beg": 1301744.57,
+      "Pool": 112595.78
+    },
+    {
+      "month": 208,
+      "LLTV Weak RI": 70866.4,
+      "LLTV Weak RI__beg": 771114.81,
+      "HLTV Strong RI": 4.52,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 41230.85,
+      "HLTV Weak RI__beg": 1267313.59,
+      "Pool": 112101.77
+    },
+    {
+      "month": 209,
+      "LLTV Weak RI": 66992.38,
+      "LLTV Weak RI__beg": 704585.98,
+      "HLTV Strong RI": 4.34,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 41083.53,
+      "HLTV Weak RI__beg": 1232834.64,
+      "Pool": 108080.25
+    },
+    {
+      "month": 210,
+      "LLTV Weak RI": 64537.39,
+      "LLTV Weak RI__beg": 641545.35,
+      "HLTV Strong RI": 4.16,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 40937.72,
+      "HLTV Weak RI__beg": 1198307.66,
+      "Pool": 105479.27
+    },
+    {
+      "month": 211,
+      "LLTV Weak RI": 63905.41,
+      "LLTV Weak RI__beg": 580596.05,
+      "HLTV Strong RI": 3.99,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 40793.37,
+      "HLTV Weak RI__beg": 1163732.57,
+      "Pool": 104702.77
+    },
+    {
+      "month": 212,
+      "LLTV Weak RI": 61684.65,
+      "LLTV Weak RI__beg": 519928.44,
+      "HLTV Strong RI": 3.82,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 40650.28,
+      "HLTV Weak RI__beg": 1129109.31,
+      "Pool": 102338.75
+    },
+    {
+      "month": 213,
+      "LLTV Weak RI": 54665.47,
+      "LLTV Weak RI__beg": 461133.24,
+      "HLTV Strong RI": 3.66,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 40508.41,
+      "HLTV Weak RI__beg": 1094437.8,
+      "Pool": 95177.54
+    },
+    {
+      "month": 214,
+      "LLTV Weak RI": 51594.61,
+      "LLTV Weak RI__beg": 409020.84,
+      "HLTV Strong RI": 3.5,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 40367.67,
+      "HLTV Weak RI__beg": 1059717.96,
+      "Pool": 91965.78
+    },
+    {
+      "month": 215,
+      "LLTV Weak RI": 51338.53,
+      "LLTV Weak RI__beg": 359682.01,
+      "HLTV Strong RI": 3.35,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 40227.86,
+      "HLTV Weak RI__beg": 1024949.74,
+      "Pool": 91569.74
+    },
+    {
+      "month": 216,
+      "LLTV Weak RI": 51082.32,
+      "LLTV Weak RI__beg": 310319.32,
+      "HLTV Strong RI": 3.2,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 40088.72,
+      "HLTV Weak RI__beg": 990133.05,
+      "Pool": 91174.24
+    },
+    {
+      "month": 217,
+      "LLTV Weak RI": 38834.63,
+      "LLTV Weak RI__beg": 260932.75,
+      "HLTV Strong RI": 3.06,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 39950.19,
+      "HLTV Weak RI__beg": 955267.84,
+      "Pool": 78787.88
+    },
+    {
+      "month": 218,
+      "LLTV Weak RI": 36919.61,
+      "LLTV Weak RI__beg": 223513.68,
+      "HLTV Strong RI": 2.91,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 39812.13,
+      "HLTV Weak RI__beg": 920354.01,
+      "Pool": 76734.65
+    },
+    {
+      "month": 219,
+      "LLTV Weak RI": 35184.25,
+      "LLTV Weak RI__beg": 187801.31,
+      "HLTV Strong RI": 2.77,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 39674.37,
+      "HLTV Weak RI__beg": 885391.51,
+      "Pool": 74861.39
+    },
+    {
+      "month": 220,
+      "LLTV Weak RI": 24912.93,
+      "LLTV Weak RI__beg": 153626.45,
+      "HLTV Strong RI": 2.62,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 39536.83,
+      "HLTV Weak RI__beg": 850380.26,
+      "Pool": 64452.38
+    },
+    {
+      "month": 221,
+      "LLTV Weak RI": 19842.83,
+      "LLTV Weak RI__beg": 129533.8,
+      "HLTV Strong RI": 2.48,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 39399.39,
+      "HLTV Weak RI__beg": 815320.2,
+      "Pool": 59244.7
+    },
+    {
+      "month": 222,
+      "LLTV Weak RI": 18551.39,
+      "LLTV Weak RI__beg": 110380.9,
+      "HLTV Strong RI": 2.34,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 39262.02,
+      "HLTV Weak RI__beg": 780211.24,
+      "Pool": 57815.75
+    },
+    {
+      "month": 223,
+      "LLTV Weak RI": 17105.69,
+      "LLTV Weak RI__beg": 92417.45,
+      "HLTV Strong RI": 2.19,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 39124.63,
+      "HLTV Weak RI__beg": 745053.32,
+      "Pool": 56232.51
+    },
+    {
+      "month": 224,
+      "LLTV Weak RI": 13069.1,
+      "LLTV Weak RI__beg": 75804.17,
+      "HLTV Strong RI": 2.05,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 38987.18,
+      "HLTV Weak RI__beg": 709846.36,
+      "Pool": 52058.33
+    },
+    {
+      "month": 225,
+      "LLTV Weak RI": 12061.16,
+      "LLTV Weak RI__beg": 63139.4,
+      "HLTV Strong RI": 1.91,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 38849.65,
+      "HLTV Weak RI__beg": 674590.29,
+      "Pool": 50912.72
+    },
+    {
+      "month": 226,
+      "LLTV Weak RI": 11999.67,
+      "LLTV Weak RI__beg": 51416.28,
+      "HLTV Strong RI": 1.77,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 38712.01,
+      "HLTV Weak RI__beg": 639285.05,
+      "Pool": 50713.45
+    },
+    {
+      "month": 227,
+      "LLTV Weak RI": 11938.18,
+      "LLTV Weak RI__beg": 39693.55,
+      "HLTV Strong RI": 1.62,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 38574.24,
+      "HLTV Weak RI__beg": 603930.55,
+      "Pool": 50514.04
+    },
+    {
+      "month": 228,
+      "LLTV Weak RI": 11876.71,
+      "LLTV Weak RI__beg": 27971.24,
+      "HLTV Strong RI": 1.48,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 38436.32,
+      "HLTV Weak RI__beg": 568526.72,
+      "Pool": 50314.51
+    },
+    {
+      "month": 229,
+      "LLTV Weak RI": 10152.98,
+      "LLTV Weak RI__beg": 16249.33,
+      "HLTV Strong RI": 1.34,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 38298.24,
+      "HLTV Weak RI__beg": 533073.5,
+      "Pool": 48452.56
+    },
+    {
+      "month": 230,
+      "LLTV Weak RI": 4508.18,
+      "LLTV Weak RI__beg": 6190.11,
+      "HLTV Strong RI": 1.2,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 38159.99,
+      "HLTV Weak RI__beg": 497570.81,
+      "Pool": 42669.37
+    },
+    {
+      "month": 231,
+      "LLTV Weak RI": 1741.12,
+      "LLTV Weak RI__beg": 1723.26,
+      "HLTV Strong RI": 1.05,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 37800.8,
+      "HLTV Weak RI__beg": 462018.57,
+      "Pool": 39542.97
+    },
+    {
+      "month": 232,
+      "LLTV Weak RI": 8.28,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.9,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 37256.04,
+      "HLTV Weak RI__beg": 426637.5,
+      "Pool": 37265.22
+    },
+    {
+      "month": 233,
+      "LLTV Weak RI": 7.48,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.76,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 37119.63,
+      "HLTV Weak RI__beg": 391614.14,
+      "Pool": 37127.87
+    },
+    {
+      "month": 234,
+      "LLTV Weak RI": 6.72,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.63,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 36983.04,
+      "HLTV Weak RI__beg": 356542.32,
+      "Pool": 36990.39
+    },
+    {
+      "month": 235,
+      "LLTV Weak RI": 5.97,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.51,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 36846.25,
+      "HLTV Weak RI__beg": 321421.96,
+      "Pool": 36852.73
+    },
+    {
+      "month": 236,
+      "LLTV Weak RI": 5.27,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.41,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 33404.37,
+      "HLTV Weak RI__beg": 286252.99,
+      "Pool": 33410.05
+    },
+    {
+      "month": 237,
+      "LLTV Weak RI": 4.64,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.31,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 29557.6,
+      "HLTV Weak RI__beg": 254340.37,
+      "Pool": 29562.55
+    },
+    {
+      "month": 238,
+      "LLTV Weak RI": 4.06,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.23,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 28776.48,
+      "HLTV Weak RI__beg": 226107.66,
+      "Pool": 28780.77
+    },
+    {
+      "month": 239,
+      "LLTV Weak RI": 3.55,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.16,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 28621.75,
+      "HLTV Weak RI__beg": 198510.32,
+      "Pool": 28625.46
+    },
+    {
+      "month": 240,
+      "LLTV Weak RI": 3.09,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.1,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 26190.66,
+      "HLTV Weak RI__beg": 170925.78,
+      "Pool": 26193.85
+    },
+    {
+      "month": 241,
+      "LLTV Weak RI": 2.7,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.06,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 22789.99,
+      "HLTV Weak RI__beg": 145630.2,
+      "Pool": 22792.75
+    },
+    {
+      "month": 242,
+      "LLTV Weak RI": 2.37,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.02,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 18806.96,
+      "HLTV Weak RI__beg": 123605.88,
+      "Pool": 18809.35
+    },
+    {
+      "month": 243,
+      "LLTV Weak RI": 2.07,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 18735.61,
+      "HLTV Weak RI__beg": 105452.07,
+      "Pool": 18737.68
+    },
+    {
+      "month": 244,
+      "LLTV Weak RI": 1.82,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 18664.2,
+      "HLTV Weak RI__beg": 87278.18,
+      "Pool": 18666.02
+    },
+    {
+      "month": 245,
+      "LLTV Weak RI": 1.6,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 18592.74,
+      "HLTV Weak RI__beg": 69084.18,
+      "Pool": 18594.34
+    },
+    {
+      "month": 246,
+      "LLTV Weak RI": 1.39,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 13376.7,
+      "HLTV Weak RI__beg": 50870.04,
+      "Pool": 13378.09
+    },
+    {
+      "month": 247,
+      "LLTV Weak RI": 1.2,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 12320.59,
+      "HLTV Weak RI__beg": 37780.31,
+      "Pool": 12321.79
+    },
+    {
+      "month": 248,
+      "LLTV Weak RI": 1.03,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 11213.02,
+      "HLTV Weak RI__beg": 25680.83,
+      "Pool": 11214.05
+    },
+    {
+      "month": 249,
+      "LLTV Weak RI": 0.88,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 11169.12,
+      "HLTV Weak RI__beg": 14627.98,
+      "Pool": 11170.0
+    },
+    {
+      "month": 250,
+      "LLTV Weak RI": 0.75,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 2667.66,
+      "HLTV Weak RI__beg": 3563.45,
+      "Pool": 2668.41
+    },
+    {
+      "month": 251,
+      "LLTV Weak RI": 0.62,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 979.8,
+      "HLTV Weak RI__beg": 944.85,
+      "Pool": 980.42
+    },
+    {
+      "month": 252,
+      "LLTV Weak RI": 0.52,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 29.01,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 29.53
+    },
+    {
+      "month": 253,
+      "LLTV Weak RI": 0.43,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 27.72,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 28.15
+    },
+    {
+      "month": 254,
+      "LLTV Weak RI": 0.36,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 26.44,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 26.8
+    },
+    {
+      "month": 255,
+      "LLTV Weak RI": 0.29,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 25.18,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 25.47
+    },
+    {
+      "month": 256,
+      "LLTV Weak RI": 0.23,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 23.93,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 24.16
+    },
+    {
+      "month": 257,
+      "LLTV Weak RI": 0.18,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 22.69,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 22.87
+    },
+    {
+      "month": 258,
+      "LLTV Weak RI": 0.13,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 21.46,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 21.59
+    },
+    {
+      "month": 259,
+      "LLTV Weak RI": 0.09,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 20.24,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 20.33
+    },
+    {
+      "month": 260,
+      "LLTV Weak RI": 0.06,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 19.03,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 19.09
+    },
+    {
+      "month": 261,
+      "LLTV Weak RI": 0.04,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 17.83,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 17.87
+    },
+    {
+      "month": 262,
+      "LLTV Weak RI": 0.02,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 16.64,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 16.66
+    },
+    {
+      "month": 263,
+      "LLTV Weak RI": 0.01,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 15.47,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 15.48
+    },
+    {
+      "month": 264,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 14.31,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 14.31
+    },
+    {
+      "month": 265,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 13.19,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 13.19
+    },
+    {
+      "month": 266,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 12.1,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 12.1
+    },
+    {
+      "month": 267,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 11.05,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 11.05
+    },
+    {
+      "month": 268,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 10.02,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 10.02
+    },
+    {
+      "month": 269,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 9.05,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 9.05
+    },
+    {
+      "month": 270,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 8.12,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 8.12
+    },
+    {
+      "month": 271,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 7.25,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 7.25
+    },
+    {
+      "month": 272,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 6.46,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 6.46
+    },
+    {
+      "month": 273,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 5.74,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 5.74
+    },
+    {
+      "month": 274,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 5.08,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 5.08
+    },
+    {
+      "month": 275,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 4.5,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 4.5
+    },
+    {
+      "month": 276,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 3.98,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 3.98
+    },
+    {
+      "month": 277,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 3.53,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 3.53
+    },
+    {
+      "month": 278,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 3.15,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 3.15
+    },
+    {
+      "month": 279,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 2.83,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 2.83
+    },
+    {
+      "month": 280,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 2.55,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 2.55
+    },
+    {
+      "month": 281,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 2.32,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 2.32
+    },
+    {
+      "month": 282,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 2.14,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 2.14
+    },
+    {
+      "month": 283,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 2.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 2.0
+    },
+    {
+      "month": 284,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 1.87,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 1.87
+    },
+    {
+      "month": 285,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 1.77,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 1.77
+    },
+    {
+      "month": 286,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 1.67,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 1.67
+    },
+    {
+      "month": 287,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 1.57,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 1.57
+    },
+    {
+      "month": 288,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 1.47,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 1.47
+    },
+    {
+      "month": 289,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 1.37,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 1.37
+    },
+    {
+      "month": 290,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 1.27,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 1.27
+    },
+    {
+      "month": 291,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 1.16,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 1.16
+    },
+    {
+      "month": 292,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 1.06,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 1.06
+    },
+    {
+      "month": 293,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.96,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.96
+    },
+    {
+      "month": 294,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.86,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.86
+    },
+    {
+      "month": 295,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.75,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.75
+    },
+    {
+      "month": 296,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.65,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.65
+    },
+    {
+      "month": 297,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.56,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.56
+    },
+    {
+      "month": 298,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.48,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.48
+    },
+    {
+      "month": 299,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.4,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.4
+    },
+    {
+      "month": 300,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.33,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.33
+    },
+    {
+      "month": 301,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.26,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.26
+    },
+    {
+      "month": 302,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.21,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.21
+    },
+    {
+      "month": 303,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.16,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.16
+    },
+    {
+      "month": 304,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.11,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.11
+    },
+    {
+      "month": 305,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.08,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.08
+    },
+    {
+      "month": 306,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.05,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.05
+    },
+    {
+      "month": 307,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.02,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.02
+    },
+    {
+      "month": 308,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.01,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.01
+    },
+    {
+      "month": 309,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 310,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 311,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 312,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 313,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 314,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 315,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 316,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 317,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 318,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 319,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 320,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 321,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 322,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 323,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 324,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 325,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 326,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 327,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 328,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 329,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 330,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 331,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 332,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 333,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 334,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 335,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 336,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 337,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 338,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 339,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 340,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 341,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 342,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 343,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 344,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 345,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 346,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 347,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 348,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 349,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 350,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 351,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 352,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 353,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 354,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 355,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 356,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 357,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 358,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 359,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 360,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 361,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 362,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 363,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 364,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 365,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 366,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 367,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 368,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 369,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 370,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 371,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 372,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 373,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 374,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 375,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 376,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 377,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 378,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 379,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 380,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 381,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 382,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 383,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 384,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 385,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 386,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 387,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 388,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 389,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 390,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 391,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 392,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 393,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 394,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 395,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 396,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 397,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 398,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 399,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 400,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 401,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 402,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 403,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 404,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 405,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 406,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 407,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 408,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 409,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 410,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 411,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 412,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 413,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 414,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 415,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 416,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 417,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 418,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 419,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 420,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 421,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 422,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 423,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 424,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 425,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 426,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 427,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 428,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 429,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 430,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 431,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 432,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 433,
+      "LLTV Weak RI": 0.0,
+      "LLTV Weak RI__beg": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Strong RI__beg": 0.0,
+      "HLTV Weak RI": 0.0,
+      "HLTV Weak RI__beg": 0.0,
+      "Pool": 0.0
+    }
+  ],
+  "recovery_months": [
+    {
+      "month": 1,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 2,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 3,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 4,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 5,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 6,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 7,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 8,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 9,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 10,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 11,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 12,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 13,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 14,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 15,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 16,
+      "LLTV Weak RI": 41.44,
+      "HLTV Strong RI": 37.98,
+      "HLTV Weak RI": 125.37,
+      "Pool": 204.79
+    },
+    {
+      "month": 17,
+      "LLTV Weak RI": 180.29,
+      "HLTV Strong RI": 172.21,
+      "HLTV Weak RI": 479.46,
+      "Pool": 831.96
+    },
+    {
+      "month": 18,
+      "LLTV Weak RI": 359.16,
+      "HLTV Strong RI": 346.1,
+      "HLTV Weak RI": 912.08,
+      "Pool": 1617.34
+    },
+    {
+      "month": 19,
+      "LLTV Weak RI": 582.74,
+      "HLTV Strong RI": 574.17,
+      "HLTV Weak RI": 1458.41,
+      "Pool": 2615.32
+    },
+    {
+      "month": 20,
+      "LLTV Weak RI": 848.21,
+      "HLTV Strong RI": 847.09,
+      "HLTV Weak RI": 2096.95,
+      "Pool": 3792.25
+    },
+    {
+      "month": 21,
+      "LLTV Weak RI": 1213.01,
+      "HLTV Strong RI": 1226.98,
+      "HLTV Weak RI": 2985.14,
+      "Pool": 5425.13
+    },
+    {
+      "month": 22,
+      "LLTV Weak RI": 1650.31,
+      "HLTV Strong RI": 1679.29,
+      "HLTV Weak RI": 4029.98,
+      "Pool": 7359.58
+    },
+    {
+      "month": 23,
+      "LLTV Weak RI": 2153.05,
+      "HLTV Strong RI": 2199.03,
+      "HLTV Weak RI": 5217.31,
+      "Pool": 9569.39
+    },
+    {
+      "month": 24,
+      "LLTV Weak RI": 2745.37,
+      "HLTV Strong RI": 2821.52,
+      "HLTV Weak RI": 6630.99,
+      "Pool": 12197.88
+    },
+    {
+      "month": 25,
+      "LLTV Weak RI": 3474.63,
+      "HLTV Strong RI": 3675.6,
+      "HLTV Weak RI": 8430.3,
+      "Pool": 15580.53
+    },
+    {
+      "month": 26,
+      "LLTV Weak RI": 4215.0,
+      "HLTV Strong RI": 4656.22,
+      "HLTV Weak RI": 10454.25,
+      "Pool": 19325.47
+    },
+    {
+      "month": 27,
+      "LLTV Weak RI": 5030.47,
+      "HLTV Strong RI": 5783.97,
+      "HLTV Weak RI": 12721.28,
+      "Pool": 23535.72
+    },
+    {
+      "month": 28,
+      "LLTV Weak RI": 5937.84,
+      "HLTV Strong RI": 7031.72,
+      "HLTV Weak RI": 15273.24,
+      "Pool": 28242.8
+    },
+    {
+      "month": 29,
+      "LLTV Weak RI": 6921.61,
+      "HLTV Strong RI": 8322.81,
+      "HLTV Weak RI": 18068.57,
+      "Pool": 33312.99
+    },
+    {
+      "month": 30,
+      "LLTV Weak RI": 7923.47,
+      "HLTV Strong RI": 9712.46,
+      "HLTV Weak RI": 21105.06,
+      "Pool": 38740.99
+    },
+    {
+      "month": 31,
+      "LLTV Weak RI": 8969.34,
+      "HLTV Strong RI": 11184.66,
+      "HLTV Weak RI": 24255.09,
+      "Pool": 44409.09
+    },
+    {
+      "month": 32,
+      "LLTV Weak RI": 10065.25,
+      "HLTV Strong RI": 12747.09,
+      "HLTV Weak RI": 27413.34,
+      "Pool": 50225.68
+    },
+    {
+      "month": 33,
+      "LLTV Weak RI": 11186.0,
+      "HLTV Strong RI": 14335.9,
+      "HLTV Weak RI": 30727.85,
+      "Pool": 56249.75
+    },
+    {
+      "month": 34,
+      "LLTV Weak RI": 12241.64,
+      "HLTV Strong RI": 15983.74,
+      "HLTV Weak RI": 34160.87,
+      "Pool": 62386.25
+    },
+    {
+      "month": 35,
+      "LLTV Weak RI": 13300.22,
+      "HLTV Strong RI": 17693.37,
+      "HLTV Weak RI": 37730.4,
+      "Pool": 68723.99
+    },
+    {
+      "month": 36,
+      "LLTV Weak RI": 14353.85,
+      "HLTV Strong RI": 19427.36,
+      "HLTV Weak RI": 41276.53,
+      "Pool": 75057.74
+    },
+    {
+      "month": 37,
+      "LLTV Weak RI": 15379.74,
+      "HLTV Strong RI": 21054.62,
+      "HLTV Weak RI": 44889.61,
+      "Pool": 81323.97
+    },
+    {
+      "month": 38,
+      "LLTV Weak RI": 16394.79,
+      "HLTV Strong RI": 22677.85,
+      "HLTV Weak RI": 48581.09,
+      "Pool": 87653.73
+    },
+    {
+      "month": 39,
+      "LLTV Weak RI": 17398.39,
+      "HLTV Strong RI": 24273.99,
+      "HLTV Weak RI": 52262.76,
+      "Pool": 93935.14
+    },
+    {
+      "month": 40,
+      "LLTV Weak RI": 18388.93,
+      "HLTV Strong RI": 25829.0,
+      "HLTV Weak RI": 55771.43,
+      "Pool": 99989.36
+    },
+    {
+      "month": 41,
+      "LLTV Weak RI": 19364.28,
+      "HLTV Strong RI": 27357.79,
+      "HLTV Weak RI": 59258.9,
+      "Pool": 105980.97
+    },
+    {
+      "month": 42,
+      "LLTV Weak RI": 20322.64,
+      "HLTV Strong RI": 28858.35,
+      "HLTV Weak RI": 62699.36,
+      "Pool": 111880.35
+    },
+    {
+      "month": 43,
+      "LLTV Weak RI": 21259.99,
+      "HLTV Strong RI": 30321.41,
+      "HLTV Weak RI": 66040.59,
+      "Pool": 117621.99
+    },
+    {
+      "month": 44,
+      "LLTV Weak RI": 22170.47,
+      "HLTV Strong RI": 31741.36,
+      "HLTV Weak RI": 69308.43,
+      "Pool": 123220.26
+    },
+    {
+      "month": 45,
+      "LLTV Weak RI": 23043.1,
+      "HLTV Strong RI": 33108.07,
+      "HLTV Weak RI": 72480.95,
+      "Pool": 128632.12
+    },
+    {
+      "month": 46,
+      "LLTV Weak RI": 23866.68,
+      "HLTV Strong RI": 34409.15,
+      "HLTV Weak RI": 75537.37,
+      "Pool": 133813.2
+    },
+    {
+      "month": 47,
+      "LLTV Weak RI": 24635.9,
+      "HLTV Strong RI": 35639.36,
+      "HLTV Weak RI": 78464.54,
+      "Pool": 138739.8
+    },
+    {
+      "month": 48,
+      "LLTV Weak RI": 25346.05,
+      "HLTV Strong RI": 36794.45,
+      "HLTV Weak RI": 81255.59,
+      "Pool": 143396.09
+    },
+    {
+      "month": 49,
+      "LLTV Weak RI": 25995.11,
+      "HLTV Strong RI": 37867.78,
+      "HLTV Weak RI": 83895.62,
+      "Pool": 147758.51
+    },
+    {
+      "month": 50,
+      "LLTV Weak RI": 26580.73,
+      "HLTV Strong RI": 38852.06,
+      "HLTV Weak RI": 86360.38,
+      "Pool": 151793.17
+    },
+    {
+      "month": 51,
+      "LLTV Weak RI": 27094.11,
+      "HLTV Strong RI": 39741.48,
+      "HLTV Weak RI": 88632.94,
+      "Pool": 155468.53
+    },
+    {
+      "month": 52,
+      "LLTV Weak RI": 27532.27,
+      "HLTV Strong RI": 40525.94,
+      "HLTV Weak RI": 90696.86,
+      "Pool": 158755.07
+    },
+    {
+      "month": 53,
+      "LLTV Weak RI": 27892.51,
+      "HLTV Strong RI": 41191.01,
+      "HLTV Weak RI": 92533.72,
+      "Pool": 161617.24
+    },
+    {
+      "month": 54,
+      "LLTV Weak RI": 28171.12,
+      "HLTV Strong RI": 41722.99,
+      "HLTV Weak RI": 94130.6,
+      "Pool": 164024.71
+    },
+    {
+      "month": 55,
+      "LLTV Weak RI": 28374.35,
+      "HLTV Strong RI": 42126.57,
+      "HLTV Weak RI": 95483.67,
+      "Pool": 165984.59
+    },
+    {
+      "month": 56,
+      "LLTV Weak RI": 28504.53,
+      "HLTV Strong RI": 42404.74,
+      "HLTV Weak RI": 96597.48,
+      "Pool": 167506.75
+    },
+    {
+      "month": 57,
+      "LLTV Weak RI": 28565.43,
+      "HLTV Strong RI": 42564.07,
+      "HLTV Weak RI": 97472.51,
+      "Pool": 168602.01
+    },
+    {
+      "month": 58,
+      "LLTV Weak RI": 28560.79,
+      "HLTV Strong RI": 42618.61,
+      "HLTV Weak RI": 98114.43,
+      "Pool": 169293.83
+    },
+    {
+      "month": 59,
+      "LLTV Weak RI": 28498.85,
+      "HLTV Strong RI": 42590.79,
+      "HLTV Weak RI": 98551.35,
+      "Pool": 169640.99
+    },
+    {
+      "month": 60,
+      "LLTV Weak RI": 28389.6,
+      "HLTV Strong RI": 42476.78,
+      "HLTV Weak RI": 98798.03,
+      "Pool": 169664.41
+    },
+    {
+      "month": 61,
+      "LLTV Weak RI": 28241.19,
+      "HLTV Strong RI": 42285.5,
+      "HLTV Weak RI": 98877.32,
+      "Pool": 169404.01
+    },
+    {
+      "month": 62,
+      "LLTV Weak RI": 28063.99,
+      "HLTV Strong RI": 42026.68,
+      "HLTV Weak RI": 98804.38,
+      "Pool": 168895.05
+    },
+    {
+      "month": 63,
+      "LLTV Weak RI": 27873.97,
+      "HLTV Strong RI": 41708.65,
+      "HLTV Weak RI": 98588.21,
+      "Pool": 168170.83
+    },
+    {
+      "month": 64,
+      "LLTV Weak RI": 27677.42,
+      "HLTV Strong RI": 41344.78,
+      "HLTV Weak RI": 98246.17,
+      "Pool": 167268.37
+    },
+    {
+      "month": 65,
+      "LLTV Weak RI": 27478.47,
+      "HLTV Strong RI": 40952.93,
+      "HLTV Weak RI": 97805.58,
+      "Pool": 166236.98
+    },
+    {
+      "month": 66,
+      "LLTV Weak RI": 27279.53,
+      "HLTV Strong RI": 40550.21,
+      "HLTV Weak RI": 97285.87,
+      "Pool": 165115.61
+    },
+    {
+      "month": 67,
+      "LLTV Weak RI": 27081.46,
+      "HLTV Strong RI": 40142.78,
+      "HLTV Weak RI": 96706.09,
+      "Pool": 163930.33
+    },
+    {
+      "month": 68,
+      "LLTV Weak RI": 26881.49,
+      "HLTV Strong RI": 39734.91,
+      "HLTV Weak RI": 96087.42,
+      "Pool": 162703.82
+    },
+    {
+      "month": 69,
+      "LLTV Weak RI": 26681.3,
+      "HLTV Strong RI": 39331.94,
+      "HLTV Weak RI": 95446.57,
+      "Pool": 161459.81
+    },
+    {
+      "month": 70,
+      "LLTV Weak RI": 26480.48,
+      "HLTV Strong RI": 38933.93,
+      "HLTV Weak RI": 94790.92,
+      "Pool": 160205.33
+    },
+    {
+      "month": 71,
+      "LLTV Weak RI": 26278.45,
+      "HLTV Strong RI": 38525.72,
+      "HLTV Weak RI": 94122.81,
+      "Pool": 158926.98
+    },
+    {
+      "month": 72,
+      "LLTV Weak RI": 26074.76,
+      "HLTV Strong RI": 38117.33,
+      "HLTV Weak RI": 93447.58,
+      "Pool": 157639.67
+    },
+    {
+      "month": 73,
+      "LLTV Weak RI": 25868.1,
+      "HLTV Strong RI": 37706.08,
+      "HLTV Weak RI": 92767.26,
+      "Pool": 156341.44
+    },
+    {
+      "month": 74,
+      "LLTV Weak RI": 25656.47,
+      "HLTV Strong RI": 37290.52,
+      "HLTV Weak RI": 92064.81,
+      "Pool": 155011.8
+    },
+    {
+      "month": 75,
+      "LLTV Weak RI": 25435.89,
+      "HLTV Strong RI": 36867.69,
+      "HLTV Weak RI": 91341.84,
+      "Pool": 153645.42
+    },
+    {
+      "month": 76,
+      "LLTV Weak RI": 25202.32,
+      "HLTV Strong RI": 36433.91,
+      "HLTV Weak RI": 90591.13,
+      "Pool": 152227.36
+    },
+    {
+      "month": 77,
+      "LLTV Weak RI": 24953.95,
+      "HLTV Strong RI": 35987.59,
+      "HLTV Weak RI": 89808.27,
+      "Pool": 150749.81
+    },
+    {
+      "month": 78,
+      "LLTV Weak RI": 24689.16,
+      "HLTV Strong RI": 35527.68,
+      "HLTV Weak RI": 88991.27,
+      "Pool": 149208.11
+    },
+    {
+      "month": 79,
+      "LLTV Weak RI": 24407.35,
+      "HLTV Strong RI": 35052.33,
+      "HLTV Weak RI": 88135.1,
+      "Pool": 147594.78
+    },
+    {
+      "month": 80,
+      "LLTV Weak RI": 24107.76,
+      "HLTV Strong RI": 34559.45,
+      "HLTV Weak RI": 87231.14,
+      "Pool": 145898.35
+    },
+    {
+      "month": 81,
+      "LLTV Weak RI": 23787.22,
+      "HLTV Strong RI": 34047.39,
+      "HLTV Weak RI": 86273.43,
+      "Pool": 144108.04
+    },
+    {
+      "month": 82,
+      "LLTV Weak RI": 23444.74,
+      "HLTV Strong RI": 33513.08,
+      "HLTV Weak RI": 85256.57,
+      "Pool": 142214.39
+    },
+    {
+      "month": 83,
+      "LLTV Weak RI": 23079.4,
+      "HLTV Strong RI": 32952.0,
+      "HLTV Weak RI": 84173.58,
+      "Pool": 140204.98
+    },
+    {
+      "month": 84,
+      "LLTV Weak RI": 22689.98,
+      "HLTV Strong RI": 32359.84,
+      "HLTV Weak RI": 83020.0,
+      "Pool": 138069.82
+    },
+    {
+      "month": 85,
+      "LLTV Weak RI": 22278.83,
+      "HLTV Strong RI": 31738.33,
+      "HLTV Weak RI": 81794.49,
+      "Pool": 135811.65
+    },
+    {
+      "month": 86,
+      "LLTV Weak RI": 21846.86,
+      "HLTV Strong RI": 31087.64,
+      "HLTV Weak RI": 80498.69,
+      "Pool": 133433.19
+    },
+    {
+      "month": 87,
+      "LLTV Weak RI": 21395.18,
+      "HLTV Strong RI": 30409.24,
+      "HLTV Weak RI": 79131.67,
+      "Pool": 130936.09
+    },
+    {
+      "month": 88,
+      "LLTV Weak RI": 20924.65,
+      "HLTV Strong RI": 29706.03,
+      "HLTV Weak RI": 77695.59,
+      "Pool": 128326.27
+    },
+    {
+      "month": 89,
+      "LLTV Weak RI": 20437.34,
+      "HLTV Strong RI": 28980.74,
+      "HLTV Weak RI": 76196.6,
+      "Pool": 125614.68
+    },
+    {
+      "month": 90,
+      "LLTV Weak RI": 19937.64,
+      "HLTV Strong RI": 28235.6,
+      "HLTV Weak RI": 74644.07,
+      "Pool": 122817.31
+    },
+    {
+      "month": 91,
+      "LLTV Weak RI": 19428.57,
+      "HLTV Strong RI": 27473.67,
+      "HLTV Weak RI": 73046.87,
+      "Pool": 119949.11
+    },
+    {
+      "month": 92,
+      "LLTV Weak RI": 18914.03,
+      "HLTV Strong RI": 26698.23,
+      "HLTV Weak RI": 71410.95,
+      "Pool": 117023.21
+    },
+    {
+      "month": 93,
+      "LLTV Weak RI": 18399.95,
+      "HLTV Strong RI": 25912.1,
+      "HLTV Weak RI": 69739.81,
+      "Pool": 114051.86
+    },
+    {
+      "month": 94,
+      "LLTV Weak RI": 17888.76,
+      "HLTV Strong RI": 25119.74,
+      "HLTV Weak RI": 68040.14,
+      "Pool": 111048.64
+    },
+    {
+      "month": 95,
+      "LLTV Weak RI": 17382.11,
+      "HLTV Strong RI": 24327.12,
+      "HLTV Weak RI": 66322.47,
+      "Pool": 108031.7
+    },
+    {
+      "month": 96,
+      "LLTV Weak RI": 16881.22,
+      "HLTV Strong RI": 23539.92,
+      "HLTV Weak RI": 64594.29,
+      "Pool": 105015.43
+    },
+    {
+      "month": 97,
+      "LLTV Weak RI": 16386.99,
+      "HLTV Strong RI": 22760.21,
+      "HLTV Weak RI": 62862.46,
+      "Pool": 102009.66
+    },
+    {
+      "month": 98,
+      "LLTV Weak RI": 15899.41,
+      "HLTV Strong RI": 21990.43,
+      "HLTV Weak RI": 61135.46,
+      "Pool": 99025.3
+    },
+    {
+      "month": 99,
+      "LLTV Weak RI": 15418.47,
+      "HLTV Strong RI": 21233.17,
+      "HLTV Weak RI": 59419.81,
+      "Pool": 96071.45
+    },
+    {
+      "month": 100,
+      "LLTV Weak RI": 14944.16,
+      "HLTV Strong RI": 20490.36,
+      "HLTV Weak RI": 57718.66,
+      "Pool": 93153.18
+    },
+    {
+      "month": 101,
+      "LLTV Weak RI": 14476.47,
+      "HLTV Strong RI": 19762.06,
+      "HLTV Weak RI": 56034.17,
+      "Pool": 90272.7
+    },
+    {
+      "month": 102,
+      "LLTV Weak RI": 14015.4,
+      "HLTV Strong RI": 19048.21,
+      "HLTV Weak RI": 54370.29,
+      "Pool": 87433.9
+    },
+    {
+      "month": 103,
+      "LLTV Weak RI": 13560.93,
+      "HLTV Strong RI": 18348.74,
+      "HLTV Weak RI": 52729.03,
+      "Pool": 84638.7
+    },
+    {
+      "month": 104,
+      "LLTV Weak RI": 13113.06,
+      "HLTV Strong RI": 17663.58,
+      "HLTV Weak RI": 51110.31,
+      "Pool": 81886.95
+    },
+    {
+      "month": 105,
+      "LLTV Weak RI": 12671.77,
+      "HLTV Strong RI": 16992.68,
+      "HLTV Weak RI": 49514.04,
+      "Pool": 79178.49
+    },
+    {
+      "month": 106,
+      "LLTV Weak RI": 12237.07,
+      "HLTV Strong RI": 16335.95,
+      "HLTV Weak RI": 47940.16,
+      "Pool": 76513.18
+    },
+    {
+      "month": 107,
+      "LLTV Weak RI": 11808.94,
+      "HLTV Strong RI": 15693.28,
+      "HLTV Weak RI": 46388.6,
+      "Pool": 73890.82
+    },
+    {
+      "month": 108,
+      "LLTV Weak RI": 11387.37,
+      "HLTV Strong RI": 15064.59,
+      "HLTV Weak RI": 44859.26,
+      "Pool": 71311.22
+    },
+    {
+      "month": 109,
+      "LLTV Weak RI": 10972.35,
+      "HLTV Strong RI": 14449.84,
+      "HLTV Weak RI": 43352.1,
+      "Pool": 68774.29
+    },
+    {
+      "month": 110,
+      "LLTV Weak RI": 10563.89,
+      "HLTV Strong RI": 13848.96,
+      "HLTV Weak RI": 41867.03,
+      "Pool": 66279.88
+    },
+    {
+      "month": 111,
+      "LLTV Weak RI": 10161.97,
+      "HLTV Strong RI": 13261.89,
+      "HLTV Weak RI": 40403.98,
+      "Pool": 63827.84
+    },
+    {
+      "month": 112,
+      "LLTV Weak RI": 9766.58,
+      "HLTV Strong RI": 12688.57,
+      "HLTV Weak RI": 38963.38,
+      "Pool": 61418.53
+    },
+    {
+      "month": 113,
+      "LLTV Weak RI": 9377.72,
+      "HLTV Strong RI": 12128.96,
+      "HLTV Weak RI": 37544.97,
+      "Pool": 59051.65
+    },
+    {
+      "month": 114,
+      "LLTV Weak RI": 8995.38,
+      "HLTV Strong RI": 11582.99,
+      "HLTV Weak RI": 36148.66,
+      "Pool": 56727.03
+    },
+    {
+      "month": 115,
+      "LLTV Weak RI": 8619.52,
+      "HLTV Strong RI": 11050.61,
+      "HLTV Weak RI": 34774.3,
+      "Pool": 54444.43
+    },
+    {
+      "month": 116,
+      "LLTV Weak RI": 8250.15,
+      "HLTV Strong RI": 10531.41,
+      "HLTV Weak RI": 33421.64,
+      "Pool": 52203.2
+    },
+    {
+      "month": 117,
+      "LLTV Weak RI": 7887.14,
+      "HLTV Strong RI": 10025.06,
+      "HLTV Weak RI": 32090.12,
+      "Pool": 50002.32
+    },
+    {
+      "month": 118,
+      "LLTV Weak RI": 7530.27,
+      "HLTV Strong RI": 9530.94,
+      "HLTV Weak RI": 30779.59,
+      "Pool": 47840.8
+    },
+    {
+      "month": 119,
+      "LLTV Weak RI": 7179.53,
+      "HLTV Strong RI": 9049.05,
+      "HLTV Weak RI": 29489.98,
+      "Pool": 45718.56
+    },
+    {
+      "month": 120,
+      "LLTV Weak RI": 6834.94,
+      "HLTV Strong RI": 8579.36,
+      "HLTV Weak RI": 28221.35,
+      "Pool": 43635.65
+    },
+    {
+      "month": 121,
+      "LLTV Weak RI": 6496.5,
+      "HLTV Strong RI": 8121.86,
+      "HLTV Weak RI": 26973.72,
+      "Pool": 41592.08
+    },
+    {
+      "month": 122,
+      "LLTV Weak RI": 6164.19,
+      "HLTV Strong RI": 7676.53,
+      "HLTV Weak RI": 25747.06,
+      "Pool": 39587.78
+    },
+    {
+      "month": 123,
+      "LLTV Weak RI": 5838.04,
+      "HLTV Strong RI": 7243.35,
+      "HLTV Weak RI": 24541.3,
+      "Pool": 37622.69
+    },
+    {
+      "month": 124,
+      "LLTV Weak RI": 5518.06,
+      "HLTV Strong RI": 6822.3,
+      "HLTV Weak RI": 23356.46,
+      "Pool": 35696.82
+    },
+    {
+      "month": 125,
+      "LLTV Weak RI": 5204.36,
+      "HLTV Strong RI": 6413.38,
+      "HLTV Weak RI": 22192.72,
+      "Pool": 33810.46
+    },
+    {
+      "month": 126,
+      "LLTV Weak RI": 4897.06,
+      "HLTV Strong RI": 6016.58,
+      "HLTV Weak RI": 21050.01,
+      "Pool": 31963.65
+    },
+    {
+      "month": 127,
+      "LLTV Weak RI": 4596.37,
+      "HLTV Strong RI": 5631.86,
+      "HLTV Weak RI": 19927.81,
+      "Pool": 30156.04
+    },
+    {
+      "month": 128,
+      "LLTV Weak RI": 4302.28,
+      "HLTV Strong RI": 5259.58,
+      "HLTV Weak RI": 18826.27,
+      "Pool": 28388.13
+    },
+    {
+      "month": 129,
+      "LLTV Weak RI": 4014.77,
+      "HLTV Strong RI": 4899.98,
+      "HLTV Weak RI": 17745.62,
+      "Pool": 26660.37
+    },
+    {
+      "month": 130,
+      "LLTV Weak RI": 3734.13,
+      "HLTV Strong RI": 4553.67,
+      "HLTV Weak RI": 16686.1,
+      "Pool": 24973.9
+    },
+    {
+      "month": 131,
+      "LLTV Weak RI": 3460.58,
+      "HLTV Strong RI": 4220.7,
+      "HLTV Weak RI": 15648.99,
+      "Pool": 23330.27
+    },
+    {
+      "month": 132,
+      "LLTV Weak RI": 3194.32,
+      "HLTV Strong RI": 3901.06,
+      "HLTV Weak RI": 14635.53,
+      "Pool": 21730.91
+    },
+    {
+      "month": 133,
+      "LLTV Weak RI": 2936.02,
+      "HLTV Strong RI": 3595.38,
+      "HLTV Weak RI": 13647.07,
+      "Pool": 20178.47
+    },
+    {
+      "month": 134,
+      "LLTV Weak RI": 2686.63,
+      "HLTV Strong RI": 3303.95,
+      "HLTV Weak RI": 12685.86,
+      "Pool": 18676.44
+    },
+    {
+      "month": 135,
+      "LLTV Weak RI": 2448.21,
+      "HLTV Strong RI": 3027.19,
+      "HLTV Weak RI": 11755.61,
+      "Pool": 17231.01
+    },
+    {
+      "month": 136,
+      "LLTV Weak RI": 2222.66,
+      "HLTV Strong RI": 2765.68,
+      "HLTV Weak RI": 10859.9,
+      "Pool": 15848.24
+    },
+    {
+      "month": 137,
+      "LLTV Weak RI": 2010.68,
+      "HLTV Strong RI": 2519.43,
+      "HLTV Weak RI": 10001.0,
+      "Pool": 14531.11
+    },
+    {
+      "month": 138,
+      "LLTV Weak RI": 1812.95,
+      "HLTV Strong RI": 2288.39,
+      "HLTV Weak RI": 9179.66,
+      "Pool": 13281.0
+    },
+    {
+      "month": 139,
+      "LLTV Weak RI": 1629.53,
+      "HLTV Strong RI": 2072.59,
+      "HLTV Weak RI": 8398.16,
+      "Pool": 12100.28
+    },
+    {
+      "month": 140,
+      "LLTV Weak RI": 1460.64,
+      "HLTV Strong RI": 1872.11,
+      "HLTV Weak RI": 7660.57,
+      "Pool": 10993.32
+    },
+    {
+      "month": 141,
+      "LLTV Weak RI": 1307.62,
+      "HLTV Strong RI": 1686.91,
+      "HLTV Weak RI": 6969.85,
+      "Pool": 9964.38
+    },
+    {
+      "month": 142,
+      "LLTV Weak RI": 1170.6,
+      "HLTV Strong RI": 1517.2,
+      "HLTV Weak RI": 6328.33,
+      "Pool": 9016.13
+    },
+    {
+      "month": 143,
+      "LLTV Weak RI": 1049.71,
+      "HLTV Strong RI": 1363.42,
+      "HLTV Weak RI": 5738.84,
+      "Pool": 8151.97
+    },
+    {
+      "month": 144,
+      "LLTV Weak RI": 944.97,
+      "HLTV Strong RI": 1225.83,
+      "HLTV Weak RI": 5203.13,
+      "Pool": 7373.93
+    },
+    {
+      "month": 145,
+      "LLTV Weak RI": 854.9,
+      "HLTV Strong RI": 1103.24,
+      "HLTV Weak RI": 4721.22,
+      "Pool": 6679.36
+    },
+    {
+      "month": 146,
+      "LLTV Weak RI": 778.84,
+      "HLTV Strong RI": 994.63,
+      "HLTV Weak RI": 4291.51,
+      "Pool": 6064.98
+    },
+    {
+      "month": 147,
+      "LLTV Weak RI": 715.88,
+      "HLTV Strong RI": 898.87,
+      "HLTV Weak RI": 3913.21,
+      "Pool": 5527.96
+    },
+    {
+      "month": 148,
+      "LLTV Weak RI": 665.11,
+      "HLTV Strong RI": 814.42,
+      "HLTV Weak RI": 3584.55,
+      "Pool": 5064.08
+    },
+    {
+      "month": 149,
+      "LLTV Weak RI": 625.35,
+      "HLTV Strong RI": 740.18,
+      "HLTV Weak RI": 3301.91,
+      "Pool": 4667.44
+    },
+    {
+      "month": 150,
+      "LLTV Weak RI": 594.37,
+      "HLTV Strong RI": 675.18,
+      "HLTV Weak RI": 3060.05,
+      "Pool": 4329.6
+    },
+    {
+      "month": 151,
+      "LLTV Weak RI": 570.62,
+      "HLTV Strong RI": 618.35,
+      "HLTV Weak RI": 2853.93,
+      "Pool": 4042.9
+    },
+    {
+      "month": 152,
+      "LLTV Weak RI": 552.23,
+      "HLTV Strong RI": 568.62,
+      "HLTV Weak RI": 2679.89,
+      "Pool": 3800.74
+    },
+    {
+      "month": 153,
+      "LLTV Weak RI": 536.38,
+      "HLTV Strong RI": 525.07,
+      "HLTV Weak RI": 2535.78,
+      "Pool": 3597.23
+    },
+    {
+      "month": 154,
+      "LLTV Weak RI": 521.96,
+      "HLTV Strong RI": 486.53,
+      "HLTV Weak RI": 2417.88,
+      "Pool": 3426.37
+    },
+    {
+      "month": 155,
+      "LLTV Weak RI": 508.2,
+      "HLTV Strong RI": 451.52,
+      "HLTV Weak RI": 2320.52,
+      "Pool": 3280.24
+    },
+    {
+      "month": 156,
+      "LLTV Weak RI": 494.64,
+      "HLTV Strong RI": 418.8,
+      "HLTV Weak RI": 2239.37,
+      "Pool": 3152.81
+    },
+    {
+      "month": 157,
+      "LLTV Weak RI": 481.13,
+      "HLTV Strong RI": 387.9,
+      "HLTV Weak RI": 2170.72,
+      "Pool": 3039.75
+    },
+    {
+      "month": 158,
+      "LLTV Weak RI": 467.68,
+      "HLTV Strong RI": 358.54,
+      "HLTV Weak RI": 2110.37,
+      "Pool": 2936.59
+    },
+    {
+      "month": 159,
+      "LLTV Weak RI": 454.28,
+      "HLTV Strong RI": 330.42,
+      "HLTV Weak RI": 2054.92,
+      "Pool": 2839.62
+    },
+    {
+      "month": 160,
+      "LLTV Weak RI": 440.93,
+      "HLTV Strong RI": 303.62,
+      "HLTV Weak RI": 2002.83,
+      "Pool": 2747.38
+    },
+    {
+      "month": 161,
+      "LLTV Weak RI": 427.63,
+      "HLTV Strong RI": 278.23,
+      "HLTV Weak RI": 1953.15,
+      "Pool": 2659.01
+    },
+    {
+      "month": 162,
+      "LLTV Weak RI": 414.39,
+      "HLTV Strong RI": 254.44,
+      "HLTV Weak RI": 1904.57,
+      "Pool": 2573.4
+    },
+    {
+      "month": 163,
+      "LLTV Weak RI": 401.2,
+      "HLTV Strong RI": 232.27,
+      "HLTV Weak RI": 1856.18,
+      "Pool": 2489.65
+    },
+    {
+      "month": 164,
+      "LLTV Weak RI": 388.06,
+      "HLTV Strong RI": 211.73,
+      "HLTV Weak RI": 1807.98,
+      "Pool": 2407.77
+    },
+    {
+      "month": 165,
+      "LLTV Weak RI": 374.97,
+      "HLTV Strong RI": 192.76,
+      "HLTV Weak RI": 1759.96,
+      "Pool": 2327.69
+    },
+    {
+      "month": 166,
+      "LLTV Weak RI": 361.94,
+      "HLTV Strong RI": 175.27,
+      "HLTV Weak RI": 1712.12,
+      "Pool": 2249.33
+    },
+    {
+      "month": 167,
+      "LLTV Weak RI": 348.95,
+      "HLTV Strong RI": 159.21,
+      "HLTV Weak RI": 1664.46,
+      "Pool": 2172.62
+    },
+    {
+      "month": 168,
+      "LLTV Weak RI": 336.02,
+      "HLTV Strong RI": 144.45,
+      "HLTV Weak RI": 1616.99,
+      "Pool": 2097.46
+    },
+    {
+      "month": 169,
+      "LLTV Weak RI": 323.15,
+      "HLTV Strong RI": 130.96,
+      "HLTV Weak RI": 1569.7,
+      "Pool": 2023.81
+    },
+    {
+      "month": 170,
+      "LLTV Weak RI": 310.32,
+      "HLTV Strong RI": 118.65,
+      "HLTV Weak RI": 1522.58,
+      "Pool": 1951.55
+    },
+    {
+      "month": 171,
+      "LLTV Weak RI": 297.55,
+      "HLTV Strong RI": 107.41,
+      "HLTV Weak RI": 1475.65,
+      "Pool": 1880.61
+    },
+    {
+      "month": 172,
+      "LLTV Weak RI": 284.83,
+      "HLTV Strong RI": 97.09,
+      "HLTV Weak RI": 1428.89,
+      "Pool": 1810.81
+    },
+    {
+      "month": 173,
+      "LLTV Weak RI": 272.16,
+      "HLTV Strong RI": 87.56,
+      "HLTV Weak RI": 1382.41,
+      "Pool": 1742.13
+    },
+    {
+      "month": 174,
+      "LLTV Weak RI": 259.54,
+      "HLTV Strong RI": 78.59,
+      "HLTV Weak RI": 1336.19,
+      "Pool": 1674.32
+    },
+    {
+      "month": 175,
+      "LLTV Weak RI": 246.99,
+      "HLTV Strong RI": 70.12,
+      "HLTV Weak RI": 1290.28,
+      "Pool": 1607.39
+    },
+    {
+      "month": 176,
+      "LLTV Weak RI": 234.51,
+      "HLTV Strong RI": 62.3,
+      "HLTV Weak RI": 1244.77,
+      "Pool": 1541.58
+    },
+    {
+      "month": 177,
+      "LLTV Weak RI": 222.16,
+      "HLTV Strong RI": 55.12,
+      "HLTV Weak RI": 1200.0,
+      "Pool": 1477.28
+    },
+    {
+      "month": 178,
+      "LLTV Weak RI": 210.02,
+      "HLTV Strong RI": 48.65,
+      "HLTV Weak RI": 1156.02,
+      "Pool": 1414.69
+    },
+    {
+      "month": 179,
+      "LLTV Weak RI": 198.1,
+      "HLTV Strong RI": 42.86,
+      "HLTV Weak RI": 1112.82,
+      "Pool": 1353.78
+    },
+    {
+      "month": 180,
+      "LLTV Weak RI": 186.41,
+      "HLTV Strong RI": 37.73,
+      "HLTV Weak RI": 1070.37,
+      "Pool": 1294.51
+    },
+    {
+      "month": 181,
+      "LLTV Weak RI": 174.95,
+      "HLTV Strong RI": 33.23,
+      "HLTV Weak RI": 1028.65,
+      "Pool": 1236.83
+    },
+    {
+      "month": 182,
+      "LLTV Weak RI": 163.78,
+      "HLTV Strong RI": 29.32,
+      "HLTV Weak RI": 987.67,
+      "Pool": 1180.77
+    },
+    {
+      "month": 183,
+      "LLTV Weak RI": 152.87,
+      "HLTV Strong RI": 25.99,
+      "HLTV Weak RI": 947.44,
+      "Pool": 1126.3
+    },
+    {
+      "month": 184,
+      "LLTV Weak RI": 142.3,
+      "HLTV Strong RI": 23.21,
+      "HLTV Weak RI": 907.92,
+      "Pool": 1073.43
+    },
+    {
+      "month": 185,
+      "LLTV Weak RI": 132.13,
+      "HLTV Strong RI": 20.95,
+      "HLTV Weak RI": 869.12,
+      "Pool": 1022.2
+    },
+    {
+      "month": 186,
+      "LLTV Weak RI": 122.34,
+      "HLTV Strong RI": 19.19,
+      "HLTV Weak RI": 831.03,
+      "Pool": 972.56
+    },
+    {
+      "month": 187,
+      "LLTV Weak RI": 112.93,
+      "HLTV Strong RI": 17.91,
+      "HLTV Weak RI": 793.63,
+      "Pool": 924.47
+    },
+    {
+      "month": 188,
+      "LLTV Weak RI": 103.89,
+      "HLTV Strong RI": 16.84,
+      "HLTV Weak RI": 756.84,
+      "Pool": 877.57
+    },
+    {
+      "month": 189,
+      "LLTV Weak RI": 95.31,
+      "HLTV Strong RI": 15.94,
+      "HLTV Weak RI": 720.64,
+      "Pool": 831.89
+    },
+    {
+      "month": 190,
+      "LLTV Weak RI": 87.21,
+      "HLTV Strong RI": 15.05,
+      "HLTV Weak RI": 684.96,
+      "Pool": 787.22
+    },
+    {
+      "month": 191,
+      "LLTV Weak RI": 79.69,
+      "HLTV Strong RI": 14.17,
+      "HLTV Weak RI": 649.76,
+      "Pool": 743.62
+    },
+    {
+      "month": 192,
+      "LLTV Weak RI": 72.81,
+      "HLTV Strong RI": 13.3,
+      "HLTV Weak RI": 614.7,
+      "Pool": 700.81
+    },
+    {
+      "month": 193,
+      "LLTV Weak RI": 66.54,
+      "HLTV Strong RI": 12.43,
+      "HLTV Weak RI": 579.85,
+      "Pool": 658.82
+    },
+    {
+      "month": 194,
+      "LLTV Weak RI": 60.89,
+      "HLTV Strong RI": 11.58,
+      "HLTV Weak RI": 545.3,
+      "Pool": 617.77
+    },
+    {
+      "month": 195,
+      "LLTV Weak RI": 55.87,
+      "HLTV Strong RI": 10.76,
+      "HLTV Weak RI": 511.19,
+      "Pool": 577.82
+    },
+    {
+      "month": 196,
+      "LLTV Weak RI": 51.47,
+      "HLTV Strong RI": 9.96,
+      "HLTV Weak RI": 477.65,
+      "Pool": 539.08
+    },
+    {
+      "month": 197,
+      "LLTV Weak RI": 47.68,
+      "HLTV Strong RI": 9.22,
+      "HLTV Weak RI": 444.83,
+      "Pool": 501.73
+    },
+    {
+      "month": 198,
+      "LLTV Weak RI": 44.48,
+      "HLTV Strong RI": 8.52,
+      "HLTV Weak RI": 412.8,
+      "Pool": 465.8
+    },
+    {
+      "month": 199,
+      "LLTV Weak RI": 41.83,
+      "HLTV Strong RI": 7.88,
+      "HLTV Weak RI": 381.68,
+      "Pool": 431.39
+    },
+    {
+      "month": 200,
+      "LLTV Weak RI": 39.59,
+      "HLTV Strong RI": 7.3,
+      "HLTV Weak RI": 351.64,
+      "Pool": 398.53
+    },
+    {
+      "month": 201,
+      "LLTV Weak RI": 37.69,
+      "HLTV Strong RI": 6.78,
+      "HLTV Weak RI": 322.99,
+      "Pool": 367.46
+    },
+    {
+      "month": 202,
+      "LLTV Weak RI": 36.11,
+      "HLTV Strong RI": 6.31,
+      "HLTV Weak RI": 295.78,
+      "Pool": 338.2
+    },
+    {
+      "month": 203,
+      "LLTV Weak RI": 34.76,
+      "HLTV Strong RI": 5.89,
+      "HLTV Weak RI": 270.12,
+      "Pool": 310.77
+    },
+    {
+      "month": 204,
+      "LLTV Weak RI": 33.6,
+      "HLTV Strong RI": 5.52,
+      "HLTV Weak RI": 246.2,
+      "Pool": 285.32
+    },
+    {
+      "month": 205,
+      "LLTV Weak RI": 32.52,
+      "HLTV Strong RI": 5.21,
+      "HLTV Weak RI": 224.13,
+      "Pool": 261.86
+    },
+    {
+      "month": 206,
+      "LLTV Weak RI": 31.53,
+      "HLTV Strong RI": 4.95,
+      "HLTV Weak RI": 203.94,
+      "Pool": 240.42
+    },
+    {
+      "month": 207,
+      "LLTV Weak RI": 30.57,
+      "HLTV Strong RI": 4.72,
+      "HLTV Weak RI": 185.67,
+      "Pool": 220.96
+    },
+    {
+      "month": 208,
+      "LLTV Weak RI": 29.64,
+      "HLTV Strong RI": 4.52,
+      "HLTV Weak RI": 169.26,
+      "Pool": 203.42
+    },
+    {
+      "month": 209,
+      "LLTV Weak RI": 28.73,
+      "HLTV Strong RI": 4.34,
+      "HLTV Weak RI": 154.67,
+      "Pool": 187.74
+    },
+    {
+      "month": 210,
+      "LLTV Weak RI": 27.83,
+      "HLTV Strong RI": 4.16,
+      "HLTV Weak RI": 141.78,
+      "Pool": 173.77
+    },
+    {
+      "month": 211,
+      "LLTV Weak RI": 26.93,
+      "HLTV Strong RI": 3.99,
+      "HLTV Weak RI": 130.53,
+      "Pool": 161.45
+    },
+    {
+      "month": 212,
+      "LLTV Weak RI": 26.03,
+      "HLTV Strong RI": 3.82,
+      "HLTV Weak RI": 120.73,
+      "Pool": 150.58
+    },
+    {
+      "month": 213,
+      "LLTV Weak RI": 25.13,
+      "HLTV Strong RI": 3.66,
+      "HLTV Weak RI": 112.33,
+      "Pool": 141.12
+    },
+    {
+      "month": 214,
+      "LLTV Weak RI": 24.23,
+      "HLTV Strong RI": 3.5,
+      "HLTV Weak RI": 105.25,
+      "Pool": 132.98
+    },
+    {
+      "month": 215,
+      "LLTV Weak RI": 23.33,
+      "HLTV Strong RI": 3.35,
+      "HLTV Weak RI": 99.29,
+      "Pool": 125.97
+    },
+    {
+      "month": 216,
+      "LLTV Weak RI": 22.43,
+      "HLTV Strong RI": 3.2,
+      "HLTV Weak RI": 94.19,
+      "Pool": 119.82
+    },
+    {
+      "month": 217,
+      "LLTV Weak RI": 21.53,
+      "HLTV Strong RI": 3.06,
+      "HLTV Weak RI": 89.88,
+      "Pool": 114.47
+    },
+    {
+      "month": 218,
+      "LLTV Weak RI": 20.63,
+      "HLTV Strong RI": 2.91,
+      "HLTV Weak RI": 86.23,
+      "Pool": 109.77
+    },
+    {
+      "month": 219,
+      "LLTV Weak RI": 19.72,
+      "HLTV Strong RI": 2.77,
+      "HLTV Weak RI": 83.07,
+      "Pool": 105.56
+    },
+    {
+      "month": 220,
+      "LLTV Weak RI": 18.82,
+      "HLTV Strong RI": 2.62,
+      "HLTV Weak RI": 80.31,
+      "Pool": 101.75
+    },
+    {
+      "month": 221,
+      "LLTV Weak RI": 17.92,
+      "HLTV Strong RI": 2.48,
+      "HLTV Weak RI": 77.84,
+      "Pool": 98.24
+    },
+    {
+      "month": 222,
+      "LLTV Weak RI": 17.01,
+      "HLTV Strong RI": 2.34,
+      "HLTV Weak RI": 75.63,
+      "Pool": 94.98
+    },
+    {
+      "month": 223,
+      "LLTV Weak RI": 16.11,
+      "HLTV Strong RI": 2.19,
+      "HLTV Weak RI": 73.59,
+      "Pool": 91.89
+    },
+    {
+      "month": 224,
+      "LLTV Weak RI": 15.2,
+      "HLTV Strong RI": 2.05,
+      "HLTV Weak RI": 71.68,
+      "Pool": 88.93
+    },
+    {
+      "month": 225,
+      "LLTV Weak RI": 14.3,
+      "HLTV Strong RI": 1.91,
+      "HLTV Weak RI": 69.88,
+      "Pool": 86.09
+    },
+    {
+      "month": 226,
+      "LLTV Weak RI": 13.41,
+      "HLTV Strong RI": 1.77,
+      "HLTV Weak RI": 68.15,
+      "Pool": 83.33
+    },
+    {
+      "month": 227,
+      "LLTV Weak RI": 12.52,
+      "HLTV Strong RI": 1.62,
+      "HLTV Weak RI": 66.48,
+      "Pool": 80.62
+    },
+    {
+      "month": 228,
+      "LLTV Weak RI": 11.65,
+      "HLTV Strong RI": 1.48,
+      "HLTV Weak RI": 64.86,
+      "Pool": 77.99
+    },
+    {
+      "month": 229,
+      "LLTV Weak RI": 10.79,
+      "HLTV Strong RI": 1.34,
+      "HLTV Weak RI": 63.26,
+      "Pool": 75.39
+    },
+    {
+      "month": 230,
+      "LLTV Weak RI": 9.94,
+      "HLTV Strong RI": 1.2,
+      "HLTV Weak RI": 61.69,
+      "Pool": 72.83
+    },
+    {
+      "month": 231,
+      "LLTV Weak RI": 9.1,
+      "HLTV Strong RI": 1.05,
+      "HLTV Weak RI": 60.12,
+      "Pool": 70.27
+    },
+    {
+      "month": 232,
+      "LLTV Weak RI": 8.28,
+      "HLTV Strong RI": 0.9,
+      "HLTV Weak RI": 58.55,
+      "Pool": 67.73
+    },
+    {
+      "month": 233,
+      "LLTV Weak RI": 7.48,
+      "HLTV Strong RI": 0.76,
+      "HLTV Weak RI": 56.97,
+      "Pool": 65.21
+    },
+    {
+      "month": 234,
+      "LLTV Weak RI": 6.72,
+      "HLTV Strong RI": 0.63,
+      "HLTV Weak RI": 55.39,
+      "Pool": 62.74
+    },
+    {
+      "month": 235,
+      "LLTV Weak RI": 5.97,
+      "HLTV Strong RI": 0.51,
+      "HLTV Weak RI": 53.81,
+      "Pool": 60.29
+    },
+    {
+      "month": 236,
+      "LLTV Weak RI": 5.27,
+      "HLTV Strong RI": 0.41,
+      "HLTV Weak RI": 52.23,
+      "Pool": 57.91
+    },
+    {
+      "month": 237,
+      "LLTV Weak RI": 4.64,
+      "HLTV Strong RI": 0.31,
+      "HLTV Weak RI": 50.65,
+      "Pool": 55.6
+    },
+    {
+      "month": 238,
+      "LLTV Weak RI": 4.06,
+      "HLTV Strong RI": 0.23,
+      "HLTV Weak RI": 49.08,
+      "Pool": 53.37
+    },
+    {
+      "month": 239,
+      "LLTV Weak RI": 3.55,
+      "HLTV Strong RI": 0.16,
+      "HLTV Weak RI": 47.52,
+      "Pool": 51.23
+    },
+    {
+      "month": 240,
+      "LLTV Weak RI": 3.09,
+      "HLTV Strong RI": 0.1,
+      "HLTV Weak RI": 45.98,
+      "Pool": 49.17
+    },
+    {
+      "month": 241,
+      "LLTV Weak RI": 2.7,
+      "HLTV Strong RI": 0.06,
+      "HLTV Weak RI": 44.46,
+      "Pool": 47.22
+    },
+    {
+      "month": 242,
+      "LLTV Weak RI": 2.37,
+      "HLTV Strong RI": 0.02,
+      "HLTV Weak RI": 42.95,
+      "Pool": 45.34
+    },
+    {
+      "month": 243,
+      "LLTV Weak RI": 2.07,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 41.47,
+      "Pool": 43.54
+    },
+    {
+      "month": 244,
+      "LLTV Weak RI": 1.82,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 40.01,
+      "Pool": 41.83
+    },
+    {
+      "month": 245,
+      "LLTV Weak RI": 1.6,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 38.56,
+      "Pool": 40.16
+    },
+    {
+      "month": 246,
+      "LLTV Weak RI": 1.39,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 37.14,
+      "Pool": 38.53
+    },
+    {
+      "month": 247,
+      "LLTV Weak RI": 1.2,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 35.74,
+      "Pool": 36.94
+    },
+    {
+      "month": 248,
+      "LLTV Weak RI": 1.03,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 34.35,
+      "Pool": 35.38
+    },
+    {
+      "month": 249,
+      "LLTV Weak RI": 0.88,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 32.99,
+      "Pool": 33.87
+    },
+    {
+      "month": 250,
+      "LLTV Weak RI": 0.75,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 31.65,
+      "Pool": 32.4
+    },
+    {
+      "month": 251,
+      "LLTV Weak RI": 0.62,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 30.33,
+      "Pool": 30.95
+    },
+    {
+      "month": 252,
+      "LLTV Weak RI": 0.52,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 29.01,
+      "Pool": 29.53
+    },
+    {
+      "month": 253,
+      "LLTV Weak RI": 0.43,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 27.72,
+      "Pool": 28.15
+    },
+    {
+      "month": 254,
+      "LLTV Weak RI": 0.36,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 26.44,
+      "Pool": 26.8
+    },
+    {
+      "month": 255,
+      "LLTV Weak RI": 0.29,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 25.18,
+      "Pool": 25.47
+    },
+    {
+      "month": 256,
+      "LLTV Weak RI": 0.23,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 23.93,
+      "Pool": 24.16
+    },
+    {
+      "month": 257,
+      "LLTV Weak RI": 0.18,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 22.69,
+      "Pool": 22.87
+    },
+    {
+      "month": 258,
+      "LLTV Weak RI": 0.13,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 21.46,
+      "Pool": 21.59
+    },
+    {
+      "month": 259,
+      "LLTV Weak RI": 0.09,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 20.24,
+      "Pool": 20.33
+    },
+    {
+      "month": 260,
+      "LLTV Weak RI": 0.06,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 19.03,
+      "Pool": 19.09
+    },
+    {
+      "month": 261,
+      "LLTV Weak RI": 0.04,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 17.83,
+      "Pool": 17.87
+    },
+    {
+      "month": 262,
+      "LLTV Weak RI": 0.02,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 16.64,
+      "Pool": 16.66
+    },
+    {
+      "month": 263,
+      "LLTV Weak RI": 0.01,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 15.47,
+      "Pool": 15.48
+    },
+    {
+      "month": 264,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 14.31,
+      "Pool": 14.31
+    },
+    {
+      "month": 265,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 13.19,
+      "Pool": 13.19
+    },
+    {
+      "month": 266,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 12.1,
+      "Pool": 12.1
+    },
+    {
+      "month": 267,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 11.05,
+      "Pool": 11.05
+    },
+    {
+      "month": 268,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 10.02,
+      "Pool": 10.02
+    },
+    {
+      "month": 269,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 9.05,
+      "Pool": 9.05
+    },
+    {
+      "month": 270,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 8.12,
+      "Pool": 8.12
+    },
+    {
+      "month": 271,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 7.25,
+      "Pool": 7.25
+    },
+    {
+      "month": 272,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 6.46,
+      "Pool": 6.46
+    },
+    {
+      "month": 273,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 5.74,
+      "Pool": 5.74
+    },
+    {
+      "month": 274,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 5.08,
+      "Pool": 5.08
+    },
+    {
+      "month": 275,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 4.5,
+      "Pool": 4.5
+    },
+    {
+      "month": 276,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 3.98,
+      "Pool": 3.98
+    },
+    {
+      "month": 277,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 3.53,
+      "Pool": 3.53
+    },
+    {
+      "month": 278,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 3.15,
+      "Pool": 3.15
+    },
+    {
+      "month": 279,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 2.83,
+      "Pool": 2.83
+    },
+    {
+      "month": 280,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 2.55,
+      "Pool": 2.55
+    },
+    {
+      "month": 281,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 2.32,
+      "Pool": 2.32
+    },
+    {
+      "month": 282,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 2.14,
+      "Pool": 2.14
+    },
+    {
+      "month": 283,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 2.0,
+      "Pool": 2.0
+    },
+    {
+      "month": 284,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 1.87,
+      "Pool": 1.87
+    },
+    {
+      "month": 285,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 1.77,
+      "Pool": 1.77
+    },
+    {
+      "month": 286,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 1.67,
+      "Pool": 1.67
+    },
+    {
+      "month": 287,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 1.57,
+      "Pool": 1.57
+    },
+    {
+      "month": 288,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 1.47,
+      "Pool": 1.47
+    },
+    {
+      "month": 289,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 1.37,
+      "Pool": 1.37
+    },
+    {
+      "month": 290,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 1.27,
+      "Pool": 1.27
+    },
+    {
+      "month": 291,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 1.16,
+      "Pool": 1.16
+    },
+    {
+      "month": 292,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 1.06,
+      "Pool": 1.06
+    },
+    {
+      "month": 293,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.96,
+      "Pool": 0.96
+    },
+    {
+      "month": 294,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.86,
+      "Pool": 0.86
+    },
+    {
+      "month": 295,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.75,
+      "Pool": 0.75
+    },
+    {
+      "month": 296,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.65,
+      "Pool": 0.65
+    },
+    {
+      "month": 297,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.56,
+      "Pool": 0.56
+    },
+    {
+      "month": 298,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.48,
+      "Pool": 0.48
+    },
+    {
+      "month": 299,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.4,
+      "Pool": 0.4
+    },
+    {
+      "month": 300,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.33,
+      "Pool": 0.33
+    },
+    {
+      "month": 301,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.26,
+      "Pool": 0.26
+    },
+    {
+      "month": 302,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.21,
+      "Pool": 0.21
+    },
+    {
+      "month": 303,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.16,
+      "Pool": 0.16
+    },
+    {
+      "month": 304,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.11,
+      "Pool": 0.11
+    },
+    {
+      "month": 305,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.08,
+      "Pool": 0.08
+    },
+    {
+      "month": 306,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.05,
+      "Pool": 0.05
+    },
+    {
+      "month": 307,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.02,
+      "Pool": 0.02
+    },
+    {
+      "month": 308,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.01,
+      "Pool": 0.01
+    },
+    {
+      "month": 309,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 310,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 311,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 312,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 313,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 314,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 315,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 316,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 317,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 318,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 319,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 320,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 321,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 322,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 323,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 324,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 325,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 326,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 327,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 328,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 329,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 330,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 331,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 332,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 333,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 334,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 335,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 336,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 337,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 338,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 339,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 340,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 341,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 342,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 343,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 344,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 345,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 346,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 347,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 348,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 349,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 350,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 351,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 352,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 353,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 354,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 355,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 356,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 357,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 358,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 359,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 360,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 361,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 362,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 363,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 364,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 365,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 366,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 367,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 368,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 369,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 370,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 371,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 372,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 373,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 374,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 375,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 376,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 377,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 378,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 379,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 380,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 381,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 382,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 383,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 384,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 385,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 386,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 387,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 388,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 389,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 390,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 391,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 392,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 393,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 394,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 395,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 396,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 397,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 398,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 399,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 400,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 401,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 402,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 403,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 404,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 405,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 406,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 407,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 408,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 409,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 410,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 411,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 412,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 413,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 414,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 415,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 416,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 417,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 418,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 419,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 420,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 421,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 422,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 423,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 424,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 425,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 426,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 427,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 428,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 429,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 430,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 431,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 432,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    },
+    {
+      "month": 433,
+      "LLTV Weak RI": 0.0,
+      "HLTV Strong RI": 0.0,
+      "HLTV Weak RI": 0.0,
+      "Pool": 0.0
+    }
+  ],
+  "parallelism": {
+    "executor": "serial-base",
+    "n_loans": 1043,
+    "n_loan_months": 410542,
+    "wall_ms": 19834.6
+  },
+  "n_loan_month1": 1043
+}

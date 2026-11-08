@@ -23,8 +23,20 @@ TAPE_COLUMN_DOCS: tuple[tuple[str, str, str], ...] = (
     ("original_ltv", "float", "LTV decimal (0.80 = 80%)"),
     ("original_cltv", "float", "CLTV decimal"),
     ("original_fico", "int", "FICO 300–850"),
-    ("state", "text", "US state code"),
-    ("postal_code", "text", "ZIP; prefer 5 digits"),
+    (
+        "state",
+        "text",
+        "US state postal abbreviation (2-letter: NY, CA, TX). "
+        "Phrases like 'ny state' / 'New York' / 'loans in NY' → "
+        "state = 'NY' (upper(trim(state)) = 'NY'). "
+        "Never invent columns from state names (ny, california, texas).",
+    ),
+    (
+        "postal_code",
+        "text",
+        "ZIP code text only (prefer 5 digits). Not for US state names; "
+        "use state for NY/CA/etc.",
+    ),
     ("property_type", "text", "Property type"),
     ("occupancy", "text", "Occupancy"),
     ("loan_purpose", "text", "Purchase / refi / etc."),

@@ -23,10 +23,12 @@ import {
   DataGrid,
   StatusBanner,
   fmtInt,
+  fmtLtv,
   fmtNum,
   fmtPct,
   fmtUpbShort,
   fmtWac,
+  ltvCol,
   moneyCol,
 } from "./cashflowGrid";
 import { StateChoropleth } from "./UsChoropleth";
@@ -145,7 +147,7 @@ const largeLoanCols = [
     headerName: "CLTV",
     field: "original_cltv",
     width: 72,
-    valueFormatter: (p) => fmtPct(p.value, 1),
+    valueFormatter: (p) => fmtPct(p.value, 0),
     cellClass: "cf-num",
   },
   { headerName: "State", field: "state", width: 64 },
@@ -306,7 +308,7 @@ export default function InvestorAnalysis() {
           <div className="ia-kpi">
             <span className="ia-kpi-label">WA CLTV</span>
             <span className="ia-kpi-value">
-              {kpis.wa_cltv != null ? fmtPct(kpis.wa_cltv, 1) : "—"}
+              {kpis.wa_cltv != null ? fmtPct(kpis.wa_cltv, 0) : "—"}
             </span>
           </div>
           <div className="ia-kpi">
@@ -393,7 +395,7 @@ export default function InvestorAnalysis() {
                         {r.wa_fico != null ? fmtInt(r.wa_fico) : "—"}
                       </td>
                       <td className="ia-num">
-                        {r.wa_cltv != null ? fmtPct(r.wa_cltv, 1) : "—"}
+                        {r.wa_cltv != null ? fmtPct(r.wa_cltv, 0) : "—"}
                       </td>
                       <td className="ia-num">
                         {r.wac != null ? fmtWac(r.wac) : "—"}

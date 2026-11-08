@@ -60,7 +60,7 @@ def _enrich_results(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         else:
             row["status_label"] = ""
         if not row.get("scope"):
-            row["scope"] = "Custom" if row.get("source") == "custom" else "Global"
+            row["scope"] = "Custom" if row.get("source") == "custom" else "Standard"
     return rows
 
 
@@ -134,7 +134,7 @@ def qc_run() -> dict:
 
 @router.post("/translate")
 def qc_translate(body: TranslateBody) -> dict:
-    """English → failing-row SQL predicate (Groq or heuristic mock)."""
+    """English → failing-row SQL predicate via Groq (no mock fallback)."""
     result = translate_english(body.english)
     if not result.get("ok"):
         raise HTTPException(
@@ -167,7 +167,7 @@ def qc_preview(body: PreviewBody) -> dict:
             )
         predicate = translated["sql_predicate"]
         required = list(translated.get("required_columns") or [])
-        mode = translated.get("mode") or "mock"
+        mode = translated.get("mode") or "groq"
         warning = translated.get("warning")
         model = translated.get("model")
 
@@ -236,7 +236,7 @@ def qc_create_check(body: CustomCheckBody) -> dict:
             )
         predicate = translated["sql_predicate"]
         required = list(translated.get("required_columns") or [])
-        mode = translated.get("mode") or "mock"
+        mode = translated.get("mode") or "groq"
         warning = translated.get("warning")
         model = translated.get("model")
 
@@ -288,7 +288,7 @@ def qc_update_check(check_id: str, body: CustomCheckUpdateBody) -> dict:
             )
         predicate = translated["sql_predicate"]
         required = list(translated.get("required_columns") or [])
-        mode = translated.get("mode") or "mock"
+        mode = translated.get("mode") or "groq"
         warning = translated.get("warning")
         model = translated.get("model")
     elif predicate is not None:

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.repositories.cashflow_schema import (
+    COHORT_SCENARIO_WAL_TABLE_SQL,
     LOAN_CF_MONTH1_ADD_PANEL_COLS_SQL,
     LOAN_CF_MONTH1_ENRICHED_VIEW_SQL,
     LOAN_CF_MONTH1_TABLE_SQL,
@@ -12,6 +13,8 @@ from app.repositories.cashflow_schema import (
     LOAN_MONTH_CF_ENRICHED_VIEW_SQL,
     LOAN_MONTH_CF_TABLE_SQL,
     MONTH1_FACT_COLS,
+    SCENARIO_MONTH_CF_ADD_COMPONENT_COLS_SQL,
+    SCENARIO_MONTH_CF_TABLE_SQL,
 )
 from app.repositories.connect import connect
 from app.repositories.env_load import load_dotenv, resolve_pg_url
@@ -59,10 +62,141 @@ class NeonCfRepository:
                 cur.execute(LOAN_CF_MONTH1_TABLE_SQL)
                 cur.execute(LOAN_MONTH_CF_TABLE_SQL)
                 _exec_multi(cur, LOAN_MONTH_CF_ADD_PANEL_COLS_SQL)
+                # DROP first: CREATE OR REPLACE cannot rename/reorder view cols.
+                cur.execute(
+                    "DROP VIEW IF EXISTS public.loan_month_cf_enriched CASCADE"
+                )
                 cur.execute(LOAN_MONTH_CF_ENRICHED_VIEW_SQL)
                 _exec_multi(cur, LOAN_CF_MONTH1_ADD_PANEL_COLS_SQL)
+                cur.execute(
+                    "DROP VIEW IF EXISTS public.loan_cashflows_month1_enriched CASCADE"
+                )
                 cur.execute(LOAN_CF_MONTH1_ENRICHED_VIEW_SQL)
+                cur.execute(SCENARIO_MONTH_CF_TABLE_SQL)
+                _exec_multi(cur, SCENARIO_MONTH_CF_ADD_COMPONENT_COLS_SQL)
+                cur.execute(COHORT_SCENARIO_WAL_TABLE_SQL)
             conn.commit()
+
+    def ensure_scenario_grid_schema(self) -> None:
+        """Minimal DDL for 27-scenario aggregate tables (skip loan CF views)."""
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(SCENARIO_SQL)
+                cur.execute(SCENARIO_MONTH_CF_TABLE_SQL)
+                _exec_multi(cur, SCENARIO_MONTH_CF_ADD_COMPONENT_COLS_SQL)
+                cur.execute(COHORT_SCENARIO_WAL_TABLE_SQL)
+            conn.commit()
+
+    def upsert_scenarios(self, scenarios: list[Any]) -> int:
+        """Upsert securitization_scenarios rows (ON CONFLICT scenario_id)."""
+        self.ensure_scenario_grid_schema()
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                for s in scenarios:
+                    row = s.model_dump() if hasattr(s, "model_dump") else dict(s)
+                    cur.execute(
+                        """
+                        INSERT INTO public.securitization_scenarios (
+                            scenario_id, cohort, psa_multiple, sda_multiple,
+                            recovery_period_months, recovery_lag_months,
+                            recovery_rate, state_varying_recovery_todo, note
+                        ) VALUES (
+                            %(scenario_id)s, %(cohort)s, %(psa_multiple)s,
+                            %(sda_multiple)s, %(recovery_period_months)s,
+                            %(recovery_lag_months)s, %(recovery_rate)s,
+                            %(state_varying_recovery_todo)s, %(note)s
+                        )
+                        ON CONFLICT (scenario_id) DO UPDATE SET
+                            cohort = EXCLUDED.cohort,
+                            psa_multiple = EXCLUDED.psa_multiple,
+                            sda_multiple = EXCLUDED.sda_multiple,
+                            recovery_period_months = EXCLUDED.recovery_period_months,
+                            recovery_lag_months = EXCLUDED.recovery_lag_months,
+                            recovery_rate = EXCLUDED.recovery_rate,
+                            state_varying_recovery_todo =
+                                EXCLUDED.state_varying_recovery_todo,
+                            note = EXCLUDED.note
+                        """,
+                        row,
+                    )
+            conn.commit()
+        return len(scenarios)
+
+    def replace_scenario_month_cf(self, rows: list[dict[str, Any]]) -> int:
+        """Replace all rows in public.scenario_month_cf."""
+        self.ensure_scenario_grid_schema()
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("TRUNCATE public.scenario_month_cf")
+                for r in rows:
+                    cur.execute(
+                        """
+                        INSERT INTO public.scenario_month_cf (
+                            scenario_id, month,
+                            interest, scheduled_principal, prepay,
+                            new_default, recovery,
+                            total_cash, principal_cash, beginning_balance
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            r["scenario_id"],
+                            int(r["month"]),
+                            r.get("interest"),
+                            r.get("scheduled_principal"),
+                            r.get("prepay"),
+                            r.get("new_default"),
+                            r.get("recovery"),
+                            r.get("total_cash"),
+                            r.get("principal_cash"),
+                            r.get("beginning_balance"),
+                        ),
+                    )
+            conn.commit()
+        return len(rows)
+
+    def replace_cohort_scenario_wal(self, rows: list[dict[str, Any]]) -> int:
+        """Replace all rows in public.cohort_scenario_wal."""
+        self.ensure_scenario_grid_schema()
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("TRUNCATE public.cohort_scenario_wal")
+                for r in rows:
+                    cur.execute(
+                        """
+                        INSERT INTO public.cohort_scenario_wal (
+                            cohort, scenario_id, wal_years, total_cash_sum,
+                            n_loans, perform_months, horizon_months
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            r["cohort"],
+                            r["scenario_id"],
+                            r.get("wal_years"),
+                            r.get("total_cash_sum"),
+                            r.get("n_loans"),
+                            r.get("perform_months"),
+                            r.get("horizon_months"),
+                        ),
+                    )
+            conn.commit()
+        return len(rows)
+
+    def save_scenario_grid_cf(
+        self,
+        scenarios: list[Any],
+        month_rows: list[dict[str, Any]],
+        wal_rows: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Ensure schema, upsert scenario defs, replace aggregate CF + WAL tables."""
+        self.ensure_scenario_grid_schema()
+        n_scen = self.upsert_scenarios(scenarios)
+        n_months = self.replace_scenario_month_cf(month_rows)
+        n_wal = self.replace_cohort_scenario_wal(wal_rows)
+        return {
+            "scenarios_upserted": n_scen,
+            "scenario_month_cf_rows": n_months,
+            "cohort_scenario_wal_rows": n_wal,
+        }
 
     def list_scenarios(self) -> list[dict[str, Any]]:
         with self._connect() as conn:

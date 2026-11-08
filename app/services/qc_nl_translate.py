@@ -1,14 +1,14 @@
 """Translate English Loan QC checks into asf_tape SQL predicates via Groq.
 
-Uses llama-3.1-8b-instant when GROQ_API_KEY is set. Without a key (or on API
-failure), returns a heuristic mock predicate so the QC UI stays usable.
+Requires GROQ_API_KEY. There is no heuristic mock fallback — missing key or
+API failure returns ok=False with an error. Override model via GROQ_MODEL /
+GROQ_MODEL_FALLBACKS in .env.
 """
 
 from __future__ import annotations
 
 import json
 import os
-import re
 import urllib.error
 import urllib.request
 from typing import Any
@@ -17,8 +17,32 @@ from app.repositories.env_load import load_dotenv
 from app.services.qc_predicate import validate_predicate
 from app.services.qc_tape_schema import schema_prompt_block
 
-GROQ_MODEL = "llama-3.1-8b-instant"
+# Primary + fallbacks: llama-3.1-8b-instant was removed from many Groq accounts.
+_DEFAULT_MODELS = (
+    "openai/gpt-oss-20b",
+    "llama-3.1-8b-instant",
+    "llama-3.3-70b-versatile",
+    "qwen/qwen3-32b",
+)
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+
+
+def _groq_models() -> list[str]:
+    load_dotenv(overwrite=False)
+    primary = (os.environ.get("GROQ_MODEL") or "").strip()
+    extra = (os.environ.get("GROQ_MODEL_FALLBACKS") or "").strip()
+    models: list[str] = []
+    if primary:
+        models.append(primary)
+    if extra:
+        models.extend(m.strip() for m in extra.split(",") if m.strip())
+    for m in _DEFAULT_MODELS:
+        if m not in models:
+            models.append(m)
+    return models
+
+
+GROQ_MODEL = _DEFAULT_MODELS[0]
 
 _SCHEMA = schema_prompt_block()
 
@@ -34,6 +58,10 @@ Rules:
 - Rates and LTV/CLTV/DTI are decimals (0.80 = 80%). FICO is integer 300–850.
 - Example: "FICO below 620" → original_fico IS NOT NULL AND original_fico < 620
 - Example: "LTV above 80%" → original_ltv IS NOT NULL AND original_ltv > 0.80
+- Example: "ny state" / "New York loans" → state IS NOT NULL AND upper(trim(state)) = 'NY'
+- US state phrases always use column state with the 2-letter postal abbreviation.
+  Never invent identifiers like ny, california, texas as columns.
+  Do not put state abbreviations into postal_code (that column is ZIP only).
 """
 
 
@@ -46,205 +74,104 @@ def groq_api_key() -> str | None:
     return key or None
 
 
-def translate_english(english: str) -> dict[str, Any]:
-    """Translate English → runnable failing-row predicate.
-
-    Always returns a dict with ok, english, sql_predicate, required_columns,
-    mode (groq|mock), model, and optional warning/error.
-    """
-    text = (english or "").strip()
-    if not text:
-        return {
-            "ok": False,
-            "english": text,
-            "sql_predicate": None,
-            "required_columns": [],
-            "mode": "error",
-            "model": None,
-            "warning": None,
-            "error": "english is required",
-        }
-
-    key = groq_api_key()
-    if key:
-        try:
-            raw = _call_groq(key, text)
-            predicate, cols = validate_predicate(raw["sql_predicate"])
-            return {
-                "ok": True,
-                "english": text,
-                "sql_predicate": predicate,
-                "required_columns": cols or list(raw.get("required_columns") or []),
-                "mode": "groq",
-                "model": GROQ_MODEL,
-                "warning": None,
-                "error": None,
-            }
-        except Exception as exc:  # noqa: BLE001
-            mock = _mock_translate(text)
-            mock["warning"] = (
-                f"Groq request failed ({type(exc).__name__}: {exc}); "
-                "using heuristic mock"
-            )
-            return mock
-
-    mock = _mock_translate(text)
-    mock["warning"] = "GROQ_API_KEY not set; using heuristic mock"
-    return mock
-
-
-def _call_groq(api_key: str, english: str) -> dict[str, Any]:
-    payload = {
-        "model": GROQ_MODEL,
-        "temperature": 0,
-        "response_format": {"type": "json_object"},
-        "messages": [
-            {"role": "system", "content": _SYSTEM},
-            {
-                "role": "user",
-                "content": (
-                    "Translate this Loan QC check into a failing-row SQL "
-                    f"predicate:\n{english}"
-                ),
-            },
-        ],
-    }
-    req = urllib.request.Request(
-        GROQ_URL,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "User-Agent": "cashflow-sum-app-qc/1.0",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=45) as resp:
-            body = json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")[:400]
-        raise RuntimeError(f"HTTP {exc.code}: {detail}") from exc
-
-    content = (
-        ((body.get("choices") or [{}])[0].get("message") or {}).get("content")
-        or ""
-    )
-    parsed = json.loads(content)
-    if not isinstance(parsed, dict) or not parsed.get("sql_predicate"):
-        raise RuntimeError("Groq response missing sql_predicate")
-    return parsed
-
-
-def _mock_translate(english: str) -> dict[str, Any]:
-    """Cheap pattern match so demos work without GROQ_API_KEY."""
-    lowered = english.lower()
-    predicate: str | None = None
-
-    fico = _num_after(lowered, r"fico")
-    if fico is not None:
-        if _has_any(lowered, ("below", "under", "less than", "<", "missing", "null")):
-            if "missing" in lowered or "null" in lowered:
-                predicate = (
-                    "original_fico IS NULL OR original_fico = 0 "
-                    "OR original_fico < 300 OR original_fico > 850"
-                )
-            else:
-                predicate = (
-                    f"original_fico IS NOT NULL AND original_fico < {int(fico)}"
-                )
-        elif _has_any(lowered, ("above", "over", "greater than", ">")):
-            predicate = (
-                f"original_fico IS NOT NULL AND original_fico > {int(fico)}"
-            )
-
-    if predicate is None:
-        ltv = _pct_after(lowered, r"\bltv\b")
-        if ltv is not None:
-            if _has_any(lowered, ("above", "over", "greater", ">")):
-                predicate = (
-                    f"original_ltv IS NOT NULL AND original_ltv > {ltv}"
-                )
-            elif _has_any(lowered, ("below", "under", "less", "<")):
-                predicate = (
-                    f"original_ltv IS NOT NULL AND original_ltv < {ltv}"
-                )
-            elif "missing" in lowered or "null" in lowered:
-                predicate = "original_ltv IS NULL"
-
-    if predicate is None:
-        dti = _pct_after(lowered, r"\bdti\b")
-        if dti is not None and _has_any(
-            lowered, ("above", "over", "greater", ">", "than")
-        ):
-            predicate = (
-                f"originator_dti IS NOT NULL AND originator_dti > {dti}"
-            )
-
-    if predicate is None and _has_any(
-        lowered, ("zip", "postal")
-    ) and _has_any(lowered, ("5", "five", "digit")):
-        predicate = (
-            "postal_code IS NULL OR length(regexp_replace("
-            "trim(postal_code), '[^0-9]', '', 'g')) <> 5"
-        )
-
-    if predicate is None and _has_any(
-        lowered, ("balance", "upb", "loan amount")
-    ) and _has_any(lowered, ("zero", "<= 0", "missing", "null", "blank")):
-        predicate = (
-            "original_loan_amount IS NULL OR original_loan_amount <= 0"
-        )
-
-    if predicate is None and ("dscr" in lowered) and _has_any(
-        lowered, ("below", "under", "less", "<")
-    ):
-        n = _pct_after(lowered, r"\bdscr\b") or 1.0
-        predicate = f"dscr IS NOT NULL AND dscr < {n}"
-
-    if predicate is None:
-        # Safe default: flag blank / out-of-range FICO so mock still runs.
-        predicate = (
-            "original_fico IS NULL OR original_fico = 0 "
-            "OR original_fico < 300 OR original_fico > 850"
-        )
-
-    cleaned, cols = validate_predicate(predicate)
+def _error_result(english: str, error: str) -> dict[str, Any]:
     return {
-        "ok": True,
-        "english": english.strip(),
-        "sql_predicate": cleaned,
-        "required_columns": cols,
-        "mode": "mock",
+        "ok": False,
+        "english": english,
+        "sql_predicate": None,
+        "required_columns": [],
+        "mode": "error",
         "model": None,
         "warning": None,
-        "error": None,
+        "error": error,
     }
 
 
-def _has_any(text: str, needles: tuple[str, ...]) -> bool:
-    return any(n in text for n in needles)
+def translate_english(english: str) -> dict[str, Any]:
+    """Translate English → runnable failing-row predicate via Groq only."""
+    text = (english or "").strip()
+    if not text:
+        return _error_result(text, "english is required")
 
-
-def _num_after(text: str, label: str) -> float | None:
-    match = re.search(
-        rf"{label}\D{{0,24}}(\d+(?:\.\d+)?)", text, flags=re.I
-    )
-    if not match:
-        match = re.search(
-            rf"(\d+(?:\.\d+)?)\D{{0,12}}{label}", text, flags=re.I
+    key = groq_api_key()
+    if not key:
+        return _error_result(
+            text,
+            "GROQ_API_KEY is required. Set it in .env and restart the API.",
         )
-    return float(match.group(1)) if match else None
+
+    try:
+        raw, used_model = _call_groq(key, text)
+        predicate, cols = validate_predicate(raw["sql_predicate"])
+        return {
+            "ok": True,
+            "english": text,
+            "sql_predicate": predicate,
+            "required_columns": cols or list(raw.get("required_columns") or []),
+            "mode": "groq",
+            "model": used_model,
+            "warning": None,
+            "error": None,
+        }
+    except Exception as exc:  # noqa: BLE001
+        return _error_result(
+            text,
+            f"Groq translate failed ({type(exc).__name__}: {exc})",
+        )
 
 
-def _pct_after(text: str, label: str) -> float | None:
-    """Parse a percent-ish number near a label into a decimal fraction."""
-    match = re.search(
-        rf"{label}\D{{0,24}}(\d+(?:\.\d+)?)\s*%?", text, flags=re.I
-    )
-    if not match:
-        return None
-    raw = float(match.group(1))
-    if raw > 1.5:  # treat 50 / 80 as percent points
-        return raw / 100.0
-    return raw
+def _call_groq(api_key: str, english: str) -> tuple[dict[str, Any], str]:
+    models = _groq_models()
+    errors: list[str] = []
+    for model in models:
+        payload = {
+            "model": model,
+            "temperature": 0,
+            "response_format": {"type": "json_object"},
+            "messages": [
+                {"role": "system", "content": _SYSTEM},
+                {
+                    "role": "user",
+                    "content": (
+                        "Translate this Loan QC check into a failing-row SQL "
+                        f"predicate:\n{english}"
+                    ),
+                },
+            ],
+        }
+        req = urllib.request.Request(
+            GROQ_URL,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": "cashflow-sum-app-qc/1.0",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")[:400]
+            errors.append(f"{model}: HTTP {exc.code}: {detail}")
+            # Try next model on missing/decommissioned/forbidden.
+            if exc.code in (400, 403, 404):
+                continue
+            raise RuntimeError(f"HTTP {exc.code}: {detail}") from exc
+
+        content = (
+            ((body.get("choices") or [{}])[0].get("message") or {}).get("content")
+            or ""
+        )
+        try:
+            parsed = json.loads(content)
+        except json.JSONDecodeError:
+            errors.append(f"{model}: invalid JSON content")
+            continue
+        if not isinstance(parsed, dict) or not parsed.get("sql_predicate"):
+            errors.append(f"{model}: missing sql_predicate")
+            continue
+        return parsed, model
+
+    raise RuntimeError("; ".join(errors) or "no Groq models available")

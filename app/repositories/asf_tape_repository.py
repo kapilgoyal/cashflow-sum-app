@@ -206,7 +206,11 @@ class AsfTapeRepository:
                 nl_description = EXCLUDED.nl_description,
                 sql_predicate = EXCLUDED.sql_predicate,
                 required_columns = EXCLUDED.required_columns,
-                status_mode = EXCLUDED.status_mode,
+                status_mode = CASE
+                    WHEN public.qc_checks.status_mode = 'disabled'
+                    THEN 'disabled'
+                    ELSE EXCLUDED.status_mode
+                END,
                 skip_reason = EXCLUDED.skip_reason,
                 updated_at = now()
         """
@@ -366,9 +370,22 @@ class AsfTapeRepository:
         assert saved is not None
         return saved
 
-    def delete_custom_check(self, check_id: str) -> bool:
+    def list_disabled_check_ids(self) -> set[str]:
+        sql = """
+            SELECT check_id FROM public.qc_checks
+            WHERE status_mode = 'disabled'
+        """
         with connect(self.require_url(), connect_timeout=30) as conn:
             with conn.cursor() as cur:
+                cur.execute(QC_CHECKS_TABLE_SQL)
+                cur.execute(sql)
+                return {r[0] for r in cur.fetchall()}
+
+    def delete_custom_check(self, check_id: str) -> bool:
+        """Remove a custom rule, or soft-disable a Standard/built-in rule."""
+        with connect(self.require_url(), connect_timeout=30) as conn:
+            with conn.cursor() as cur:
+                cur.execute(QC_CHECKS_TABLE_SQL)
                 cur.execute(
                     "SELECT source FROM public.qc_checks WHERE check_id = %s",
                     (check_id,),
@@ -376,23 +393,35 @@ class AsfTapeRepository:
                 tup = cur.fetchone()
                 if not tup:
                     return False
-                if tup[0] != "custom":
-                    raise ValueError("cannot delete a built-in QC check")
                 cur.execute(
                     "DELETE FROM public.qc_results WHERE check_id = %s",
                     (check_id,),
                 )
-                cur.execute(
-                    "DELETE FROM public.qc_checks WHERE check_id = %s",
-                    (check_id,),
-                )
+                if tup[0] == "custom":
+                    cur.execute(
+                        "DELETE FROM public.qc_checks WHERE check_id = %s",
+                        (check_id,),
+                    )
+                else:
+                    # Soft-disable so upsert_check_defs does not revive it.
+                    cur.execute(
+                        """
+                        UPDATE public.qc_checks
+                        SET status_mode = 'disabled', updated_at = now()
+                        WHERE check_id = %s
+                        """,
+                        (check_id,),
+                    )
             conn.commit()
         return True
 
     def _checks_for_run(self) -> list[dict[str, Any]]:
-        """Built-in ALL_CHECKS plus persisted custom rules."""
+        """Built-in ALL_CHECKS plus persisted custom rules (skip disabled)."""
+        disabled = self.list_disabled_check_ids()
         out: list[dict[str, Any]] = []
         for check in ALL_CHECKS:
+            if check.check_id in disabled:
+                continue
             out.append(
                 {
                     "check_id": check.check_id,
@@ -402,6 +431,8 @@ class AsfTapeRepository:
                 }
             )
         for custom in self.list_custom_checks():
+            if custom["check_id"] in disabled:
+                continue
             out.append(
                 {
                     "check_id": custom["check_id"],
@@ -519,6 +550,7 @@ class AsfTapeRepository:
               ON r.check_id = c.check_id
              AND r.run_id = (SELECT run_id FROM latest)
             WHERE c.source <> 'demo'
+              AND COALESCE(c.status_mode, 'active') <> 'disabled'
             ORDER BY
                 CASE c.source
                     WHEN 'custom' THEN 0
@@ -551,7 +583,7 @@ class AsfTapeRepository:
                         )
                     )
                     row["scope"] = (
-                        "Custom" if row.get("source") == "custom" else "Global"
+                        "Custom" if row.get("source") == "custom" else "Standard"
                     )
                     out.append(row)
                 return out

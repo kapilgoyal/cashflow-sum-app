@@ -213,6 +213,187 @@ def run_month1(
     }
 
 
+def _load_base_cohort_cf() -> dict | None:
+    for path in (DATA / "cohort-base-cashflow.json", PUBLIC / "cohort-base-cashflow.json"):
+        if path.exists():
+            return relabel_payload(json.loads(path.read_text(encoding="utf-8")))
+    return None
+
+
+@router.get("/cashflows/base-cohort")
+def get_base_cohort_cashflow() -> dict:
+    """Monthly total cash by cohort under Base speeds (Scenarios chart)."""
+    payload = _load_base_cohort_cf()
+    if not payload:
+        raise HTTPException(
+            status_code=404,
+            detail="No base cohort CF yet — POST /api/cashflows/run-base-cohort",
+        )
+    return payload
+
+
+@router.post("/cashflows/run-base-cohort")
+def run_base_cohort(
+    months: int = Query(
+        default=360,
+        ge=1,
+        le=360,
+        description="Performing horizon; FNMA lag + recovery period extend past this",
+    ),
+    force: bool = Query(default=False),
+) -> dict:
+    """Project all loans under Base PSA/SDA per cohort; write aggregate JSON."""
+    if not force:
+        cached = _load_base_cohort_cf()
+        # Cache must already include recovery tail + monthly recovery series.
+        if (
+            cached
+            and int(cached.get("perform_months") or cached.get("horizon_months") or 0)
+            >= months
+            and cached.get("recovery_tail")
+            and cached.get("recovery_months")
+        ):
+            return {**cached, "cached": True}
+
+    from app.services.base_case_cohort_cf import run_base_case_cohort_cf
+
+    tape = TapeRepository(_tape_path())
+    try:
+        loans = tape.load_all_loans()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    if not loans:
+        raise HTTPException(status_code=400, detail="no loans loaded from tape")
+
+    result = run_base_case_cohort_cf(loans, months=months)
+    payload = {
+        "scenario": result["scenario"],
+        "perform_months": result["perform_months"],
+        "horizon_months": result["horizon_months"],
+        "seasoning": result["seasoning"],
+        "recovery_source": result.get("recovery_source"),
+        "recovery_tail": result["recovery_tail"],
+        "cohorts": result["cohorts"],
+        "months": result["months"],
+        "recovery_months": result["recovery_months"],
+        "parallelism": result["parallelism"],
+        "n_loan_month1": len(result["loan_month1"]),
+        "cached": False,
+    }
+    text = json.dumps(payload, indent=2)
+    DATA.mkdir(parents=True, exist_ok=True)
+    PUBLIC.mkdir(parents=True, exist_ok=True)
+    (DATA / "cohort-base-cashflow.json").write_text(text, encoding="utf-8")
+    (PUBLIC / "cohort-base-cashflow.json").write_text(text, encoding="utf-8")
+    return relabel_payload(payload)
+
+
+def _load_scenario_grid_cf() -> dict | None:
+    for path in (
+        DATA / "scenario-grid-cashflow.json",
+        PUBLIC / "scenario-grid-cashflow.json",
+    ):
+        if path.exists():
+            return relabel_payload(json.loads(path.read_text(encoding="utf-8")))
+    return None
+
+
+@router.get("/cashflows/scenario-grid")
+def get_scenario_grid_cashflow() -> dict:
+    """Monthly total cash for all 27 grid scenarios (+ cohort averages / WAL)."""
+    payload = _load_scenario_grid_cf()
+    if not payload:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "No scenario-grid CF yet — POST /api/cashflows/run-scenario-grid"
+            ),
+        )
+    return payload
+
+
+@router.post("/cashflows/run-scenario-grid")
+def run_scenario_grid(
+    months: int = Query(
+        default=360,
+        ge=1,
+        le=360,
+        description="Performing horizon; FNMA lag + recovery period extend past this",
+    ),
+    force: bool = Query(
+        default=False,
+        description="Recompute even when cached scenario-grid JSON exists",
+    ),
+) -> dict:
+    """Project all 27 grid cells (full horizon); write aggregate JSON (+ Neon)."""
+    if not force:
+        cached = _load_scenario_grid_cf()
+        if (
+            cached
+            and int(cached.get("perform_months") or cached.get("horizon_months") or 0)
+            >= months
+            and cached.get("recovery_tail")
+            and cached.get("scenarios")
+        ):
+            return {**cached, "cached": True}
+
+    from app.services.scenario_grid_cf import run_scenario_grid_cf, ui_payload
+
+    tape = TapeRepository(_tape_path())
+    try:
+        loans = tape.load_all_loans()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    if not loans:
+        raise HTTPException(status_code=400, detail="no loans loaded from tape")
+
+    scenarios = build_scenario_grid()
+    ScenarioRepository(DATA / "securitization_scenarios.csv").save_csv(scenarios)
+
+    constrained = bool(os.environ.get("VERCEL"))
+    max_workers = 2 if constrained else 27
+    result = run_scenario_grid_cf(
+        loans,
+        scenarios,
+        months=months,
+        max_workers=max_workers,
+        keep_month1=False,
+    )
+    payload = ui_payload(result)
+    payload["cached"] = False
+
+    text = json.dumps(payload, indent=2)
+    DATA.mkdir(parents=True, exist_ok=True)
+    PUBLIC.mkdir(parents=True, exist_ok=True)
+    (DATA / "scenario-grid-cashflow.json").write_text(text, encoding="utf-8")
+    (PUBLIC / "scenario-grid-cashflow.json").write_text(text, encoding="utf-8")
+
+    neon_info: dict | str | None = None
+    neon_error: str | None = None
+    load_dotenv()
+    if resolve_pg_url():
+        try:
+            from app.repositories.neon_cf_repository import NeonCfRepository
+
+            neon_info = NeonCfRepository().save_scenario_grid_cf(
+                scenarios,
+                result["neon_month_rows"],
+                result["wal_rows"],
+            )
+        except Exception as exc:  # noqa: BLE001
+            neon_error = f"{type(exc).__name__}: {exc}"
+    else:
+        neon_info = "skipped: DATABASE_URL not set"
+
+    payload["storage"] = {
+        "json": "data/scenario-grid-cashflow.json",
+        "public_json": "public/scenario-grid-cashflow.json",
+        "neon": neon_info,
+        "neon_error": neon_error,
+    }
+    return relabel_payload(payload)
+
+
 @router.get("/loans/summary")
 def loans_summary() -> dict:
     tape = TapeRepository(_tape_path())
