@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { FONT } from "./cashflowGrid";
+import { FONT, chartPct } from "./cashflowGrid";
 import {
   buildSpeedChartRows,
   distinctPsaMultiples,
@@ -23,11 +23,7 @@ import {
 const CHART_MONTHS = 120;
 
 function pctTick(v) {
-  if (v == null || Number.isNaN(Number(v))) return "";
-  const pct = Number(v) * 100;
-  if (pct >= 1) return `${pct.toFixed(1)}%`;
-  if (pct >= 0.1) return `${pct.toFixed(2)}%`;
-  return `${pct.toFixed(3)}%`;
+  return chartPct(v);
 }
 
 function tipStyle() {

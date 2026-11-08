@@ -157,6 +157,35 @@ export function fmtNum(v, digits = 1) {
   return fixed.replace(/\.?0+$/, "");
 }
 
+/**
+ * Chart/axis/tooltip money — whole dollars; at most 1 decimal on M/B.
+ * Prefer this over ad-hoc toFixed in Recharts formatters.
+ */
+export function chartMoney(v) {
+  if (v == null || Number.isNaN(Number(v))) return "";
+  const n = Number(v);
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return `$${fmtNum(n / 1e9, 1)}B`;
+  if (abs >= 1e6) return `$${fmtNum(n / 1e6, 1)}M`;
+  if (abs >= 1e3) return `$${Math.round(n / 1e3)}k`;
+  return `$${Math.round(n).toLocaleString()}`;
+}
+
+/**
+ * Chart percent. Pass fraction (0.06 → 6%) unless alreadyPercent.
+ * At most 1 decimal; trailing .0 dropped.
+ */
+export function chartPct(v, { alreadyPercent = false } = {}) {
+  if (v == null || Number.isNaN(Number(v))) return "";
+  const pct = alreadyPercent ? Number(v) : Number(v) * 100;
+  return `${fmtNum(pct, 1)}%`;
+}
+
+/** Chart scalar — integers preferred; at most 1 decimal. */
+export function chartNum(v) {
+  return fmtNum(v, 1);
+}
+
 const PCA = { 75: "Down", 100: "Base", 125: "Up" };
 const STA = { 50: "Down", 100: "Base", 200: "Up" };
 

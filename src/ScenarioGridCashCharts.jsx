@@ -16,7 +16,7 @@ import {
   YAxis,
 } from "recharts";
 import { apiUrl } from "./apiBase";
-import { FONT } from "./cashflowGrid";
+import { FONT, chartMoney } from "./cashflowGrid";
 import {
   CLUSTER_COLORS,
   CLUSTER_ORDER,
@@ -34,12 +34,7 @@ const TICK = { fill: "#808080", fontSize: 8, fontFamily: FONT };
 const AXIS = { stroke: "#464646" };
 
 function moneyTick(v) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return "";
-  const abs = Math.abs(n);
-  if (abs >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
-  if (abs >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
-  return `$${n.toFixed(0)}`;
+  return chartMoney(v);
 }
 
 function tipStyle() {

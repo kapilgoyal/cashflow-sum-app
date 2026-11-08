@@ -18,6 +18,9 @@ import { apiUrl } from "./apiBase";
 import {
   FONT,
   PaneSpinner,
+  chartMoney,
+  chartNum,
+  chartPct,
   fmtNum,
   fmtPct,
   fmtUpbShort,
@@ -46,34 +49,28 @@ function tipStyle() {
 function yieldTick(v) {
   const n = Number(v);
   if (!Number.isFinite(n)) return "";
-  return `${n.toFixed(2)}%`;
+  return chartPct(n, { alreadyPercent: true });
 }
 
 function priceTick(v) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return "";
-  return n.toFixed(2);
+  return chartNum(v) || "";
 }
 
 function fmtDollar(v) {
   if (v == null || !Number.isFinite(Number(v))) return "—";
-  const n = Number(v);
-  const abs = Math.abs(n);
-  if (abs >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
-  if (abs >= 1e3) return `$${(n / 1e3).toFixed(1)}K`;
-  return `$${n.toFixed(0)}`;
+  return chartMoney(v);
 }
 
 function fmtDelta(v) {
   if (v == null || !Number.isFinite(Number(v))) return "—";
   const n = Number(v);
   if (Math.abs(n) < 1e-9) return "—";
-  return `${n > 0 ? "+" : ""}${fmtNum(n, 4)}`;
+  return `${n > 0 ? "+" : ""}${chartNum(n)}`;
 }
 
-function Kpi({ label, children }) {
+function Kpi({ label, title, children }) {
   return (
-    <div className="qc-kpi" aria-label={label}>
+    <div className="qc-kpi" aria-label={title || label} title={title || label}>
       <span className="qc-kpi-label">{label}</span>
       <span className="qc-kpi-value">{children}</span>
     </div>
@@ -278,28 +275,31 @@ export default function Valuation() {
 
       <div className="qc-kpi-strip valuation-kpi-strip" aria-label="Valuation KPIs">
         <Kpi label="Price">
-          {payload?.price_pts != null ? fmtNum(payload.price_pts, 2) : "—"}
+          {payload?.price_pts != null ? chartNum(payload.price_pts) : "—"}
         </Kpi>
         <Kpi label="WAL">
           {payload?.wal_years != null
-            ? `${fmtNum(payload.wal_years, 2)} yr`
+            ? `${chartNum(payload.wal_years)} yr`
             : "—"}
         </Kpi>
         <Kpi label="Duration">
           {payload?.duration != null
-            ? `${fmtNum(payload.duration, 2)} yr`
+            ? `${chartNum(payload.duration)} yr`
             : "—"}
         </Kpi>
         <Kpi label="CS01">{fmtDollar(payload?.cs01)}</Kpi>
         <Kpi label="DV01">{fmtDollar(payload?.dv01)}</Kpi>
         <Kpi label="Convexity">{fmtDollar(payload?.convexity_dollar)}</Kpi>
-        <Kpi label="CPR">
+        <Kpi label="CPR" title="Conditional Prepay Rate · Annual">
           {speeds.cpr != null ? fmtPct(speeds.cpr, 1) : "—"}
         </Kpi>
-        <Kpi label="CDR">
+        <Kpi label="CDR" title="Conditional Default Rate · Annual">
           {speeds.cdr != null ? fmtPct(speeds.cdr, 1) : "—"}
         </Kpi>
-        <Kpi label="CRR">
+        <Kpi
+          label="Cond Repay"
+          title="Conditional Repayment Rate · Annual Combined Prepays + Defaults (Not Recovery)"
+        >
           {speeds.crr != null ? fmtPct(speeds.crr, 1) : "—"}
         </Kpi>
       </div>
@@ -340,7 +340,7 @@ export default function Valuation() {
                     <Tooltip
                       contentStyle={tipStyle()}
                       formatter={(v, _n, ctx) => [
-                        `${Number(v).toFixed(3)}%`,
+                        chartPct(v, { alreadyPercent: true }),
                         ctx?.payload?.extrapolated
                           ? `${ctx.payload.series} (Extrap)`
                           : ctx?.payload?.series || "Yield",
@@ -398,7 +398,7 @@ export default function Valuation() {
                     <Tooltip
                       contentStyle={tipStyle()}
                       formatter={(v, _n, ctx) => [
-                        Number(v).toFixed(4),
+                        chartNum(v),
                         `Δ ${fmtDelta(ctx?.payload?.delta)}`,
                       ]}
                       labelFormatter={(l) => String(l)}
@@ -459,7 +459,7 @@ export default function Valuation() {
                       >
                         <td>{row.label}</td>
                         <td className="num">{fmtNum(row.z, 0)}</td>
-                        <td className="num">{fmtNum(row.price, 4)}</td>
+                        <td className="num">{chartNum(row.price)}</td>
                         <td
                           className={`num${
                             row.delta > 0
@@ -516,7 +516,7 @@ export default function Valuation() {
                     {krdMatrix.items.map((row) => (
                       <tr key={row.label}>
                         <td>{row.label}</td>
-                        <td className="num">{fmtNum(row.duration, 3)}</td>
+                        <td className="num">{chartNum(row.duration)}</td>
                         <td className="num">{fmtDollar(row.dv01)}</td>
                         <td className="num valuation-share-cell">
                           <PctBar pct={row.pct} />
@@ -528,7 +528,7 @@ export default function Valuation() {
                     <tfoot>
                       <tr>
                         <td>Total</td>
-                        <td className="num">{fmtNum(krdMatrix.totalDur, 3)}</td>
+                        <td className="num">{chartNum(krdMatrix.totalDur)}</td>
                         <td className="num">
                           {fmtDollar(krdMatrix.totalDv01)}
                         </td>
