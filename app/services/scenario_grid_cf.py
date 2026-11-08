@@ -522,13 +522,14 @@ def ui_payload(result: dict[str, Any]) -> dict[str, Any]:
         "horizon_months": result["horizon_months"],
         "recovery_tail": result["recovery_tail"],
         "scenarios": result["scenarios"],
+        # Keep Sxx__prin for Avg-vs-Stress cum principal; drop __beg (balance) to limit size.
         "months": [
             {
                 "month": row["month"],
                 **{
                     k: v
                     for k, v in row.items()
-                    if k != "month" and not k.endswith("__prin") and not k.endswith("__beg")
+                    if k != "month" and not k.endswith("__beg")
                 },
             }
             for row in result["months"]

@@ -32,6 +32,20 @@ const TEXT = "#FCFCFC";
 const GRID = "#323232";
 const EMPTY = "#121212";
 
+/** Dark tip + soft amber hover band (Recharts default cursor is a bright white strip). */
+const TIP_STYLE = {
+  background: "#0C0C0C",
+  border: "1px solid #323232",
+  borderRadius: 0,
+  fontSize: 11,
+  color: TEXT,
+  fontFamily: FONT,
+  boxShadow: "none",
+};
+const TIP_CURSOR = { fill: "rgba(253, 157, 36, 0.12)", stroke: "none" };
+const TIP_LABEL = { color: TEXT };
+const TIP_ITEM = { color: TEXT };
+
 /** Bloomberg-ish muted fills — cycle by category; selected stays bright amber. */
 const BAR_PALETTE = [
   "#C4A574", // sand
@@ -320,11 +334,15 @@ function DistBar({
           </>
         )}
         <Tooltip
+          cursor={TIP_CURSOR}
+          contentStyle={TIP_STYLE}
+          labelStyle={TIP_LABEL}
+          itemStyle={TIP_ITEM}
+          wrapperStyle={{ outline: "none" }}
           formatter={(v) =>
             metric === "loan_count" ? Number(v).toLocaleString() : fmtUpbShort(v)
           }
           labelFormatter={(label) => String(label)}
-          labelStyle={{ color: TEXT }}
         />
         <Bar
           dataKey={valueKey}
@@ -375,12 +393,16 @@ function AgeWacChart({ rows, selected, onSelect }) {
               tickFormatter={(v) => `${(Number(v) * 100).toFixed(1)}%`}
             />
             <Tooltip
+              cursor={TIP_CURSOR}
+              contentStyle={TIP_STYLE}
+              labelStyle={TIP_LABEL}
+              itemStyle={TIP_ITEM}
+              wrapperStyle={{ outline: "none" }}
               formatter={(v, name) =>
                 name === "wac"
                   ? `${(Number(v) * 100).toFixed(2)}%`
                   : fmtUpbShort(v)
               }
-              labelStyle={{ color: TEXT }}
             />
             <Bar
               yAxisId="upb"

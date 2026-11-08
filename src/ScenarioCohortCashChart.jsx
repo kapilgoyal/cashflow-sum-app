@@ -175,7 +175,7 @@ function ChartFrame({
   horizon,
   monthTicks,
   series,
-  yWidth = 44,
+  yWidth = 48,
 }) {
   return (
     <div className="scenario-component-chart" aria-label={title}>
@@ -344,7 +344,7 @@ export default function ScenarioCohortCashChart() {
         horizon={horizon}
         monthTicks={monthTicks}
         series={series}
-        yWidth={44}
+        yWidth={48}
       />
     </div>
   );

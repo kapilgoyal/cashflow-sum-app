@@ -70,6 +70,7 @@ const LoanStrats = lazy(() =>
     return { default: m.default };
   })
 );
+const Valuation = lazy(() => import("./Valuation"));
 
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -80,6 +81,7 @@ const NAV = [
   { id: "strats", label: "Loan Strats" },
   { id: "cohort", label: "Cohort" },
   { id: "scenarios", label: "Scenarios" },
+  { id: "valuation", label: "Valuation" },
 ];
 
 const X_DOMAIN = [0.28, 0.92];
@@ -151,6 +153,13 @@ function NavIcon({ id }) {
       return (
         <svg {...common}>
           <path d="M3 3.5h3.5V7H3zM9.5 3.5H13V7H9.5zM3 9h3.5v3.5H3zM9.5 9H13v3.5H9.5z" {...stroke} />
+        </svg>
+      );
+    case "valuation":
+      return (
+        <svg {...common}>
+          <path d="M2.5 12.5 5.5 8l2.5 3 5-7.5" {...stroke} />
+          <path d="M10.5 3.5H13.5V6.5" {...stroke} />
         </svg>
       );
     case "cashflow":
@@ -1799,6 +1808,12 @@ export default function App() {
           )}
 
           {pane === "qc" && <LoanQc />}
+
+          {pane === "valuation" && (
+            <Suspense fallback={<PaneSpinner label="Loading Valuation…" />}>
+              <Valuation />
+            </Suspense>
+          )}
 
           {pane === "strats" && (
             <Suspense fallback={<PaneSpinner label="Loading Loan Strats…" />}>
