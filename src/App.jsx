@@ -1171,7 +1171,8 @@ export default function App() {
         flex: 1.15,
         minWidth: 72,
         wal: true,
-        tooltip: "Cohort-avg WAL · prin = sched + prepay + recovery",
+        tooltip:
+          "Scenario-avg WAL (mean of 9 PSA×SDA cells) · not Base-speed WAL · prin = sched + prepay + recovery",
         valueFormatter: (p) =>
           p.value == null || Number.isNaN(Number(p.value))
             ? "—"

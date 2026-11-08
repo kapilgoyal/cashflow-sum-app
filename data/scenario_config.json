@@ -1,0 +1,59 @@
+{
+  "version": "1.0.0",
+  "description": "Authoritative cohort PSA/SDA schedule + 27-cell grid axes (shared backend+UI).",
+  "grid_axes": {
+    "psa_multiples": [75, 100, 125],
+    "sda_multiples": [50, 100, 200],
+    "psa_level_names": { "75": "Down", "100": "Base", "125": "Up" },
+    "sda_level_names": { "50": "Down", "100": "Base", "200": "Up" },
+    "base_psa": 100,
+    "base_sda": 100
+  },
+  "cohort_speed_schedule": [
+    {
+      "cohort": "HLTV Strong RI",
+      "psaDown": 100,
+      "psaBase": 150,
+      "psaUp": 225,
+      "sdaLow": 100,
+      "sdaBase": 150,
+      "sdaHigh": 300
+    },
+    {
+      "cohort": "HLTV Weak RI",
+      "psaDown": 50,
+      "psaBase": 75,
+      "psaUp": 100,
+      "sdaLow": 150,
+      "sdaBase": 250,
+      "sdaHigh": 450
+    },
+    {
+      "cohort": "LLTV Weak RI",
+      "psaDown": 75,
+      "psaBase": 100,
+      "psaUp": 125,
+      "sdaLow": 25,
+      "sdaBase": 75,
+      "sdaHigh": 150
+    }
+  ],
+  "cohort_recovery": {
+    "HLTV Strong RI": { "rate": 0.6, "period_months": 12, "lag_months": 0 },
+    "HLTV Weak RI": { "rate": 0.55, "period_months": 15, "lag_months": 0 },
+    "LLTV Weak RI": { "rate": 0.75, "period_months": 9, "lag_months": 0 }
+  },
+  "wal": {
+    "base_wal": "Cohort Base-speed WAL (psaBase/sdaBase from cohort_speed_schedule)",
+    "scenario_wal": "Per-cell WAL for that scenario's PSA×SDA (27-grid)",
+    "scenario_avg_wal": "Simple average of scenario WALs across the 9 cells in a cohort"
+  },
+  "mi_credit_recovery": {
+    "has_mi_default": true,
+    "severity_source": "Urban/Freddie Table 4 (data/urban_freddie_loss_severity_fico_ltv.csv)",
+    "severity_default_year_band": "2006",
+    "severity_year_rationale": "Preserved peak-crisis vintage band from assumptions.csv — not inferred from tape origination year. Change severity_default_year_band in assumptions.csv to override.",
+    "recovery_with_mi": "recovery_rate = 1 − severity_pct/100 from FICO×LTV cell",
+    "recovery_without_mi": "cohort_recovery rate only"
+  }
+}

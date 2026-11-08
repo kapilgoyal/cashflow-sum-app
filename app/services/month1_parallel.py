@@ -79,7 +79,11 @@ def _worker(payload: dict[str, Any]) -> dict[str, Any]:
         loan_rows: list[dict[str, Any]] = []
         totals = {k: 0.0 for k in SUM_FIELDS}
         for loan in loans:
-            rows = project_loan_cashflows(loan, scenario, months=HORIZON_MONTHS)
+            # Pool path: project ARMs as fixed-coupon (strict ARM check is
+            # run-loan only). CF-175/176 — same engine as /api/run-loan.
+            rows = project_loan_cashflows(
+                loan, scenario, months=HORIZON_MONTHS, validate=False
+            )
             if not rows:
                 raise RuntimeError(f"engine returned no rows for {loan.loan_id}")
             row = rows[0].model_dump()

@@ -24,6 +24,7 @@ from app.services.base_case_cohort_cf import (
 from app.services.cashflow_engine import project_loan_cashflows
 from app.services.cohort_labels import canonical_cohort_label
 from app.services.recovery import resolve_recovery_lag_months
+from app.services.scenario_config import label_psa_sda
 from app.services.scenario_grid import (
     COHORTS,
     PSA_LEVEL_NAME,
@@ -83,7 +84,9 @@ def _worker(payload: dict[str, Any]) -> dict[str, Any]:
                 scenario_lag_months=int(scenario.recovery_lag_months),
             )
             max_lag = max(max_lag, lag)
-            rows = project_loan_cashflows(loan, scenario, months=loan_months)
+            rows = project_loan_cashflows(
+                loan, scenario, months=loan_months, validate=False
+            )
             if not rows:
                 continue
             n_loan_months += len(rows)
@@ -152,8 +155,12 @@ def _worker(payload: dict[str, Any]) -> dict[str, Any]:
             "cohort": scenario.cohort,
             "psa_multiple": scenario.psa_multiple,
             "sda_multiple": scenario.sda_multiple,
+            "psa_sda_label": label_psa_sda(
+                scenario.psa_multiple, scenario.sda_multiple
+            ),
             "pca_level": PSA_LEVEL_NAME.get(scenario.psa_multiple),
             "sta_level": SDA_LEVEL_NAME.get(scenario.sda_multiple),
+            "wal_kind": "scenario_wal",
             "recovery_rate": scenario.recovery_rate,
             "recovery_period_months": scenario.recovery_period_months,
             "recovery_lag_months": scenario.recovery_lag_months,
@@ -177,8 +184,15 @@ def _worker(payload: dict[str, Any]) -> dict[str, Any]:
             "cohort": scenario_raw.get("cohort"),
             "psa_multiple": scenario_raw.get("psa_multiple"),
             "sda_multiple": scenario_raw.get("sda_multiple"),
+            "psa_sda_label": label_psa_sda(
+                int(scenario_raw.get("psa_multiple") or 0),
+                int(scenario_raw.get("sda_multiple") or 0),
+            )
+            if scenario_raw.get("psa_multiple") is not None
+            else None,
             "pca_level": PSA_LEVEL_NAME.get(scenario_raw.get("psa_multiple")),
             "sta_level": SDA_LEVEL_NAME.get(scenario_raw.get("sda_multiple")),
+            "wal_kind": "scenario_wal",
             "n_loans": len(payload.get("loans") or []),
             "n_loan_months": 0,
             "horizon_months": 0,
@@ -418,6 +432,14 @@ def run_scenario_grid_cf(
             {
                 "cohort": r["cohort"],
                 "scenario_id": r["scenario_id"],
+                "psa_multiple": r.get("psa_multiple"),
+                "sda_multiple": r.get("sda_multiple"),
+                "psa_sda_label": r.get("psa_sda_label")
+                or label_psa_sda(
+                    int(r.get("psa_multiple") or 0),
+                    int(r.get("sda_multiple") or 0),
+                ),
+                "wal_kind": "scenario_wal",
                 "wal_years": r.get("wal_years"),
                 "total_cash_sum": r.get("total_cash_sum"),
                 "n_loans": r.get("n_loans"),
@@ -445,6 +467,8 @@ def run_scenario_grid_cf(
             {
                 "cohort": cohort,
                 "scenario_id": "AVG",
+                "psa_sda_label": "scenario-avg (9 cells)",
+                "wal_kind": "scenario_avg_wal",
                 "wal_years": avg["wal_years"],
                 "total_cash_sum": avg["total_cash_sum"],
                 "n_loans": avg["n_loans"],

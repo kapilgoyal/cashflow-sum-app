@@ -106,6 +106,9 @@ class TapeRepository:
             )
         fico = row.get("ORIGINAL_FICO")
         ltv = row.get("ORIGINAL_LTV")
+        arm_idx = row.get("ARM_INDEX")
+        arm_fixed = row.get("ARM_INITIAL_FIXED_MONTHS")
+        arm_freq = row.get("ARM_RESET_FREQUENCY_MONTHS")
         return Loan(
             loan_id=str(row["LOAN_ID"]),
             current_balance=float(row["CURRENT_LOAN_AMOUNT"]),
@@ -124,6 +127,15 @@ class TapeRepository:
             original_ltv=float(ltv) if pd.notna(ltv) else None,
             # From data/assumptions.csv — not from monthly_insurance_cost.
             has_mi=default_has_mi(),
+            arm_index=str(arm_idx).strip()
+            if arm_idx is not None and pd.notna(arm_idx) and str(arm_idx).strip()
+            else None,
+            arm_initial_fixed_months=int(arm_fixed)
+            if arm_fixed is not None and pd.notna(arm_fixed)
+            else None,
+            arm_reset_frequency_months=int(arm_freq)
+            if arm_freq is not None and pd.notna(arm_freq)
+            else None,
         )
 
     def get_loan(self, loan_id: str | None = None) -> Loan:

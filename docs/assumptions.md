@@ -22,6 +22,14 @@ All modeling assumptions live under repo `data/` as CSV. Neon does **not** store
 1. If `has_mi` is True → look up Urban Table 4 cell (default vintage band **`2006`**, peak-crisis FICO×LTV) → `recovery_rate = 1 − severity_pct/100`. Falls back within-grid to `fico_band=Total` then `year_band=Total` (LTV-only).
 2. If no cell / `has_mi` False → fall back to **cohort** recovery rates in `assumptions.csv` / scenario grid (0.75 / 0.60 / 0.55).
 
+### Severity vintage (explicit — not invented per loan)
+
+The engine does **not** map each loan’s origination year into a severity vintage.
+`severity_default_year_band` in `assumptions.csv` (fallback **`2006`**) is a
+**deliberate pool-level assumption**: peak-crisis Urban Table 4 severities, used
+for all MI loans unless that assumption row is changed. Rationale is also stored
+in `data/scenario_config.json` → `mi_credit_recovery.severity_year_rationale`.
+
 Source PDF: [Loss Severity on Residential Mortgages (Goodman & Zhu, Urban Institute, Feb 2015)](https://www.urban.org/sites/default/files/publication/39566/2000092-Loss-Severity-on-Residential-Mortgages.pdf) — Table 4. Agency collateral; LTV > 80 severities reflect MI.
 
 ## PSA / SDA seasoning
